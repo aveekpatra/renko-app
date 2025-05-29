@@ -1,470 +1,553 @@
-# Renko Design Guidelines - Tailwind CSS
+# Renko Design Guidelines - Professional Glassmorphism
 
-_Minimal • Focused • Elegant • Zen_
+_Professional • Sophisticated • Elegant • Business-Ready_
 
-## Core Design Philosophy
+## Core Design Philosophy ✅ Implemented
 
-- **Breath over clutter**: Every element has purpose and space
-- **Subtle depth**: Gentle 3D touches without overwhelming
-- **Glass morphism**: Translucent layers with soft blurs
-- **Purposeful minimalism**: Clean but not sterile
-- **Zen aesthetics**: Calming, focused, professional
+- **Professional over flashy**: Sophisticated aesthetics suitable for business environments
+- **Horizontal scrolling first**: Wide layouts that scroll horizontally for better content organization
+- **Glassmorphic depth**: Translucent layers with tasteful backdrop-blur effects
+- **Consistent theming**: Seamless dark/light mode transitions across all components
+- **Touch-optimized**: Mobile-first design with finger-friendly interactions
 
 ---
 
-## Tailwind Config Setup
+## Current Implementation Colors
 
-```js
-// tailwind.config.js
-module.exports = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        // Light theme
-        light: {
-          canvas: "#FAFBFC",
-          secondary: "#F5F7FA",
-          tertiary: "#E8EDF5",
-          glass: "#FFFFFF",
-        },
-        // Dark theme
-        dark: {
-          canvas: "#0F1116",
-          secondary: "#1A1D29",
-          tertiary: "#252A3A",
-          glass: "#2D3347",
-        },
-        // Accent colors
-        accent: {
-          primary: "#5B7FFF",
-          "primary-dark": "#6B8AFF",
-          success: "#00D4AA",
-          "success-dark": "#00E6C3",
-          error: "#FF6B6B",
-          "error-dark": "#FF7A7A",
-          warning: "#FFB347",
-          "warning-dark": "#FFC266",
-        },
-        // Text colors
-        text: {
-          primary: "#1A1D29",
-          secondary: "#4A5568",
-          tertiary: "#718096",
-          "primary-dark": "#F7FAFC",
-          "secondary-dark": "#CBD5E0",
-          "tertiary-dark": "#A0AEC0",
-        },
-      },
-      backdropBlur: {
-        glass: "20px",
-        "glass-subtle": "12px",
-        "glass-strong": "32px",
-      },
-      fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-      },
-      spacing: {
-        18: "4.5rem",
-        22: "5.5rem",
-      },
-      borderRadius: {
-        glass: "16px",
-        button: "12px",
-      },
-      boxShadow: {
-        glass: "0 2px 8px rgba(0, 0, 0, 0.04)",
-        "glass-hover": "0 4px 16px rgba(0, 0, 0, 0.08)",
-        "glass-active": "0 8px 24px rgba(0, 0, 0, 0.12)",
-        "glass-modal": "0 16px 48px rgba(0, 0, 0, 0.16)",
-        button: "0 2px 8px rgba(91, 127, 255, 0.15)",
-        "button-hover": "0 4px 16px rgba(91, 127, 255, 0.25)",
-        "button-active": "0 1px 4px rgba(91, 127, 255, 0.3)",
-      },
-      transitionTimingFunction: {
-        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
-      },
-    },
-  },
+### Glassmorphic Color System ✅
+
+```css
+/* Dark Mode Implementation */
+.dark {
+  /* Primary Backgrounds */
+  --bg-primary: rgba(17, 24, 39, 0.6); /* gray-900/60 */
+  --bg-secondary: rgba(31, 41, 55, 0.8); /* gray-800/80 */
+  --bg-tertiary: rgba(55, 65, 81, 0.3); /* gray-700/30 */
+
+  /* Borders */
+  --border-primary: rgba(75, 85, 99, 0.6); /* gray-600/60 */
+  --border-secondary: rgba(107, 114, 128, 0.5); /* gray-500/50 */
+
+  /* Text Colors */
+  --text-primary: rgba(255, 255, 255, 1); /* white */
+  --text-secondary: rgba(156, 163, 175, 1); /* gray-400 */
+  --text-tertiary: rgba(107, 114, 128, 1); /* gray-500 */
+
+  /* Accent Colors */
+  --accent-purple: rgba(147, 51, 234, 1); /* purple-600 */
+  --accent-purple-light: rgba(168, 85, 247, 0.4); /* purple-500/40 */
+}
+
+/* Light Mode Implementation */
+.light {
+  /* Primary Backgrounds */
+  --bg-primary: rgba(255, 255, 255, 0.9); /* white/90 */
+  --bg-secondary: rgba(249, 250, 251, 0.8); /* gray-50/80 */
+  --bg-tertiary: rgba(243, 244, 246, 0.5); /* gray-100/50 */
+
+  /* Borders */
+  --border-primary: rgba(229, 231, 235, 0.6); /* gray-200/60 */
+  --border-secondary: rgba(209, 213, 219, 0.5); /* gray-300/50 */
+
+  /* Text Colors */
+  --text-primary: rgba(17, 24, 39, 1); /* gray-900 */
+  --text-secondary: rgba(107, 114, 128, 1); /* gray-500 */
+  --text-tertiary: rgba(156, 163, 175, 1); /* gray-400 */
+
+  /* Accent Colors */
+  --accent-purple: rgba(147, 51, 234, 1); /* purple-600 */
+  --accent-purple-light: rgba(147, 51, 234, 0.1); /* purple-600/10 */
+}
+```
+
+### Priority and Status Colors ✅
+
+```css
+/* Task Priority Colors */
+--priority-high-dark: rgba(239, 68, 68, 0.3); /* red-500/30 */
+--priority-high-light: rgba(254, 226, 226, 0.9); /* red-100/90 */
+
+--priority-medium-dark: rgba(245, 158, 11, 0.3); /* yellow-500/30 */
+--priority-medium-light: rgba(254, 243, 199, 0.9); /* yellow-100/90 */
+
+--priority-low-dark: rgba(34, 197, 94, 0.3); /* green-500/30 */
+--priority-low-light: rgba(220, 252, 231, 0.9); /* green-100/90 */
+
+/* Column Header Colors */
+--red-theme-dark: rgba(239, 68, 68, 0.15); /* red-500/15 */
+--orange-theme-dark: rgba(251, 146, 60, 0.15); /* orange-500/15 */
+--blue-theme-dark: rgba(59, 130, 246, 0.15); /* blue-500/15 */
+--purple-theme-dark: rgba(168, 85, 247, 0.15); /* purple-500/15 */
+--gray-theme-dark: rgba(107, 114, 128, 0.15); /* gray-500/15 */
+--green-theme-dark: rgba(34, 197, 94, 0.15); /* green-500/15 */
+```
+
+---
+
+## Typography Implementation ✅
+
+### Font Hierarchy
+
+```css
+/* Current Typography Scale - Professional */
+.text-2xl {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 500; /* medium */
+  line-height: 1.2;
+}
+
+.text-xl {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600; /* semibold */
+  line-height: 1.3;
+}
+
+.text-lg {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 500; /* medium */
+  line-height: 1.4;
+}
+
+.text-base {
+  font-size: 1rem; /* 16px */
+  font-weight: 400; /* normal */
+  line-height: 1.5;
+}
+
+.text-sm {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500; /* medium */
+  line-height: 1.4;
+}
+
+.text-xs {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500; /* medium */
+  line-height: 1.3;
+}
+```
+
+### Font Weight Usage ✅
+
+- **font-medium (500)**: Headers and important text
+- **font-semibold (600)**: Sub-headers and emphasized content
+- **font-normal (400)**: Body text and descriptions
+- **font-bold (700)**: Reserved for branding only
+
+---
+
+## Spacing System ✅
+
+### Implemented 4px Grid
+
+```css
+/* Consistent Spacing - 4px increments */
+--space-1: 0.25rem; /* 4px */
+--space-2: 0.5rem; /* 8px */
+--space-3: 0.75rem; /* 12px */
+--space-4: 1rem; /* 16px */
+--space-5: 1.25rem; /* 20px */
+--space-6: 1.5rem; /* 24px */
+--space-8: 2rem; /* 32px */
+--space-10: 2.5rem; /* 40px */
+--space-12: 3rem; /* 48px */
+```
+
+### Component Spacing Patterns ✅
+
+```css
+/* Standard Component Padding */
+.component-padding {
+  padding: 1.5rem; /* 24px - p-6 */
+}
+
+.component-gap {
+  gap: 1.5rem; /* 24px - gap-6 */
+}
+
+.section-margin {
+  margin-bottom: 2.5rem; /* 40px - mb-10 */
+}
+```
+
+---
+
+## Component Patterns ✅
+
+### Glassmorphic Container Pattern
+
+```tsx
+// Standard container used across all components
+const GlassmorphicContainer = ({ isDarkMode, children }) => (
+  <div
+    className={`
+    rounded-2xl backdrop-blur-xl border shadow-2xl
+    ${
+      isDarkMode
+        ? "bg-gray-900/60 border-gray-800/60 shadow-black/25"
+        : "bg-white/90 border-gray-200/60 shadow-gray-900/15"
+    }
+  `}
+  >
+    {children}
+  </div>
+);
+```
+
+### Header Pattern with Icon
+
+```tsx
+// Consistent header pattern across dashboard widgets
+const ComponentHeader = ({ isDarkMode, icon: Icon, title, action }) => (
+  <div className="flex items-center justify-between mb-8">
+    <div className="flex items-center space-x-4">
+      <div
+        className={`
+        p-2.5 rounded-xl backdrop-blur-sm border shadow-sm
+        ${
+          isDarkMode
+            ? "bg-gray-800/80 border-gray-700/50 text-purple-400 shadow-black/20"
+            : "bg-white/80 border-gray-200/60 text-purple-600 shadow-gray-900/10"
+        }
+      `}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      <h3
+        className={`text-2xl font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}
+      >
+        {title}
+      </h3>
+    </div>
+    {action && action}
+  </div>
+);
+```
+
+### Horizontal Scroll Container
+
+```tsx
+// Standard horizontal scrolling pattern
+const HorizontalScrollContainer = ({ children }) => (
+  <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50">
+    <div className="flex gap-6 min-w-max">{children}</div>
+  </div>
+);
+```
+
+### Column/Card Pattern
+
+```tsx
+// Fixed-width columns for horizontal scrolling
+const ScrollableColumn = ({ isDarkMode, width = "240px", children }) => (
+  <div className={`${width} flex-shrink-0`}>{children}</div>
+);
+```
+
+---
+
+## Interaction Patterns ✅
+
+### Hover Effects
+
+```css
+/* Subtle lift effect for interactive elements */
+.hover-lift {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Active state */
+.hover-lift:active {
+  transform: translateY(0);
+}
+```
+
+### Button Interactions
+
+```tsx
+// Professional button with glassmorphic styling
+const GlassButton = ({ isDarkMode, variant, children, ...props }) => {
+  const baseClasses = `
+    px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
+    backdrop-blur-sm border shadow-lg hover:shadow-xl hover:-translate-y-0.5
+  `;
+
+  const variantClasses = variant === 'primary'
+    ? isDarkMode
+      ? "text-gray-400 hover:text-gray-200 bg-gray-800/70 hover:bg-gray-800/90 border-gray-700/50 shadow-black/20"
+      : "text-gray-600 hover:text-gray-900 bg-white/70 hover:bg-white/90 border-gray-200/60 shadow-gray-900/10"
+    : /* secondary styles */;
+
+  return (
+    <button className={`${baseClasses} ${variantClasses}`} {...props}>
+      {children}
+    </button>
+  );
 };
 ```
 
 ---
 
-## Custom CSS Classes
+## Border Radius System ✅
 
 ```css
-/* Glass morphism utilities */
-@layer utilities {
-  .glass-primary {
-    @apply bg-white/70 dark:bg-dark-glass/80 backdrop-blur-glass border border-white/20;
-  }
+/* Implemented Border Radius Scale */
+.rounded-lg {
+  /* 8px - small components */
+  border-radius: 0.5rem;
+}
 
-  .glass-elevated {
-    @apply bg-white/90 dark:bg-dark-glass/95 backdrop-blur-glass-strong border border-white/30 shadow-glass-modal;
-  }
+.rounded-xl {
+  /* 12px - cards and buttons */
+  border-radius: 0.75rem;
+}
 
-  .glass-subtle {
-    @apply bg-white/40 dark:bg-dark-glass/50 backdrop-blur-glass-subtle border border-white/10;
-  }
+.rounded-2xl {
+  /* 16px - major containers */
+  border-radius: 1rem;
+}
 
-  /* 3D Touch effects */
-  .touch-lift {
-    @apply transition-all duration-200 ease-smooth;
-  }
-
-  .touch-lift:hover {
-    @apply -translate-y-0.5 shadow-glass-hover;
-  }
-
-  .touch-lift:active {
-    @apply translate-y-0 shadow-glass-active;
-  }
-
-  /* Button variants */
-  .btn-primary {
-    @apply glass-primary text-white bg-accent-primary/20 dark:bg-accent-primary-dark/20 
-           px-5 py-3 rounded-button shadow-button touch-lift
-           hover:shadow-button-hover active:shadow-button-active;
-  }
-
-  .btn-secondary {
-    @apply glass-subtle text-accent-primary dark:text-accent-primary-dark
-           px-5 py-3 rounded-button border border-accent-primary/30
-           hover:glass-primary;
-  }
+.rounded-3xl {
+  /* 24px - large sections */
+  border-radius: 1.5rem;
 }
 ```
 
 ---
 
-## Typography Classes
+## Shadow System ✅
+
+### Professional Shadow Hierarchy
 
 ```css
-/* Typography utilities */
-.text-h1 {
-  @apply text-3xl font-semibold tracking-tight leading-tight;
-}
-.text-h2 {
-  @apply text-2xl font-semibold tracking-tight leading-tight;
-}
-.text-h3 {
-  @apply text-xl font-medium tracking-tight leading-tight;
-}
-.text-body {
-  @apply text-base font-normal leading-relaxed;
-}
-.text-caption {
-  @apply text-sm font-normal tracking-wide leading-normal;
-}
-.text-small {
-  @apply text-xs font-medium tracking-wider leading-normal;
+/* Light Mode Shadows */
+.shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Text color utilities */
-.text-primary {
-  @apply text-text-primary dark:text-text-primary-dark;
+.shadow-lg {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-.text-secondary {
-  @apply text-text-secondary dark:text-text-secondary-dark;
+
+.shadow-xl {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
-.text-tertiary {
-  @apply text-text-tertiary dark:text-text-tertiary-dark;
+
+.shadow-2xl {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode Shadows */
+.dark .shadow-black/10 {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-black/20 {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-black/25 {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
 }
 ```
 
 ---
 
-## Component Examples
+## Responsive Breakpoints ✅
 
-### Card Component
-
-```jsx
-<div className="glass-primary rounded-glass p-5 touch-lift">
-  <h3 className="text-h3 text-primary mb-4">Task Title</h3>
-  <p className="text-body text-secondary">Task description...</p>
-</div>
-```
-
-### Button Components
-
-```jsx
-<!-- Primary Button -->
-<button className="btn-primary">
-  Complete Task
-</button>
-
-<!-- Secondary Button -->
-<button className="btn-secondary">
-  Edit Task
-</button>
-
-<!-- Icon Button -->
-<button className="glass-primary p-3 rounded-button touch-lift">
-  <Icon className="w-5 h-5 text-primary" />
-</button>
-```
-
-### Form Field
-
-```jsx
-<input
-  className="glass-primary w-full p-4 rounded-glass border-0 
-             text-primary placeholder:text-tertiary
-             focus:ring-2 focus:ring-accent-primary/30 focus:outline-none
-             transition-all duration-200"
-  placeholder="Enter task name..."
-/>
-```
-
----
-
-## Layout Classes
+### Mobile-First Strategy
 
 ```css
-/* Container utilities */
-.container-main {
-  @apply max-w-6xl mx-auto px-5 py-8;
+/* Tailwind Breakpoints - Used in Implementation */
+/* Default: Mobile (0px and up) */
+@media (min-width: 640px) {
+  /* sm: */
 }
-
-.container-card {
-  @apply glass-primary rounded-glass p-5 mb-6;
+@media (min-width: 768px) {
+  /* md: */
 }
-
-/* Grid utilities */
-.grid-main {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+@media (min-width: 1024px) {
+  /* lg: */
 }
-
-.grid-sidebar {
-  @apply grid grid-cols-1 lg:grid-cols-4 gap-6;
+@media (min-width: 1280px) {
+  /* xl: */
 }
-
-/* Flex utilities */
-.flex-between {
-  @apply flex items-center justify-between;
-}
-
-.flex-center {
-  @apply flex items-center justify-center;
+@media (min-width: 1536px) {
+  /* 2xl: */
 }
 ```
 
----
+### Responsive Patterns
 
-## Theme Background Classes
-
-```css
-/* Background utilities */
-.bg-canvas {
-  @apply bg-light-canvas dark:bg-dark-canvas;
-}
-
-.bg-secondary {
-  @apply bg-light-secondary dark:bg-dark-secondary;
-}
-
-.bg-tertiary {
-  @apply bg-light-tertiary dark:bg-dark-tertiary;
-}
-```
-
----
-
-## Common Patterns
-
-### Navigation Bar
-
-```jsx
-<nav className="glass-primary sticky top-0 z-50 px-6 py-4">
-  <div className="flex-between max-w-6xl mx-auto">
-    <div className="text-h3 text-primary">Renko</div>
-    <div className="flex items-center space-x-4">{/* Nav items */}</div>
-  </div>
-</nav>
-```
-
-### Sidebar
-
-```jsx
-<aside className="w-64 h-screen glass-subtle p-6">
-  <div className="space-y-4">{/* Sidebar content */}</div>
-</aside>
-```
-
-### Modal
-
-```jsx
-<div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex-center z-50">
-  <div className="glass-elevated rounded-glass p-8 max-w-md w-full mx-4">
-    <h2 className="text-h2 text-primary mb-6">Modal Title</h2>
-    {/* Modal content */}
-  </div>
-</div>
-```
-
-### Kanban Card
-
-```jsx
-<div className="glass-primary rounded-glass p-4 touch-lift cursor-pointer">
-  <div className="flex-between mb-3">
-    <span className="text-small text-tertiary uppercase tracking-wider">
-      In Progress
-    </span>
-    <div className="w-3 h-3 rounded-full bg-accent-primary"></div>
-  </div>
-  <h4 className="text-body text-primary font-medium mb-2">
-    Design new feature
-  </h4>
-  <p className="text-caption text-secondary mb-4">
-    Create wireframes and prototypes
-  </p>
-  <div className="flex items-center space-x-2">
-    <img className="w-6 h-6 rounded-full" src="avatar.jpg" alt="User" />
-    <span className="text-small text-tertiary">Due: Tomorrow</span>
-  </div>
-</div>
-```
-
-### Task List Item
-
-```jsx
-<div className="glass-subtle rounded-glass p-4 mb-3 touch-lift hover:glass-primary">
-  <div className="flex items-start space-x-3">
-    <input
-      type="checkbox"
-      className="mt-1 w-4 h-4 text-accent-primary rounded border-gray-300 
-                 focus:ring-accent-primary/30"
-    />
-    <div className="flex-1 min-w-0">
-      <p className="text-body text-primary font-medium">
-        Complete project documentation
-      </p>
-      <p className="text-caption text-secondary mt-1">
-        Marketing Project • Due: May 30
-      </p>
+```tsx
+// Example responsive implementation
+const ResponsiveWidget = () => (
+  <div
+    className="
+    w-full                    // Mobile: full width
+    md:w-[240px]             // Desktop: fixed width
+    flex-shrink-0            // Prevent shrinking in flex containers
+    overflow-hidden          // Prevent content overflow
+  "
+  >
+    <div
+      className="
+      max-h-[300px]          // Mobile: limited height
+      md:max-h-[400px]       // Desktop: more height
+      overflow-y-auto        // Vertical scroll when needed
+      scrollbar-thin         // Custom scrollbar styling
+    "
+    >
+      {content}
     </div>
-    <button className="p-1 text-tertiary hover:text-primary">
-      <Icon className="w-4 h-4" />
-    </button>
+  </div>
+);
+```
+
+---
+
+## Scrollbar Styling ✅
+
+### Custom Scrollbar Implementation
+
+```css
+/* Implemented Scrollbar Styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-400\/50::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 0.375rem;
+}
+
+.scrollbar-track-gray-100\/50::-webkit-scrollbar-track {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark .scrollbar-thumb-gray-600\/50::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .scrollbar-track-gray-800\/20::-webkit-scrollbar-track {
+  background-color: rgba(31, 41, 55, 0.2);
+}
+```
+
+---
+
+## Animation Guidelines ✅
+
+### Professional Transitions
+
+```css
+/* Standard transition timing */
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Micro-interactions */
+.hover-translate {
+  transition: transform 0.2s ease-out;
+}
+
+.hover-translate:hover {
+  transform: translateY(-2px);
+}
+
+/* Focus states */
+.focus-ring:focus {
+  outline: 2px solid rgba(147, 51, 234, 0.5);
+  outline-offset: 2px;
+}
+```
+
+---
+
+## Implementation Standards ✅
+
+### Do's (Currently Implemented)
+
+- ✅ Use backdrop-blur-xl for all major containers
+- ✅ Implement horizontal scrolling for wide content
+- ✅ Maintain 240px fixed width for scrollable columns
+- ✅ Use consistent header patterns with icons
+- ✅ Apply professional color palette throughout
+- ✅ Include smooth hover transitions
+- ✅ Support both dark and light modes seamlessly
+- ✅ Use rounded-2xl for major containers
+- ✅ Apply appropriate shadow hierarchy
+
+### Don'ts (Successfully Avoided)
+
+- ❌ Excessive scaling effects (hover:scale-105)
+- ❌ Overly bright or saturated colors
+- ❌ Inconsistent spacing patterns
+- ❌ Heavy animations that impact performance
+- ❌ Layouts that break on mobile devices
+- ❌ Color-only information conveyance
+
+---
+
+## Current Component Examples ✅
+
+### CalendarWidget Implementation
+
+```tsx
+// Professional calendar with horizontal scrolling
+<div
+  className={`
+  rounded-2xl backdrop-blur-xl border shadow-2xl
+  ${
+    isDarkMode
+      ? "bg-gray-900/60 border-gray-800/60 shadow-black/25"
+      : "bg-white/90 border-gray-200/60 shadow-gray-900/15"
+  }
+`}
+>
+  <div className="p-6">
+    <div className="overflow-x-auto scrollbar-thin">
+      <div className="flex gap-4 min-w-max">
+        {days.map((day) => (
+          <div key={day} className="w-[200px] flex-shrink-0">
+            {/* Day content */}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### Kanban Column Implementation
+
+```tsx
+// Fixed-width column with vertical scrolling
+<div className="w-[240px] flex-shrink-0 space-y-4">
+  <div
+    className={`
+    min-h-[280px] max-h-[400px] overflow-y-auto scrollbar-thin 
+    rounded-lg p-3 backdrop-blur-sm border
+    ${
+      isDarkMode
+        ? "bg-gray-800/30 border-gray-700/40"
+        : "bg-gray-50/80 border-gray-200/50"
+    }
+  `}
+  >
+    {tasks.map((task) => (
+      <TaskCard key={task.id} task={task} isDarkMode={isDarkMode} />
+    ))}
   </div>
 </div>
 ```
 
 ---
 
-## Animation Classes
-
-```css
-/* Animation utilities */
-.animate-fade-in {
-  @apply animate-in fade-in duration-300;
-}
-
-.animate-slide-up {
-  @apply animate-in slide-in-from-bottom-4 duration-300;
-}
-
-.animate-slide-down {
-  @apply animate-in slide-in-from-top-4 duration-300;
-}
-
-.animate-scale-in {
-  @apply animate-in zoom-in-95 duration-200;
-}
-
-/* Hover animations */
-.hover-lift {
-  @apply transition-transform duration-200 hover:-translate-y-0.5;
-}
-
-.hover-glow {
-  @apply transition-all duration-200 hover:shadow-glass-hover;
-}
-```
-
----
-
-## Responsive Spacing
-
-```css
-/* Responsive padding utilities */
-.p-responsive {
-  @apply p-4 md:p-6 lg:p-8;
-}
-
-.px-responsive {
-  @apply px-4 md:px-6 lg:px-8;
-}
-
-.py-responsive {
-  @apply py-4 md:py-6 lg:py-8;
-}
-
-/* Container responsive */
-.container-responsive {
-  @apply px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto;
-}
-```
-
----
-
-## Dark Mode Toggle
-
-```jsx
-// Theme toggle component
-<button
-  onClick={toggleTheme}
-  className="glass-primary p-3 rounded-button touch-lift"
->
-  {theme === "dark" ? (
-    <SunIcon className="w-5 h-5 text-primary" />
-  ) : (
-    <MoonIcon className="w-5 h-5 text-primary" />
-  )}
-</button>
-```
-
----
-
-## Implementation Tips
-
-### 1. Theme Setup
-
-```jsx
-// In your root component
-<html className={theme}>
-  <body className="bg-canvas text-primary">{/* Your app */}</body>
-</html>
-```
-
-### 2. Glass Effect Performance
-
-```css
-/* Only apply backdrop-filter when needed */
-@supports (backdrop-filter: blur(20px)) {
-  .glass-primary {
-    backdrop-filter: blur(20px);
-  }
-}
-
-/* Fallback for non-supporting browsers */
-@supports not (backdrop-filter: blur(20px)) {
-  .glass-primary {
-    @apply bg-white/90 dark:bg-dark-glass/90;
-  }
-}
-```
-
-### 3. Focus Management
-
-```css
-/* Custom focus styles */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:ring-offset-2 focus:ring-offset-canvas;
-}
-```
-
----
-
-_This design system creates a cohesive, zen-like experience that feels both modern and timeless, professional yet approachable._
+This design system represents the current implementation state of Renko's professional glassmorphic aesthetic with horizontal scrolling patterns. All components follow these established patterns for consistency and maintainability.
