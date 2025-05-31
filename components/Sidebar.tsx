@@ -1,6 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Plus,
   Calendar,
@@ -16,6 +18,7 @@ import {
   Sun,
   ChevronLeft,
   ChevronRight,
+  Folder,
 } from "lucide-react";
 
 // Mock data for boards
@@ -44,19 +47,18 @@ const mockBoards = [
 ];
 
 const navigationItems = [
-  { icon: HomeIcon, label: "Dashboard", active: true },
-  { icon: FolderKanban, label: "Boards", active: false },
-  { icon: Calendar, label: "Calendar", active: false },
-  { icon: FileText, label: "Notes", active: false },
-  { icon: BarChart3, label: "Analytics", active: false },
+  { icon: HomeIcon, label: "Dashboard", href: "/" },
+  { icon: Folder, label: "Projects", href: "/projects" },
+  { icon: FolderKanban, label: "Boards", href: "/boards" },
+  { icon: Calendar, label: "Calendar", href: "/calendar" },
+  { icon: FileText, label: "Notes", href: "/notes" },
+  { icon: BarChart3, label: "Analytics", href: "/analytics" },
 ];
 
 interface SidebarProps {
   sidebarWidth: number;
   isDarkMode: boolean;
   setIsDarkMode: (darkMode: boolean) => void;
-  isCollapsed: boolean;
-  setIsCollapsed: (collapsed: boolean) => void;
   handleMouseDown: (e: React.MouseEvent) => void;
 }
 
@@ -64,10 +66,28 @@ export default function Sidebar({
   sidebarWidth,
   isDarkMode,
   setIsDarkMode,
-  isCollapsed,
-  setIsCollapsed,
   handleMouseDown,
 }: SidebarProps) {
+  const pathname = usePathname();
+
+  // Manage sidebar collapsed state internally with localStorage persistence
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+    const savedSidebarState = localStorage.getItem("mainSidebarCollapsed");
+    if (savedSidebarState) {
+      setIsCollapsed(JSON.parse(savedSidebarState));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem("mainSidebarCollapsed", JSON.stringify(isCollapsed));
+    }
+  }, [isCollapsed, isHydrated]);
+
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
@@ -198,7 +218,8 @@ export default function Sidebar({
               key={item.label}
               icon={item.icon}
               label={item.label}
-              active={item.active}
+              href={item.href}
+              active={pathname === item.href}
               isCollapsed={isCollapsed}
               isDarkMode={isDarkMode}
             />
@@ -294,6 +315,7 @@ export default function Sidebar({
 interface SidebarItemProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  href: string;
   active?: boolean;
   isCollapsed: boolean;
   isDarkMode: boolean;
@@ -302,12 +324,14 @@ interface SidebarItemProps {
 function SidebarItem({
   icon: Icon,
   label,
+  href,
   active,
   isCollapsed,
   isDarkMode,
 }: SidebarItemProps) {
   return (
-    <button
+    <Link
+      href={href}
       className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2.5 rounded-xl transition-all duration-200 group ${
         active
           ? isDarkMode
@@ -333,7 +357,7 @@ function SidebarItem({
       {active && !isCollapsed && (
         <div className="ml-auto w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-sm"></div>
       )}
-    </button>
+    </Link>
   );
 }
 

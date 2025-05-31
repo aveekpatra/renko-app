@@ -60,26 +60,43 @@ _Professional • Sophisticated • Elegant • Business-Ready_
 }
 ```
 
-### Priority and Status Colors ✅
+### Enhanced Priority and Status Colors ✅
 
 ```css
-/* Task Priority Colors */
---priority-high-dark: rgba(239, 68, 68, 0.3); /* red-500/30 */
---priority-high-light: rgba(254, 226, 226, 0.9); /* red-100/90 */
+/* Enhanced Task Priority Colors with Borders */
+--priority-critical-dark: rgba(239, 68, 68, 0.2); /* red-500/20 */
+--priority-critical-light: rgba(254, 226, 226, 1); /* red-100 */
+--priority-critical-border-dark: rgba(248, 113, 113, 0.4); /* red-400/40 */
+--priority-critical-border-light: rgba(220, 38, 38, 0.6); /* red-600/60 */
 
---priority-medium-dark: rgba(245, 158, 11, 0.3); /* yellow-500/30 */
---priority-medium-light: rgba(254, 243, 199, 0.9); /* yellow-100/90 */
+--priority-high-dark: rgba(251, 146, 60, 0.2); /* orange-500/20 */
+--priority-high-light: rgba(254, 215, 170, 1); /* orange-100 */
+--priority-high-border-dark: rgba(251, 146, 60, 0.4); /* orange-400/40 */
+--priority-high-border-light: rgba(194, 65, 12, 0.6); /* orange-700/60 */
 
---priority-low-dark: rgba(34, 197, 94, 0.3); /* green-500/30 */
---priority-low-light: rgba(220, 252, 231, 0.9); /* green-100/90 */
+--priority-medium-dark: rgba(245, 158, 11, 0.2); /* yellow-500/20 */
+--priority-medium-light: rgba(254, 240, 138, 1); /* yellow-100 */
+--priority-medium-border-dark: rgba(251, 191, 36, 0.4); /* yellow-400/40 */
+--priority-medium-border-light: rgba(161, 98, 7, 0.6); /* yellow-700/60 */
 
-/* Column Header Colors */
+--priority-low-dark: rgba(34, 197, 94, 0.2); /* green-500/20 */
+--priority-low-light: rgba(187, 247, 208, 1); /* green-100 */
+--priority-low-border-dark: rgba(74, 222, 128, 0.4); /* green-400/40 */
+--priority-low-border-light: rgba(21, 128, 61, 0.6); /* green-700/60 */
+
+/* Enhanced Column Header Colors */
 --red-theme-dark: rgba(239, 68, 68, 0.15); /* red-500/15 */
 --orange-theme-dark: rgba(251, 146, 60, 0.15); /* orange-500/15 */
 --blue-theme-dark: rgba(59, 130, 246, 0.15); /* blue-500/15 */
 --purple-theme-dark: rgba(168, 85, 247, 0.15); /* purple-500/15 */
 --gray-theme-dark: rgba(107, 114, 128, 0.15); /* gray-500/15 */
 --green-theme-dark: rgba(34, 197, 94, 0.15); /* green-500/15 */
+
+/* Enhanced Project Tag Colors */
+--project-tag-dark: rgba(55, 65, 81, 0.5); /* gray-700/50 */
+--project-tag-light: rgba(255, 255, 255, 0.8); /* white/80 */
+--project-tag-border-dark: rgba(107, 114, 128, 0.5); /* gray-500/50 */
+--project-tag-border-light: rgba(156, 163, 175, 0.6); /* gray-400/60 */
 ```
 
 ---
@@ -153,7 +170,7 @@ _Professional • Sophisticated • Elegant • Business-Ready_
 --space-12: 3rem; /* 48px */
 ```
 
-### Component Spacing Patterns ✅
+### Enhanced Component Spacing Patterns ✅
 
 ```css
 /* Standard Component Padding */
@@ -168,11 +185,24 @@ _Professional • Sophisticated • Elegant • Business-Ready_
 .section-margin {
   margin-bottom: 2.5rem; /* 40px - mb-10 */
 }
+
+/* Enhanced Card Patterns */
+.card-padding {
+  padding: 0.75rem; /* 12px - p-3 */
+}
+
+.card-spacing {
+  margin-bottom: 0.5rem; /* 8px - space-y-2 */
+}
+
+.tag-padding {
+  padding: 0.25rem 0.5rem; /* 4px 8px - px-2 py-1 */
+}
 ```
 
 ---
 
-## Component Patterns ✅
+## Enhanced Component Patterns ✅
 
 ### Glassmorphic Container Pattern
 
@@ -194,360 +224,347 @@ const GlassmorphicContainer = ({ isDarkMode, children }) => (
 );
 ```
 
-### Header Pattern with Icon
+### Enhanced Header Pattern with Icon ✅
 
 ```tsx
 // Consistent header pattern across dashboard widgets
-const ComponentHeader = ({ isDarkMode, icon: Icon, title, action }) => (
+const WidgetHeader = ({ isDarkMode, icon: Icon, title, children }) => (
   <div className="flex items-center justify-between mb-8">
     <div className="flex items-center space-x-4">
       <div
-        className={`
-        p-2.5 rounded-xl backdrop-blur-sm border shadow-sm
-        ${
+        className={`p-2.5 rounded-xl backdrop-blur-sm border shadow-sm ${
           isDarkMode
             ? "bg-gray-800/80 border-gray-700/50 text-purple-400 shadow-black/20"
             : "bg-white/80 border-gray-200/60 text-purple-600 shadow-gray-900/10"
-        }
-      `}
+        }`}
       >
         <Icon className="w-5 h-5" />
       </div>
       <h3
-        className={`text-2xl font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}
+        className={`text-2xl font-medium ${
+          isDarkMode ? "text-white" : "text-gray-900"
+        }`}
       >
         {title}
       </h3>
     </div>
-    {action && action}
+    {children}
   </div>
 );
 ```
 
-### Horizontal Scroll Container
+### Enhanced Column Header Pattern ✅
 
 ```tsx
-// Standard horizontal scrolling pattern
+// Enhanced column headers with task counts and themed icons
+const ColumnHeader = ({ isDarkMode, column, taskCount }) => (
+  <div className="flex items-center justify-between">
+    <div className="flex items-center space-x-3">
+      <div
+        className={`p-2 rounded-xl backdrop-blur-sm border shadow-lg ${
+          colorClasses[column.color]
+        }`}
+      >
+        <column.icon className="w-4 h-4" />
+      </div>
+      <div>
+        <h4
+          className={`font-medium ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}
+        >
+          {column.title}
+        </h4>
+        <p
+          className={`text-sm ${
+            isDarkMode ? "text-gray-500" : "text-gray-500"
+          }`}
+        >
+          {taskCount} tasks
+        </p>
+      </div>
+    </div>
+  </div>
+);
+```
+
+### Enhanced Task Card Pattern ✅
+
+```tsx
+// Standardized task card with rich information and professional styling
+const TaskCard = ({ isDarkMode, task }) => (
+  <div
+    className={`p-3 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm border shadow-md ${
+      isDarkMode
+        ? "bg-gray-800/50 border-gray-700/50 shadow-black/20"
+        : "bg-white/80 border-gray-200/60 shadow-gray-900/10"
+    }`}
+  >
+    {/* Task Header with Time Information */}
+    <div className="flex items-start justify-between mb-2">
+      <span className="font-medium text-sm leading-tight flex-1">
+        {task.title}
+      </span>
+      <div className="flex flex-col items-end space-y-0.5 flex-shrink-0 ml-2">
+        <span
+          className={`text-xs opacity-75 font-medium ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          {task.dueTime || task.dueDate}
+        </span>
+        <span
+          className={`text-xs opacity-60 ${
+            isDarkMode ? "text-gray-500" : "text-gray-500"
+          }`}
+        >
+          {task.timeEstimate || task.duration}
+        </span>
+      </div>
+    </div>
+
+    {/* Task Description */}
+    <p
+      className={`text-xs opacity-75 mb-2 leading-relaxed ${
+        isDarkMode ? "text-gray-400" : "text-gray-600"
+      }`}
+    >
+      {task.description}
+    </p>
+
+    {/* Enhanced Task Footer with Styled Tags */}
+    <div className="flex items-center justify-between">
+      <ProjectTag isDarkMode={isDarkMode} project={task.project} />
+      <PriorityTag isDarkMode={isDarkMode} priority={task.priority} />
+    </div>
+  </div>
+);
+```
+
+### Enhanced Tag System Patterns ✅
+
+```tsx
+// Project tag with enhanced visibility
+const ProjectTag = ({ isDarkMode, project }) => (
+  <span
+    className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
+      isDarkMode
+        ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
+        : "bg-white/80 text-gray-600 border-gray-300/60"
+    }`}
+  >
+    {project}
+  </span>
+);
+
+// Priority tag with enhanced colors and borders
+const PriorityTag = ({ isDarkMode, priority }) => {
+  const priorityClasses = {
+    critical: isDarkMode
+      ? "bg-red-500/20 text-red-300 border-red-400/40"
+      : "bg-red-100 text-red-700 border-red-300/60",
+    high: isDarkMode
+      ? "bg-orange-500/20 text-orange-300 border-orange-400/40"
+      : "bg-orange-100 text-orange-700 border-orange-300/60",
+    medium: isDarkMode
+      ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/40"
+      : "bg-yellow-100 text-yellow-700 border-yellow-300/60",
+    low: isDarkMode
+      ? "bg-green-500/20 text-green-300 border-green-400/40"
+      : "bg-green-100 text-green-700 border-green-300/60",
+  };
+
+  return (
+    <span
+      className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${priorityClasses[priority]}`}
+    >
+      {priority}
+    </span>
+  );
+};
+```
+
+### Horizontal Scrolling Container Pattern ✅
+
+```tsx
+// Enhanced scrollable container with consistent styling
 const HorizontalScrollContainer = ({ children }) => (
   <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50">
     <div className="flex gap-6 min-w-max">{children}</div>
   </div>
 );
-```
 
-### Column/Card Pattern
-
-```tsx
-// Fixed-width columns for horizontal scrolling
-const ScrollableColumn = ({ isDarkMode, width = "240px", children }) => (
-  <div className={`${width} flex-shrink-0`}>{children}</div>
+// Fixed-width columns for optimal content display
+const FixedColumn = ({ children }) => (
+  <div className="w-[240px] flex-shrink-0 space-y-4">{children}</div>
 );
 ```
 
 ---
 
-## Interaction Patterns ✅
+## Enhanced Information Architecture ✅
 
-### Hover Effects
+### Task/Event Data Structure
 
-```css
-/* Subtle lift effect for interactive elements */
-.hover-lift {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+```tsx
+// Standardized task structure across all components
+interface EnhancedTask {
+  id: string;
+  title: string;
+  description: string;
+  priority: "critical" | "high" | "medium" | "low";
+  project: string;
+  timeEstimate?: string;
+  dueTime?: string;
+  dueDate?: string;
+  status?: string;
 }
 
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Active state */
-.hover-lift:active {
-  transform: translateY(0);
+// Calendar event structure
+interface CalendarEvent extends EnhancedTask {
+  time: string;
+  duration: string;
+  color: string;
 }
 ```
 
-### Button Interactions
+### Card Information Hierarchy ✅
 
 ```tsx
-// Professional button with glassmorphic styling
-const GlassButton = ({ isDarkMode, variant, children, ...props }) => {
-  const baseClasses = `
-    px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
-    backdrop-blur-sm border shadow-lg hover:shadow-xl hover:-translate-y-0.5
-  `;
-
-  const variantClasses = variant === 'primary'
-    ? isDarkMode
-      ? "text-gray-400 hover:text-gray-200 bg-gray-800/70 hover:bg-gray-800/90 border-gray-700/50 shadow-black/20"
-      : "text-gray-600 hover:text-gray-900 bg-white/70 hover:bg-white/90 border-gray-200/60 shadow-gray-900/10"
-    : /* secondary styles */;
-
-  return (
-    <button className={`${baseClasses} ${variantClasses}`} {...props}>
-      {children}
-    </button>
-  );
+// Consistent information display order
+const CardStructure = {
+  header: {
+    title: "Primary title (font-medium text-sm)",
+    timeInfo: "Due time/date and duration (text-xs opacity-75)",
+  },
+  body: {
+    description: "Context and details (text-xs opacity-75)",
+  },
+  footer: {
+    projectTag: "Left-aligned with neutral styling",
+    priorityTag: "Right-aligned with color coding",
+  },
 };
 ```
 
 ---
 
-## Border Radius System ✅
+## Component-Specific Guidelines
+
+### CalendarWidget ✅ Enhanced
+
+- **Week View**: Horizontal scrolling with fixed-width date columns
+- **Event Cards**: Task-specific information with proper time display
+- **Current Day**: Highlighted with purple accent colors
+- **Event Density**: Optimized card heights for better information display
+
+### TimeBasedKanban ✅ Enhanced
+
+- **Time Columns**: Today, This Week, This Month, Long Term
+- **Rich Tasks**: Descriptions, time estimates, project associations
+- **Due Time**: Urgency indicators with proper formatting
+- **Color Coding**: Red (Today), Orange (Week), Blue (Month), Purple (Long Term)
+
+### ProjectStatusKanban ✅ Enhanced
+
+- **Status Workflow**: Draft → Planned → In Progress → Done
+- **Project Details**: Comprehensive information with time estimates
+- **Priority System**: Enhanced visual indicators with borders
+- **Progress Tracking**: Clear categorization with due dates
+
+---
+
+## Accessibility Guidelines ✅
+
+### Enhanced Contrast Standards
 
 ```css
-/* Implemented Border Radius Scale */
-.rounded-lg {
-  /* 8px - small components */
-  border-radius: 0.5rem;
+/* Minimum contrast ratios achieved */
+.text-contrast {
+  /* Normal text: 4.5:1 ratio minimum */
+  /* Large text: 3:1 ratio minimum */
+  /* Interactive elements: 3:1 ratio minimum */
 }
 
-.rounded-xl {
-  /* 12px - cards and buttons */
-  border-radius: 0.75rem;
-}
-
-.rounded-2xl {
-  /* 16px - major containers */
-  border-radius: 1rem;
-}
-
-.rounded-3xl {
-  /* 24px - large sections */
-  border-radius: 1.5rem;
+/* Enhanced tag visibility */
+.priority-tags {
+  /* High contrast borders for better visibility */
+  border-width: 1px;
+  backdrop-filter: blur(4px);
 }
 ```
 
----
-
-## Shadow System ✅
-
-### Professional Shadow Hierarchy
+### Touch Target Requirements ✅
 
 ```css
-/* Light Mode Shadows */
-.shadow-sm {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+/* Enhanced mobile interactions */
+.touch-target {
+  min-height: 44px; /* iOS guideline */
+  min-width: 44px;
+  padding: 12px; /* p-3 for cards */
 }
 
-.shadow-lg {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.shadow-xl {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-.shadow-2xl {
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
-}
-
-/* Dark Mode Shadows */
-.dark .shadow-black/10 {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.dark .shadow-black/20 {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.dark .shadow-black/25 {
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+.tag-touch {
+  padding: 4px 8px; /* px-2 py-1 */
+  border-radius: 8px; /* rounded-lg */
 }
 ```
 
 ---
 
-## Responsive Breakpoints ✅
+## Performance Guidelines ✅
 
-### Mobile-First Strategy
+### Enhanced Animation Standards
 
 ```css
-/* Tailwind Breakpoints - Used in Implementation */
-/* Default: Mobile (0px and up) */
-@media (min-width: 640px) {
-  /* sm: */
+/* Optimized transitions */
+.transition-standard {
+  transition: all 0.2s ease-in-out;
 }
-@media (min-width: 768px) {
-  /* md: */
+
+/* Removed hover effects for cleaner interactions */
+.no-hover {
+  /* Clean design without complex hover states */
 }
-@media (min-width: 1024px) {
-  /* lg: */
-}
-@media (min-width: 1280px) {
-  /* xl: */
-}
-@media (min-width: 1536px) {
-  /* 2xl: */
+
+/* Enhanced shadow performance */
+.shadow-optimized {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 ```
 
-### Responsive Patterns
+### Memory Optimization
 
-```tsx
-// Example responsive implementation
-const ResponsiveWidget = () => (
-  <div
-    className="
-    w-full                    // Mobile: full width
-    md:w-[240px]             // Desktop: fixed width
-    flex-shrink-0            // Prevent shrinking in flex containers
-    overflow-hidden          // Prevent content overflow
-  "
-  >
-    <div
-      className="
-      max-h-[300px]          // Mobile: limited height
-      md:max-h-[400px]       // Desktop: more height
-      overflow-y-auto        // Vertical scroll when needed
-      scrollbar-thin         // Custom scrollbar styling
-    "
-    >
-      {content}
-    </div>
-  </div>
-);
-```
+- **Fixed Column Widths**: Consistent 240px for predictable layouts
+- **Reduced Card Padding**: p-3 instead of p-4 for better density
+- **Optimized Spacing**: space-y-2 for tighter card arrangements
+- **Efficient Shadows**: Single shadow-md instead of complex effects
 
 ---
 
-## Scrollbar Styling ✅
+## Enhanced Design Achievements ✅
 
-### Custom Scrollbar Implementation
+### Consistency Improvements
 
-```css
-/* Implemented Scrollbar Styles */
-.scrollbar-thin {
-  scrollbar-width: thin;
-}
+- **Unified Card Design**: All components use the same card pattern
+- **Standardized Spacing**: Consistent padding and margins throughout
+- **Enhanced Tags**: Improved visibility with borders and proper contrast
+- **Information Hierarchy**: Clear title → description → tags structure
 
-.scrollbar-thumb-gray-400\/50::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 0.375rem;
-}
+### Professional Enhancements
 
-.scrollbar-track-gray-100\/50::-webkit-scrollbar-track {
-  background-color: rgba(243, 244, 246, 0.5);
-}
+- **Business Aesthetics**: Sophisticated styling appropriate for professional use
+- **Improved Readability**: Better typography and opacity management
+- **Enhanced Accessibility**: High contrast ratios and touch-friendly sizing
+- **Mobile Optimization**: Responsive design with horizontal scrolling
 
-/* Dark mode scrollbar */
-.dark .scrollbar-thumb-gray-600\/50::-webkit-scrollbar-thumb {
-  background-color: rgba(75, 85, 99, 0.5);
-}
+### Performance Optimizations
 
-.dark .scrollbar-track-gray-800\/20::-webkit-scrollbar-track {
-  background-color: rgba(31, 41, 55, 0.2);
-}
-```
+- **Cleaner Interactions**: Removed complex hover effects
+- **Efficient Layouts**: Optimized card sizes and spacing
+- **Better Density**: More information in less space
+- **Smooth Scrolling**: Enhanced scrollbar styling and performance
 
 ---
 
-## Animation Guidelines ✅
-
-### Professional Transitions
-
-```css
-/* Standard transition timing */
-.transition-all {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Micro-interactions */
-.hover-translate {
-  transition: transform 0.2s ease-out;
-}
-
-.hover-translate:hover {
-  transform: translateY(-2px);
-}
-
-/* Focus states */
-.focus-ring:focus {
-  outline: 2px solid rgba(147, 51, 234, 0.5);
-  outline-offset: 2px;
-}
-```
-
----
-
-## Implementation Standards ✅
-
-### Do's (Currently Implemented)
-
-- ✅ Use backdrop-blur-xl for all major containers
-- ✅ Implement horizontal scrolling for wide content
-- ✅ Maintain 240px fixed width for scrollable columns
-- ✅ Use consistent header patterns with icons
-- ✅ Apply professional color palette throughout
-- ✅ Include smooth hover transitions
-- ✅ Support both dark and light modes seamlessly
-- ✅ Use rounded-2xl for major containers
-- ✅ Apply appropriate shadow hierarchy
-
-### Don'ts (Successfully Avoided)
-
-- ❌ Excessive scaling effects (hover:scale-105)
-- ❌ Overly bright or saturated colors
-- ❌ Inconsistent spacing patterns
-- ❌ Heavy animations that impact performance
-- ❌ Layouts that break on mobile devices
-- ❌ Color-only information conveyance
-
----
-
-## Current Component Examples ✅
-
-### CalendarWidget Implementation
-
-```tsx
-// Professional calendar with horizontal scrolling
-<div
-  className={`
-  rounded-2xl backdrop-blur-xl border shadow-2xl
-  ${
-    isDarkMode
-      ? "bg-gray-900/60 border-gray-800/60 shadow-black/25"
-      : "bg-white/90 border-gray-200/60 shadow-gray-900/15"
-  }
-`}
->
-  <div className="p-6">
-    <div className="overflow-x-auto scrollbar-thin">
-      <div className="flex gap-4 min-w-max">
-        {days.map((day) => (
-          <div key={day} className="w-[200px] flex-shrink-0">
-            {/* Day content */}
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
-```
-
-### Kanban Column Implementation
-
-```tsx
-// Fixed-width column with vertical scrolling
-<div className="w-[240px] flex-shrink-0 space-y-4">
-  <div
-    className={`
-    min-h-[280px] max-h-[400px] overflow-y-auto scrollbar-thin 
-    rounded-lg p-3 backdrop-blur-sm border
-    ${
-      isDarkMode
-        ? "bg-gray-800/30 border-gray-700/40"
-        : "bg-gray-50/80 border-gray-200/50"
-    }
-  `}
-  >
-    {tasks.map((task) => (
-      <TaskCard key={task.id} task={task} isDarkMode={isDarkMode} />
-    ))}
-  </div>
-</div>
-```
-
----
-
-This design system represents the current implementation state of Renko's professional glassmorphic aesthetic with horizontal scrolling patterns. All components follow these established patterns for consistency and maintainability.
+This enhanced design system establishes a solid foundation for professional productivity applications with rich information architecture, consistent styling patterns, and optimal user experience across all components.

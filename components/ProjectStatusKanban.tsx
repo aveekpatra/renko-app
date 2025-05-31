@@ -7,85 +7,123 @@ import {
   BarChart3,
 } from "lucide-react";
 
-// Project status tasks data
+// Enhanced project status tasks with more details
 const projectStatusTasks = {
   draft: [
     {
       id: "p1",
-      title: "AI Integration Proposal",
-      project: "Product",
-      dueDate: "Dec 15",
+      title: "API Documentation Rewrite",
+      description:
+        "Comprehensive update of API documentation with new endpoints",
+      project: "Backend",
+      priority: "medium",
+      timeEstimate: "8h",
+      dueDate: "Dec 5",
     },
     {
       id: "p2",
-      title: "New Onboarding Flow",
-      project: "UX",
-      dueDate: "Dec 20",
+      title: "User Onboarding Flow",
+      description: "Design new user registration and welcome sequence",
+      project: "UX Design",
+      priority: "high",
+      timeEstimate: "12h",
+      dueDate: "Dec 8",
+    },
+    {
+      id: "p3",
+      title: "Payment Integration",
+      description: "Integrate Stripe payment system for subscription billing",
+      project: "Backend",
+      priority: "critical",
+      timeEstimate: "16h",
+      dueDate: "Dec 10",
     },
   ],
   planned: [
     {
-      id: "p3",
-      title: "Database Optimization",
-      project: "Backend",
-      dueDate: "Jan 5",
-    },
-    {
       id: "p4",
       title: "Mobile Responsive Design",
+      description: "Optimize layout and components for mobile devices",
       project: "Frontend",
-      dueDate: "Jan 10",
+      priority: "high",
+      timeEstimate: "20h",
+      dueDate: "Dec 15",
     },
     {
       id: "p5",
-      title: "API Documentation",
-      project: "Backend",
-      dueDate: "Jan 15",
+      title: "Advanced Search Features",
+      description: "Implement filters, sorting, and search suggestions",
+      project: "Frontend",
+      priority: "medium",
+      timeEstimate: "15h",
+      dueDate: "Dec 18",
+    },
+    {
+      id: "p6",
+      title: "Performance Monitoring",
+      description: "Set up comprehensive monitoring and alerting system",
+      project: "DevOps",
+      priority: "high",
+      timeEstimate: "10h",
+      dueDate: "Dec 12",
     },
   ],
   inProgress: [
     {
-      id: "p6",
-      title: "User Dashboard Redesign",
-      project: "UX",
-      dueDate: "Dec 30",
-    },
-    {
       id: "p7",
-      title: "Authentication System",
+      title: "Real-time Notifications",
+      description: "Build WebSocket-based notification system",
       project: "Backend",
-      dueDate: "Jan 2",
+      priority: "high",
+      timeEstimate: "25h",
+      dueDate: "Dec 20",
     },
     {
       id: "p8",
-      title: "Payment Integration",
-      project: "Backend",
-      dueDate: "Jan 8",
+      title: "Dark Mode Implementation",
+      description: "Add dark theme support across all components",
+      project: "Frontend",
+      priority: "medium",
+      timeEstimate: "12h",
+      dueDate: "Dec 14",
     },
   ],
   done: [
     {
       id: "p9",
       title: "Landing Page Redesign",
+      description: "Modern redesign of homepage with improved conversion",
       project: "Frontend",
+      priority: "high",
+      timeEstimate: "18h",
       dueDate: "Dec 1",
     },
     {
       id: "p10",
       title: "Email Templates",
+      description: "Professional email templates for user communications",
       project: "Design",
+      priority: "medium",
+      timeEstimate: "6h",
       dueDate: "Dec 5",
     },
     {
       id: "p11",
       title: "SEO Optimization",
+      description:
+        "Improve search rankings with meta tags and content optimization",
       project: "Marketing",
+      priority: "medium",
+      timeEstimate: "8h",
       dueDate: "Dec 10",
     },
     {
       id: "p12",
       title: "Bug Fixes v2.1",
+      description: "Critical bug fixes for the latest product release",
       project: "Backend",
+      priority: "critical",
+      timeEstimate: "10h",
       dueDate: "Dec 12",
     },
   ],
@@ -169,7 +207,10 @@ interface ProjectColumnProps {
   tasks: Array<{
     id: string;
     title: string;
+    description: string;
     project: string;
+    priority: string;
+    timeEstimate: string;
     dueDate: string;
   }>;
   isDarkMode: boolean;
@@ -224,37 +265,73 @@ function ProjectColumn({ column, tasks, isDarkMode }: ProjectColumnProps) {
             : "bg-gray-50/80 border-gray-200/50 scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50"
         }`}
       >
-        <div className="space-y-3">
+        <div className="space-y-2">
           {tasks.map((task) => (
             <div
               key={task.id}
-              className={`p-4 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm border shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${
+              className={`p-3 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm border shadow-md ${
                 isDarkMode
-                  ? "bg-gray-800/50 hover:bg-gray-800/70 border-gray-700/50 shadow-black/20"
-                  : "bg-white/80 hover:bg-white/95 border-gray-200/60 shadow-gray-900/10"
+                  ? "bg-gray-800/50 border-gray-700/50 shadow-black/20"
+                  : "bg-white/80 border-gray-200/60 shadow-gray-900/10"
               }`}
             >
-              <h5
-                className={`font-medium text-sm mb-3 leading-relaxed ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
+              {/* Task Header */}
+              <div className="flex items-start justify-between mb-2">
+                <span className="font-medium text-sm leading-tight flex-1">
+                  {task.title}
+                </span>
+                <div className="flex flex-col items-end space-y-0.5 flex-shrink-0 ml-2">
+                  <span
+                    className={`text-xs opacity-75 font-medium ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    {task.dueDate}
+                  </span>
+                  <span
+                    className={`text-xs opacity-60 ${isDarkMode ? "text-gray-500" : "text-gray-500"}`}
+                  >
+                    {task.timeEstimate}
+                  </span>
+                </div>
+              </div>
+
+              {/* Task Description */}
+              <p
+                className={`text-xs opacity-75 mb-2 leading-relaxed ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
               >
-                {task.title}
-              </h5>
+                {task.description}
+              </p>
+
+              {/* Task Footer */}
               <div className="flex items-center justify-between">
                 <span
                   className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
                     isDarkMode
-                      ? "bg-purple-500/20 text-purple-300 border-purple-400/30"
-                      : "bg-purple-50/90 text-purple-700 border-purple-200/60"
+                      ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
+                      : "bg-white/80 text-gray-600 border-gray-300/60"
                   }`}
                 >
                   {task.project}
                 </span>
                 <span
-                  className={`text-xs font-medium ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+                  className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
+                    task.priority === "critical"
+                      ? isDarkMode
+                        ? "bg-red-500/20 text-red-300 border-red-400/40"
+                        : "bg-red-100 text-red-700 border-red-300/60"
+                      : task.priority === "high"
+                        ? isDarkMode
+                          ? "bg-orange-500/20 text-orange-300 border-orange-400/40"
+                          : "bg-orange-100 text-orange-700 border-orange-300/60"
+                        : task.priority === "medium"
+                          ? isDarkMode
+                            ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/40"
+                            : "bg-yellow-100 text-yellow-700 border-yellow-300/60"
+                          : isDarkMode
+                            ? "bg-green-500/20 text-green-300 border-green-400/40"
+                            : "bg-green-100 text-green-700 border-green-300/60"
+                  }`}
                 >
-                  {task.dueDate}
+                  {task.priority}
                 </span>
               </div>
             </div>

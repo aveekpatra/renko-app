@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Clock, Flag, User } from "lucide-react";
+import { Plus, Clock, User } from "lucide-react";
 
 // Mock data
 const mockColumns = [
@@ -130,7 +130,7 @@ function KanbanColumn({ column, tasks, onCreateTask }: KanbanColumnProps) {
           </div>
           <button
             onClick={onCreateTask}
-            className="p-2 glass-primary rounded-button hover:glass-subtle transition-all touch-lift"
+            className="p-2 glass-primary rounded-button transition-all"
           >
             <Plus className="w-4 h-4 text-secondary" />
           </button>
@@ -163,7 +163,7 @@ function TaskCard({ task }: TaskCardProps) {
     task.dueDate < Date.now() + 86400000 && task.status !== "done"; // due within 24 hours
 
   return (
-    <div className="glass-primary rounded-glass p-4 cursor-pointer hover:glass-elevated transition-all touch-lift">
+    <div className="glass-primary rounded-glass p-4 cursor-pointer transition-all">
       {/* Task Header */}
       <div className="flex-between mb-2">
         <span
