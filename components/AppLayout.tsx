@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
+import { Authenticated, Unauthenticated } from "convex/react";
 import Sidebar from "./Sidebar";
 
 interface ThemeContextType {
@@ -83,22 +84,30 @@ export default function AppLayout({ children }: AppLayoutProps) {
     container: isDarkMode
       ? "h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex overflow-hidden"
       : "h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex overflow-hidden",
+    fullScreen: isDarkMode
+      ? "h-screen bg-gradient-to-br from-gray-900 to-slate-900"
+      : "h-screen bg-gradient-to-br from-purple-50 to-indigo-100",
   };
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>
-      <div className={themeClasses.container}>
-        {/* Universal Sidebar */}
-        <Sidebar
-          sidebarWidth={sidebarWidth}
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
-          handleMouseDown={handleMouseDown}
-        />
+      <Authenticated>
+        {/* Authenticated Layout with Sidebar */}
+        <div className={themeClasses.container}>
+          <Sidebar
+            sidebarWidth={sidebarWidth}
+            isDarkMode={isDarkMode}
+            setIsDarkMode={setIsDarkMode}
+            handleMouseDown={handleMouseDown}
+          />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
+      </Authenticated>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </div>
+      <Unauthenticated>
+        {/* Unauthenticated Layout without Sidebar */}
+        <div className={themeClasses.fullScreen}>{children}</div>
+      </Unauthenticated>
     </ThemeContext.Provider>
   );
 }

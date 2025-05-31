@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["'Geist'", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["'Geist Mono'", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
       colors: {
         // Zen-inspired color palette
         canvas: {
@@ -32,4 +36,3 @@ const config: Config = {
 };
 
 export default config;
- 

@@ -96,7 +96,7 @@ const getMockTasksForProject = (projectId: string): Column[] => {
         description: "Integrate Stripe payment processing",
         priority: "critical",
         dueDate: "2024-01-28",
-        assignee: "Alex K.",
+        assignee: "Jimmy K.",
         timeEstimate: "4 days",
         tags: ["Backend", "Payment"],
         subtasks: 8,

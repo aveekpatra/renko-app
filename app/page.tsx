@@ -3,6 +3,8 @@
 import React from "react";
 import { Plus, Bell } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 
 // Component imports
 import TimeBasedKanban from "../components/TimeBasedKanban";
@@ -10,8 +12,13 @@ import ProjectStatusKanban from "../components/ProjectStatusKanban";
 import CalendarWidget from "../components/CalendarWidget";
 import QuickTasks from "../components/QuickTasks";
 
-export default function Home() {
+function AuthenticatedContent() {
   const { isDarkMode } = useTheme();
+  const { signOut } = useAuthActions();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <div className="p-8">
@@ -21,7 +28,7 @@ export default function Home() {
           <h2
             className={`text-3xl font-bold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-900"}`}
           >
-            Good morning, Alex!
+            Good morning, Jimmy!
           </h2>
           <p
             className={`font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
@@ -30,6 +37,12 @@ export default function Home() {
           </p>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+          >
+            Sign Out
+          </button>
           <button
             className={`p-3 backdrop-blur-md rounded-xl shadow-lg transition-all duration-300 border hover:-translate-y-0.5 ${
               isDarkMode
@@ -62,5 +75,36 @@ export default function Home() {
         <QuickTasks isDarkMode={isDarkMode} />
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <AuthLoading>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </AuthLoading>
+
+      <Authenticated>
+        <AuthenticatedContent />
+      </Authenticated>
+
+      <Unauthenticated>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Welcome</h1>
+            <p className="text-gray-600 mb-4">Please sign in to continue</p>
+            <a
+              href="/signin"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md transition-colors"
+            >
+              Sign In
+            </a>
+          </div>
+        </div>
+      </Unauthenticated>
+    </>
   );
 }

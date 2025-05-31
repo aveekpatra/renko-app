@@ -176,45 +176,13 @@ const mockProjects: Project[] = [
 ];
 
 export default function BoardsPage() {
-  const projectSidebarWidth = 240;
   const { isDarkMode } = useTheme();
-  const [isProjectSidebarCollapsed, setIsProjectSidebarCollapsed] =
-    useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedProject, setSelectedProject] = useState(mockProjects[0]);
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setIsHydrated(true);
-    const savedProjectSidebarState = localStorage.getItem(
-      "projectSidebarCollapsed",
-    );
-    if (savedProjectSidebarState) {
-      setIsProjectSidebarCollapsed(JSON.parse(savedProjectSidebarState));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem(
-        "projectSidebarCollapsed",
-        JSON.stringify(isProjectSidebarCollapsed),
-      );
-    }
-  }, [isProjectSidebarCollapsed, isHydrated]);
-
-  if (!isHydrated) {
-    return (
-      <div className="h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-xl font-medium text-gray-700">Loading...</div>
-      </div>
-    );
-  }
 
   const themeClasses = {
     projectSidebar: isDarkMode
-      ? "bg-gray-800/70 backdrop-blur-xl border-r border-gray-700/50 shadow-xl shadow-black/20"
-      : "bg-white/60 backdrop-blur-xl border-r border-white/40 shadow-xl shadow-gray-900/10",
+      ? "bg-gray-900/80 backdrop-blur-xl border-r border-gray-700/60 shadow-2xl shadow-black/30"
+      : "bg-white/80 backdrop-blur-xl border-r border-purple-200/30 shadow-2xl shadow-purple-900/10",
     text: {
       primary: isDarkMode ? "text-gray-100" : "text-gray-900",
       secondary: isDarkMode ? "text-gray-300" : "text-gray-700",
@@ -396,89 +364,134 @@ export default function BoardsPage() {
   );
 
   const ProjectSidebar = () => (
-    <div
-      className={`${isProjectSidebarCollapsed ? "w-16" : `w-[${projectSidebarWidth}px]`} ${themeClasses.projectSidebar} flex flex-col transition-all duration-300`}
-    >
-      <div className="p-6 border-b border-gray-200/20">
-        <div className="flex items-center justify-between">
-          <h2
-            className={`text-lg font-semibold ${themeClasses.text.primary} ${isProjectSidebarCollapsed ? "hidden" : ""}`}
-          >
-            Boards
-          </h2>
-          <button
-            onClick={() =>
-              setIsProjectSidebarCollapsed(!isProjectSidebarCollapsed)
-            }
-            className={`p-2 rounded-lg transition-all duration-200 ${isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-100/50"}`}
-          >
-            <Folder className="w-4 h-4" />
-          </button>
+    <div className={`w-80 ${themeClasses.projectSidebar} flex flex-col`}>
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200/20">
+        <h2 className={`text-base font-bold ${themeClasses.text.primary}`}>
+          Boards
+        </h2>
+        <p className={`text-xs ${themeClasses.text.tertiary} mt-1`}>
+          Manage your project boards and tasks
+        </p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="p-3 border-b border-gray-200/20">
+        <div className="relative">
+          <Plus
+            className={`absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 z-10 ${themeClasses.text.tertiary}`}
+          />
+          <input
+            type="text"
+            placeholder="Search boards..."
+            className={`w-full pl-9 pr-3 py-2 rounded-lg border backdrop-blur-md transition-all duration-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+              isDarkMode
+                ? "bg-gray-800/70 border-gray-700/60 text-gray-100 placeholder-gray-400 focus:border-purple-500/50 focus:bg-gray-800/90"
+                : "bg-white/80 border-purple-200/60 text-gray-800 placeholder-gray-500 focus:border-purple-400/50 focus:bg-white/95"
+            }`}
+          />
         </div>
       </div>
 
-      {!isProjectSidebarCollapsed && (
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
-            {mockProjects.map((project) => (
-              <button
-                key={project.id}
-                onClick={() => setSelectedProject(project)}
-                className={`w-full p-4 rounded-xl text-left transition-all duration-200 border backdrop-blur-sm ${
-                  selectedProject.id === project.id
-                    ? isDarkMode
-                      ? "bg-purple-500/20 text-purple-300 border-purple-400/40 shadow-lg"
-                      : "bg-purple-50/80 text-purple-800 border-purple-200/60 shadow-lg"
-                    : isDarkMode
-                      ? "bg-gray-700/30 text-gray-300 border-gray-600/40 hover:bg-gray-700/50"
-                      : "bg-white/50 text-gray-700 border-gray-200/50 hover:bg-white/80"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      project.color === "purple"
-                        ? "bg-purple-500"
-                        : project.color === "blue"
-                          ? "bg-blue-500"
-                          : project.color === "green"
-                            ? "bg-green-500"
-                            : project.color === "orange"
-                              ? "bg-orange-500"
-                              : "bg-pink-500"
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-sm">{project.name}</h3>
-                    <p className="text-xs opacity-75">{project.description}</p>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center space-x-2 text-xs opacity-75">
-                  <span>
-                    {project.tasks.todo.length +
-                      project.tasks.inProgress.length +
-                      project.tasks.done.length}{" "}
-                    tasks
-                  </span>
-                  <span>•</span>
-                  <span>{project.tasks.done.length} done</span>
-                </div>
-              </button>
-            ))}
+      {/* Boards Section */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-3">
+            <h3
+              className={`text-xs font-semibold uppercase tracking-wide ${themeClasses.text.secondary}`}
+            >
+              Project Boards
+            </h3>
+            <button className="p-1 rounded hover:bg-gray-100/10 transition-colors">
+              <Folder className={`w-3.5 h-3.5 ${themeClasses.text.tertiary}`} />
+            </button>
           </div>
 
-          <button
-            className={`w-full mt-4 p-4 rounded-xl border-2 border-dashed transition-all duration-200 text-sm font-medium ${
-              isDarkMode
-                ? "border-gray-600 hover:border-gray-500 text-gray-400 hover:bg-gray-700/30"
-                : "border-gray-300 hover:border-gray-400 text-gray-600 hover:bg-white/50"
-            }`}
-          >
-            <Plus className="w-4 h-4 mx-auto mb-1" />
-            New Board
-          </button>
+          <div className="space-y-2">
+            {mockProjects.map((project) => {
+              const isSelected = selectedProject.id === project.id;
+              const totalTasks =
+                project.tasks.todo.length +
+                project.tasks.inProgress.length +
+                project.tasks.done.length;
+              const completedTasks = project.tasks.done.length;
+              const progressPercentage =
+                totalTasks > 0
+                  ? Math.round((completedTasks / totalTasks) * 100)
+                  : 0;
+
+              return (
+                <button
+                  key={project.id}
+                  onClick={() => setSelectedProject(project)}
+                  className={`w-full p-2.5 rounded-lg transition-all duration-200 text-left group border backdrop-blur-md ${
+                    isSelected
+                      ? isDarkMode
+                        ? "bg-gradient-to-br from-purple-500/20 to-purple-600/15 text-purple-300 border-purple-400/40 shadow-lg shadow-purple-900/30"
+                        : "bg-gradient-to-br from-purple-50/95 to-purple-100/80 text-purple-800 border-purple-200/70 shadow-lg shadow-purple-200/40"
+                      : isDarkMode
+                        ? "bg-gradient-to-br from-gray-700/20 to-gray-800/15 text-gray-300 border-gray-600/40 hover:bg-gray-700/50 shadow-lg shadow-gray-900/30"
+                        : "bg-gradient-to-br from-white/50 to-gray-50/80 text-gray-700 border-gray-200/50 hover:bg-white/80 shadow-lg shadow-gray-200/40"
+                  }`}
+                >
+                  <div className="flex items-start space-x-2.5 mb-2">
+                    <div
+                      className={`w-3 h-3 rounded-full mt-0.5 flex-shrink-0 shadow-sm ${
+                        project.color === "purple"
+                          ? "bg-purple-500"
+                          : project.color === "blue"
+                            ? "bg-blue-500"
+                            : project.color === "green"
+                              ? "bg-green-500"
+                              : project.color === "orange"
+                                ? "bg-orange-500"
+                                : "bg-pink-500"
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xs font-semibold leading-tight truncate">
+                        {project.name}
+                      </h3>
+                      <p className="text-xs opacity-60 leading-tight mt-0.5 line-clamp-1">
+                        {project.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-xs opacity-75">
+                      <span>{totalTasks} tasks</span>
+                      <span>•</span>
+                      <span>{completedTasks} done</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs opacity-60">
+                        {progressPercentage}%
+                      </span>
+                      <div
+                        className={`w-8 h-1.5 rounded-full ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}
+                      >
+                        <div
+                          className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
+                          style={{ width: `${progressPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* New Board Button */}
+      <div className="p-3 border-t border-gray-200/20">
+        <button className="w-full flex items-center justify-center px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md shadow-purple-500/30 hover:shadow-lg hover:shadow-purple-500/40 transform hover:-translate-y-0.5 font-medium backdrop-blur-sm">
+          <Plus className="w-4 h-4 mr-2" />
+          New Board
+        </button>
+      </div>
     </div>
   );
 

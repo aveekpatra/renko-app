@@ -1,1 +1,38 @@
 @import "tailwindcss";
+
+/* Font families using Google Fonts directly to prevent hydration issues */
+:root {
+  --font-geist-sans:
+    "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-geist-mono:
+    "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
+}
+
+/* Base font configuration */
+html {
+  font-family: var(--font-geist-sans);
+}
+
+/* Ensure consistent font rendering across all elements */
+body {
+  font-family: var(--font-geist-sans);
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure consistent text rendering */
+* {
+  box-sizing: border-box;
+}
+
+/* Font display optimization */
+@supports (font-display: swap) {
+  * {
+    font-display: swap;
+  }
+}
