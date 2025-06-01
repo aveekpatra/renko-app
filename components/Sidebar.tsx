@@ -19,7 +19,7 @@ import {
   Sun,
   ChevronLeft,
   ChevronRight,
-  Folder,
+  Target,
   LogOut,
   ChevronUp,
 } from "lucide-react";
@@ -51,7 +51,7 @@ const mockBoards = [
 
 const navigationItems = [
   { icon: HomeIcon, label: "Dashboard", href: "/" },
-  { icon: Folder, label: "Projects", href: "/projects" },
+  { icon: Target, label: "Routines", href: "/habits" },
   { icon: FolderKanban, label: "Boards", href: "/boards" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
   { icon: FileText, label: "Notes", href: "/notes" },

@@ -542,7 +542,7 @@ function AuthenticatedContent() {
           </div>
 
           <div className="space-y-6">
-            {/* Calendar Widget */}
+          {/* Calendar Widget */}
             <UnifiedKanbanWidget
               isDarkMode={isDarkMode}
               title="Calendar"
