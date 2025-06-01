@@ -371,7 +371,7 @@ export default function ProjectKanbanBoard({
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-hidden p-6">
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50 h-full">
+        <div className="overflow-x-auto scrollbar-none h-full">
           <div className="flex gap-6 min-w-max h-full">
             {columns.map((column) => (
               <div

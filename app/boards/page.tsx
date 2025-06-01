@@ -38,6 +38,110 @@ interface Project {
 // Simple project data with rich task styling
 const mockProjects: Project[] = [
   {
+    id: "0",
+    name: "Plans",
+    description: "Time-based task organization and planning",
+    color: "purple",
+    tasks: {
+      todo: [
+        // Today's tasks
+        {
+          id: "p1",
+          title: "Review client proposal presentation",
+          description:
+            "Final review of Q4 marketing proposal before afternoon client meeting",
+          completed: false,
+          priority: "urgent",
+          color: "pink",
+          project: "Marketing",
+          dueDate: "2024-01-12T14:00:00Z",
+        },
+        {
+          id: "p2",
+          title: "Update dashboard analytics metrics",
+          description:
+            "Add new KPI tracking for user engagement and retention analysis",
+          completed: false,
+          priority: "normal",
+          color: "purple",
+          project: "Analytics",
+          dueDate: "2024-01-12T16:30:00Z",
+        },
+        {
+          id: "p3",
+          title: "Bug fix: User authentication timeout",
+          description:
+            "Fix session timeout issue affecting user login persistence",
+          completed: false,
+          priority: "urgent",
+          color: "blue",
+          project: "Backend",
+          dueDate: "2024-01-12T11:00:00Z",
+        },
+      ],
+      inProgress: [
+        // This week's tasks
+        {
+          id: "p4",
+          title: "Design system documentation update",
+          description:
+            "Complete component library documentation for new team members",
+          completed: false,
+          priority: "normal",
+          color: "blue",
+          project: "Design System",
+          dueDate: "2024-01-15T17:00:00Z",
+        },
+        {
+          id: "p5",
+          title: "Database performance optimization",
+          description:
+            "Optimize database queries and add proper indexing for improved performance",
+          completed: false,
+          priority: "urgent",
+          color: "blue",
+          project: "Backend",
+          dueDate: "2024-01-14T12:00:00Z",
+        },
+        {
+          id: "p6",
+          title: "Mobile app beta release",
+          description: "Prepare and deploy beta version for internal testing",
+          completed: false,
+          priority: "urgent",
+          color: "orange",
+          project: "Mobile",
+          dueDate: "2024-01-17T16:00:00Z",
+        },
+      ],
+      done: [
+        // This month's tasks
+        {
+          id: "p7",
+          title: "Q1 budget planning and resource allocation",
+          description:
+            "Strategic planning for next quarter's project priorities and team assignments",
+          completed: true,
+          priority: "urgent",
+          color: "green",
+          project: "General",
+          dueDate: "2024-01-25T17:00:00Z",
+        },
+        {
+          id: "p8",
+          title: "Security audit and compliance review",
+          description:
+            "Comprehensive security assessment and compliance documentation update",
+          completed: true,
+          priority: "urgent",
+          color: "pink",
+          project: "Security",
+          dueDate: "2024-01-30T12:00:00Z",
+        },
+      ],
+    },
+  },
+  {
     id: "1",
     name: "Product Development",
     description: "Main product roadmap and features",
@@ -339,10 +443,10 @@ export default function BoardsPage() {
 
       {/* Column Content */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto scrollbar-thin rounded-lg p-3 backdrop-blur-sm border ${
+        className={`flex-1 min-h-0 overflow-y-auto scrollbar-none rounded-lg p-3 backdrop-blur-sm border ${
           isDarkMode
-            ? "bg-gray-800/30 border-gray-700/40 scrollbar-thumb-gray-600/50 scrollbar-track-gray-800/20"
-            : "bg-gray-50/80 border-gray-200/50 scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50"
+            ? "bg-gray-800/30 border-gray-700/40"
+            : "bg-gray-50/80 border-gray-200/50"
         }`}
       >
         <div className="space-y-2">
@@ -495,6 +599,24 @@ export default function BoardsPage() {
     </div>
   );
 
+  // Helper function to get column titles based on project type
+  const getColumnTitles = () => {
+    if (selectedProject.name === "Plans") {
+      return {
+        todo: "Today",
+        progress: "This Week",
+        done: "This Month",
+      };
+    }
+    return {
+      todo: "To Do",
+      progress: "In Progress",
+      done: "Done",
+    };
+  };
+
+  const columnTitles = getColumnTitles();
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Project Sidebar */}
@@ -505,17 +627,17 @@ export default function BoardsPage() {
         <div className="h-full p-6">
           <div className="h-full grid grid-cols-3 gap-6">
             <Column
-              title="To Do"
+              title={columnTitles.todo}
               tasks={selectedProject.tasks.todo}
               columnType="todo"
             />
             <Column
-              title="In Progress"
+              title={columnTitles.progress}
               tasks={selectedProject.tasks.inProgress}
               columnType="progress"
             />
             <Column
-              title="Done"
+              title={columnTitles.done}
               tasks={selectedProject.tasks.done}
               columnType="done"
             />

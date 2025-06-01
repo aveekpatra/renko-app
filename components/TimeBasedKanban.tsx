@@ -177,7 +177,7 @@ export default function TimeBasedKanban({ isDarkMode }: TimeBasedKanbanProps) {
         }`}
       >
         <div className="p-6">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50">
+          <div className="overflow-x-auto scrollbar-none">
             <div className="flex gap-6 min-w-max">
               {columns.map((column) => (
                 <KanbanColumn
@@ -260,10 +260,10 @@ function KanbanColumn({ column, tasks, isDarkMode }: KanbanColumnProps) {
 
       {/* Tasks */}
       <div
-        className={`min-h-[280px] max-h-[400px] overflow-y-auto scrollbar-thin rounded-lg p-3 backdrop-blur-sm border ${
+        className={`min-h-[280px] max-h-[400px] overflow-y-auto scrollbar-none rounded-lg p-3 backdrop-blur-sm border ${
           isDarkMode
-            ? "bg-gray-800/30 border-gray-700/40 scrollbar-thumb-gray-600/50 scrollbar-track-gray-800/20"
-            : "bg-gray-50/80 border-gray-200/50 scrollbar-thumb-gray-400/50 scrollbar-track-gray-100/50"
+            ? "bg-gray-800/30 border-gray-700/40"
+            : "bg-gray-50/80 border-gray-200/50"
         }`}
       >
         <div className="space-y-2">

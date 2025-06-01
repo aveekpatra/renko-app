@@ -6,25 +6,48 @@ This document defines the complete database schema for the Productivity App usin
 
 ## 🗃️ Core Tables
 
-### Users Table (Managed by Convex Auth)
+### Authentication Tables (Managed by Convex Auth) ✅
 
-Authentication and user profile data managed by `@convex-dev/auth`.
+Authentication and user management handled by `@convex-dev/auth` with `authTables`.
 
-**System Fields:**
+**Current Implementation:**
 
-- `_id: Id<"users">` - Primary key
-- `_creationTime: number` - Auto-generated timestamp
-- `email?: string` - User email
-- `emailVerified?: number` - Email verification timestamp
-- `phone?: string` - Phone number
-- `phoneVerified?: number` - Phone verification timestamp
-- `name?: string` - Display name
-- `image?: string` - Profile image URL
+```typescript
+// convex/schema.ts
+import { authTables } from "@convex-dev/auth/server";
 
-**Indexes:**
+export default defineSchema({
+  ...authTables,
+  // ... your application tables
+});
+```
 
-- `email` - For email lookup
-- `phone` - For phone lookup
+**Key Authentication Files:**
+
+- `convex/auth.ts` - Main auth configuration with Password provider ✅
+- `convex/auth.config.ts` - Provider configuration (CRITICAL for token validation) ✅
+- `middleware.ts` - Route protection with robust error handling ✅
+
+**Provider Setup:**
+
+- **Password Provider**: Email/password authentication ✅
+- **Token Validation**: Uses JWKS and JWT_PRIVATE_KEY ✅
+- **Middleware Protection**: All routes except `/signin` require authentication ✅
+
+**User Data Access:**
+
+- All application functions use `getAuthUserId(ctx)` for user identification
+- User profile data available through Convex Auth system
+- Authentication state managed automatically with real-time updates
+
+**Security Features:**
+
+- Server-side session management ✅
+- Automatic token refresh ✅
+- Protected route middleware ✅
+- Graceful authentication error handling ✅
+
+**Troubleshooting**: For authentication issues, see [Authentication Troubleshooting Guide](./AUTH_TROUBLESHOOTING.md)
 
 ---
 

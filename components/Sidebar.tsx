@@ -11,7 +11,6 @@ import {
   FolderKanban,
   FileText,
   Settings,
-  Search,
   Home as HomeIcon,
   BarChart3,
   Sparkles,
@@ -190,6 +189,11 @@ export default function Sidebar({
     }
   };
 
+  const handleQuickAdd = () => {
+    // Add your quick add logic here
+    console.log("Quick add clicked");
+  };
+
   // Use the hydrated collapsed state, defaulting to expanded for SSR
   const currentSidebarWidth = isHydrated && isCollapsed ? 80 : sidebarWidth;
 
@@ -206,9 +210,9 @@ export default function Sidebar({
       secondary: isDarkMode ? "text-gray-300" : "text-gray-700",
       tertiary: isDarkMode ? "text-gray-400" : "text-gray-600",
     },
-    search: isDarkMode
-      ? "w-full pl-10 pr-4 py-2.5 bg-gray-700/70 backdrop-blur-md border border-gray-600/60 rounded-xl text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 focus:bg-gray-700/80 transition-all duration-200 shadow-sm shadow-black/10 hover:shadow-md hover:shadow-black/20"
-      : "w-full pl-10 pr-4 py-2.5 bg-white/70 backdrop-blur-md border border-white/60 rounded-xl text-gray-800 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300/50 focus:bg-white/80 transition-all duration-200 shadow-sm shadow-gray-900/5 hover:shadow-md hover:shadow-gray-900/10",
+    quickAddButton: isDarkMode
+      ? "w-full px-3 py-2 bg-purple-600/80 hover:bg-purple-600/90 backdrop-blur-md border border-purple-500/60 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 shadow-sm shadow-purple-500/20 hover:shadow-md hover:shadow-purple-500/30 flex items-center justify-center space-x-2"
+      : "w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 backdrop-blur-md border border-purple-500/60 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 shadow-sm shadow-purple-500/20 hover:shadow-md hover:shadow-purple-500/30 flex items-center justify-center space-x-2",
   };
 
   return (
@@ -216,24 +220,36 @@ export default function Sidebar({
       className={themeClasses.sidebar}
       style={{ width: currentSidebarWidth }}
     >
-      {/* Logo Section */}
+      {/* Logo Section - More compact */}
       <div
-        className={`p-5 border-b ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection}`}
+        className={`p-3 border-b ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection}`}
       >
         <div className="flex items-center justify-between">
           <div
-            className={`flex items-center space-x-3 ${isHydrated && isCollapsed ? "justify-center" : ""}`}
+            className={`flex items-center space-x-2 ${isHydrated && isCollapsed ? "justify-center" : ""}`}
           >
-            <div className="w-9 h-9 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div
+              className={`${
+                isHydrated && isCollapsed ? "w-10 h-10" : "w-8 h-8"
+              } bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 ${
+                isHydrated && isCollapsed
+                  ? "cursor-pointer hover:scale-105"
+                  : ""
+              }`}
+              onClick={isHydrated && isCollapsed ? toggleSidebar : undefined}
+              title={isHydrated && isCollapsed ? "Expand sidebar" : undefined}
+            >
+              <Sparkles
+                className={`${isHydrated && isCollapsed ? "w-5 h-5" : "w-4 h-4"} text-white`}
+              />
             </div>
             {!(isHydrated && isCollapsed) && (
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-indigo-700 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-purple-700 to-indigo-700 bg-clip-text text-transparent">
                   Renko
                 </h1>
                 <p
-                  className={`text-sm font-medium ${themeClasses.text.secondary}`}
+                  className={`text-xs font-medium ${themeClasses.text.secondary}`}
                 >
                   Productivity Suite
                 </p>
@@ -241,73 +257,66 @@ export default function Sidebar({
             )}
           </div>
           {!(isHydrated && isCollapsed) && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
+                className={`p-1.5 rounded-md transition-all duration-200 hover:shadow-sm ${
                   isDarkMode
                     ? "hover:bg-gray-700/50 text-gray-400 hover:text-gray-200"
                     : "hover:bg-white/60 text-gray-600 hover:text-gray-800"
                 }`}
               >
                 {isDarkMode ? (
-                  <Sun className="w-4 h-4" />
+                  <Sun className="w-3.5 h-3.5" />
                 ) : (
-                  <Moon className="w-4 h-4" />
+                  <Moon className="w-3.5 h-3.5" />
                 )}
               </button>
 
               {/* Collapse Button */}
               <button
                 onClick={toggleSidebar}
-                className={`p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
+                className={`p-1.5 rounded-md transition-all duration-200 hover:shadow-sm ${
                   isDarkMode
                     ? "hover:bg-gray-700/50 text-gray-400 hover:text-gray-200"
                     : "hover:bg-white/60 text-gray-600 hover:text-gray-800"
                 }`}
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          {isHydrated && isCollapsed && (
-            <div className="flex items-center justify-center">
-              {/* Collapse Button for collapsed state */}
-              <button
-                onClick={toggleSidebar}
-                className={`p-2 rounded-lg transition-all duration-200 hover:shadow-sm ${
-                  isDarkMode
-                    ? "hover:bg-gray-700/50 text-gray-400 hover:text-gray-200"
-                    : "hover:bg-white/60 text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Search Section */}
-      <div className="p-4 flex-shrink-0">
-        {!(isHydrated && isCollapsed) && (
-          <div className="relative">
-            <Search
-              className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 z-10 ${themeClasses.text.tertiary}`}
-            />
-            <input
-              type="text"
-              placeholder="Search..."
-              className={themeClasses.search}
-            />
-          </div>
+      {/* Quick Add Section - Replaced search */}
+      <div className="p-3 flex-shrink-0">
+        {!(isHydrated && isCollapsed) ? (
+          <button
+            onClick={handleQuickAdd}
+            className={themeClasses.quickAddButton}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-sm">Quick Add</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleQuickAdd}
+            className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
+              isDarkMode
+                ? "bg-purple-600/80 hover:bg-purple-600/90 text-white shadow-purple-500/20 hover:shadow-purple-500/30"
+                : "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20 hover:shadow-purple-500/30"
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         )}
       </div>
 
       {/* Navigation - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <div className="space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <div className="space-y-0.5">
           {navigationItems.map((item) => (
             <SidebarItem
               key={item.label}
@@ -323,15 +332,15 @@ export default function Sidebar({
 
         {/* Projects Section */}
         {!(isHydrated && isCollapsed) && (
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-3">
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
               <h3
                 className={`text-xs font-bold uppercase tracking-wider ${themeClasses.text.secondary}`}
               >
                 Recent Projects
               </h3>
               <button
-                className={`p-1.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
+                className={`p-1 rounded-md transition-all duration-200 shadow-sm hover:shadow-md ${
                   isDarkMode
                     ? "hover:bg-gray-700/50 shadow-black/10 hover:shadow-black/20"
                     : "hover:bg-white/60 shadow-gray-900/5 hover:shadow-gray-900/10"
@@ -340,7 +349,7 @@ export default function Sidebar({
                 <Plus className={`w-3 h-3 ${themeClasses.text.tertiary}`} />
               </button>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {mockBoards.slice(0, 3).map((board) => (
                 <ProjectItem
                   key={board._id}
@@ -353,20 +362,42 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* User Profile - Fixed at bottom */}
+      {/* Expand Button for collapsed state - positioned above user profile */}
+      {isHydrated && isCollapsed && (
+        <div className="p-3 flex-shrink-0">
+          <button
+            onClick={toggleSidebar}
+            className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center justify-center hover:shadow-lg ${
+              isDarkMode
+                ? "bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-gray-100 shadow-black/10 hover:shadow-black/20"
+                : "bg-gray-100/60 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800 shadow-gray-200/20 hover:shadow-gray-300/30"
+            }`}
+            title="Expand sidebar"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* User Profile - Fixed at bottom with consistent height */}
       <div
-        className={`p-4 border-t ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection} relative`}
+        className={`p-3 border-t ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection} relative`}
         ref={userDropdownRef}
       >
         <div
           onClick={toggleUserDropdown}
-          className={`flex items-center ${isHydrated && isCollapsed ? "justify-center" : "space-x-3"} p-3 rounded-xl transition-all duration-200 cursor-pointer group ${
+          className={`flex items-center ${isHydrated && isCollapsed ? "justify-center" : "space-x-2"} p-2 rounded-lg transition-all duration-200 cursor-pointer group ${
             isDarkMode
               ? "hover:bg-gray-700/50 shadow-sm hover:shadow-lg shadow-black/10 hover:shadow-black/20"
               : "hover:bg-white/60 shadow-sm hover:shadow-lg shadow-gray-900/5 hover:shadow-gray-900/15"
           }`}
+          style={{
+            // Ensure consistent container dimensions
+            width: isHydrated && isCollapsed ? "48px" : "auto",
+            height: "48px", // Same height for both states
+          }}
         >
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md shadow-purple-500/30">
               <span className="text-white font-semibold text-sm">A</span>
             </div>
@@ -385,7 +416,7 @@ export default function Sidebar({
                 </p>
               </div>
               <div
-                className={`transition-all duration-200 ${isUserDropdownOpen ? "rotate-180" : ""}`}
+                className={`transition-all duration-200 flex-shrink-0 ${isUserDropdownOpen ? "rotate-180" : ""}`}
               >
                 <ChevronUp
                   className={`w-4 h-4 ${themeClasses.text.tertiary}`}
@@ -521,16 +552,16 @@ function ProjectItem({ board, isDarkMode }: ProjectItemProps) {
 
   return (
     <button
-      className={`w-full flex items-center space-x-3 p-2.5 rounded-xl transition-all duration-200 group ${
+      className={`w-full flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 group ${
         isDarkMode
           ? "hover:bg-gray-700/50 hover:shadow-sm hover:shadow-black/10"
           : "hover:bg-white/70 hover:shadow-sm hover:shadow-gray-900/10"
       }`}
     >
-      <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full shadow-sm shadow-purple-500/30"></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full shadow-sm shadow-purple-500/30 flex-shrink-0"></div>
       <div className="flex-1 min-w-0 text-left">
         <p
-          className={`text-sm font-semibold truncate transition-colors ${
+          className={`text-xs font-semibold truncate transition-colors ${
             isDarkMode
               ? "text-gray-200 group-hover:text-gray-100"
               : "text-gray-800 group-hover:text-gray-900"
@@ -538,14 +569,14 @@ function ProjectItem({ board, isDarkMode }: ProjectItemProps) {
         >
           {board.name}
         </p>
-        <div className="flex items-center space-x-2 mt-1">
+        <div className="flex items-center space-x-1.5 mt-0.5">
           <div
-            className={`w-12 rounded-full h-1 shadow-inner ${
+            className={`w-10 rounded-full h-0.5 shadow-inner ${
               isDarkMode ? "bg-gray-600/80" : "bg-gray-200/80"
             }`}
           >
             <div
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 h-1 rounded-full transition-all duration-300 shadow-sm"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 h-0.5 rounded-full transition-all duration-300 shadow-sm"
               style={{ width: `${progress}%` }}
             />
           </div>

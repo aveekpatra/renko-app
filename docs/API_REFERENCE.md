@@ -6,15 +6,53 @@ This document provides a complete reference for all Convex backend functions, in
 
 ## 🔐 Authentication
 
-All functions use `getAuthUserId(ctx)` to get the current user ID. Functions return empty arrays or throw authentication errors if user is not logged in.
+### Current Setup ✅
+
+**Authentication System**: Convex Auth with Password provider
+
+**Key Files:**
+
+- `convex/auth.ts` - Main authentication configuration ✅
+- `convex/auth.config.ts` - Provider configuration (CRITICAL) ✅
+- `middleware.ts` - Route protection with error handling ✅
+- `convex/schema.ts` - Includes `authTables` for user management ✅
+
+**Provider Configuration:**
+
+```typescript
+// convex/auth.ts
+export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+  providers: [Password],
+});
+
+// convex/auth.config.ts
+export default {
+  providers: [
+    {
+      domain: process.env.CONVEX_SITE_URL,
+      applicationID: "convex",
+    },
+  ],
+};
+```
+
+**Environment Variables:**
+
+- `JWKS` - Public key for token validation
+- `JWT_PRIVATE_KEY` - Private key for token signing
+- `SITE_URL` - Application URL (http://localhost:3000)
+
+**Function Access**: All functions use `getAuthUserId(ctx)` to get the current user ID. Functions return empty arrays or throw authentication errors if user is not logged in.
+
+**Troubleshooting**: See [Authentication Troubleshooting Guide](./AUTH_TROUBLESHOOTING.md) for common issues and solutions.
 
 ---
 
-## 📊 Tasks API (`convex/tasks.ts`)
+## 📊 Tasks API (`convex/tasks.ts`) ✅ **IMPLEMENTED**
 
-### Queries
+### Queries ✅
 
-#### `getBoards`
+#### `getBoards` ✅
 
 Get all kanban boards for the authenticated user.
 
@@ -48,7 +86,7 @@ const boards = useQuery(api.tasks.getBoards);
 
 ---
 
-#### `getColumns`
+#### `getColumns` ✅
 
 Get all columns for a specific board, ordered by position.
 
@@ -83,7 +121,7 @@ const columns = useQuery(api.tasks.getColumns, { boardId });
 
 ---
 
-#### `getTasks`
+#### `getTasks` ✅
 
 Get all tasks in a specific column, ordered by position.
 
@@ -124,9 +162,9 @@ Array<{
 const tasks = useQuery(api.tasks.getTasks, { columnId });
 ```
 
-### Mutations
+### Mutations ✅
 
-#### `createBoard`
+#### `createBoard` ✅
 
 Create a new kanban board with default columns.
 
@@ -147,7 +185,7 @@ createBoard(name: string, description?: string, projectId?: Id<"projects">): Id<
 **Side Effects:**
 
 - Creates 3 default columns: "To Do", "In Progress", "Done"
-- Sets default colors for columns
+- Sets default colors for columns (#ef4444, #f59e0b, #10b981)
 
 **Example:**
 
@@ -162,7 +200,7 @@ const boardId = await createBoard({
 
 ---
 
-#### `createTask`
+#### `createTask` ✅
 
 Create a new task in a specific column.
 
@@ -203,7 +241,7 @@ const taskId = await createTask({
 
 ---
 
-#### `updateTaskPosition`
+#### `updateTaskPosition` ✅
 
 Move a task to a different column and/or position (drag & drop).
 
@@ -239,9 +277,11 @@ await updateTaskPosition({
 
 ---
 
-## 📁 Projects API (`convex/projects.ts`) - Future
+## 📁 Projects API (`convex/projects.ts`) - **NOT YET IMPLEMENTED**
 
-### Queries
+_The following APIs are planned but not yet implemented. Current project functionality is handled through static data in components._
+
+### Queries (Planned)
 
 #### `getProjects` (Planned)
 
@@ -255,7 +295,7 @@ Get a specific project with full details.
 
 Get analytics and statistics for a project.
 
-### Mutations
+### Mutations (Planned)
 
 #### `createProject` (Planned)
 
@@ -271,9 +311,11 @@ Soft-delete a project.
 
 ---
 
-## 📝 Notes API (`convex/notes.ts`) - Future
+## 📝 Notes API (`convex/notes.ts`) - **NOT YET IMPLEMENTED**
 
-### Queries
+_The following APIs are planned but not yet implemented. Current notes functionality uses static UI._
+
+### Queries (Planned)
 
 #### `getNotes` (Planned)
 
@@ -283,7 +325,7 @@ Get all notes for user, optionally filtered by project.
 
 Full-text search across note titles and content.
 
-### Mutations
+### Mutations (Planned)
 
 #### `createNote` (Planned)
 
@@ -299,9 +341,11 @@ Delete a note.
 
 ---
 
-## 📅 Calendar API (`convex/calendar.ts`) - Future
+## 📅 Calendar API (`convex/calendar.ts`) - **NOT YET IMPLEMENTED**
 
-### Queries
+_The following APIs are planned but not yet implemented. Current calendar functionality uses static event data._
+
+### Queries (Planned)
 
 #### `getEvents` (Planned)
 
@@ -311,7 +355,7 @@ Get events for a date range.
 
 Get upcoming events and deadlines.
 
-### Mutations
+### Mutations (Planned)
 
 #### `createEvent` (Planned)
 
