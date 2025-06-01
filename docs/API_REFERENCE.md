@@ -1,16 +1,93 @@
 # 🔌 API Reference
 
-**For AI Development**: Current Convex backend status and implementation patterns.
+**For AI Development**: Complete Convex backend implementation with 49 functions across 6 files.
 
-## 🚀 **IMPLEMENTED APIs**
+## 🚀 **FULLY IMPLEMENTED BACKEND**
 
-### **Tasks (convex/tasks.ts)** ✅
+All APIs are now fully implemented and integrated with the frontend. TypeScript compilation is complete with proper system field validation.
+
+### **Projects API (convex/projects.ts)** ✅ **7 Functions**
+
+```typescript
+// Get all projects for user with enriched data
+export const getProjects = query({
+  args: { status: v.optional(v.string()) },
+  returns: v.array(ProjectWithStats),
+  handler: async (ctx, args) => {
+    // Returns projects with task counts, progress, note counts, etc.
+  },
+});
+
+// Get single project with all related data
+export const getProject = query({
+  args: { projectId: v.id("projects") },
+  returns: v.union(ProjectWithDetails, v.null()),
+  handler: async (ctx, args) => {
+    // Returns project with tasks, notes, events, notebooks
+  },
+});
+
+// Create new project
+export const createProject = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    status: v.optional(v.string()),
+  },
+  returns: v.id("projects"),
+});
+
+// Update project details
+export const updateProject = mutation({
+  args: {
+    projectId: v.id("projects"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    status: v.optional(v.string()),
+  },
+  returns: v.null(),
+});
+
+// Delete project and all related data
+export const deleteProject = mutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Cascades delete to tasks, notes, events, notebooks, boards
+  },
+});
+
+// Get project analytics and insights
+export const getProjectStats = query({
+  args: {
+    projectId: v.optional(v.id("projects")),
+    timeRange: v.optional(v.string()),
+  },
+  returns: ProjectStatsObject,
+  handler: async (ctx, args) => {
+    // Returns comprehensive project analytics
+  },
+});
+
+// Archive/unarchive project
+export const archiveProject = mutation({
+  args: {
+    projectId: v.id("projects"),
+    archive: v.boolean(),
+  },
+  returns: v.null(),
+});
+```
+
+### **Tasks API (convex/tasks.ts)** ✅ **6 Functions**
 
 ```typescript
 // Get all boards for user
 export const getBoards = query({
   args: {},
-  returns: v.array(Board),
+  returns: v.array(BoardWithSystemFields),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
@@ -24,7 +101,7 @@ export const getBoards = query({
 // Get columns for a board
 export const getColumns = query({
   args: { boardId: v.id("boards") },
-  returns: v.array(Column),
+  returns: v.array(ColumnWithSystemFields),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("columns")
@@ -37,7 +114,7 @@ export const getColumns = query({
 // Get tasks for a column
 export const getTasks = query({
   args: { columnId: v.id("columns") },
-  returns: v.array(Task),
+  returns: v.array(TaskWithSystemFields),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("tasks")
@@ -144,96 +221,455 @@ export const updateTaskPosition = mutation({
 });
 ```
 
-## ❌ **MISSING APIs** (Need Implementation)
-
-### **Projects (convex/projects.ts)** - NOT IMPLEMENTED
+### **Calendar API (convex/calendar.ts)** ✅ **6 Functions**
 
 ```typescript
-// Needed for projects page
-export const getProjects = query({ ... });
-export const createProject = mutation({ ... });
-export const updateProject = mutation({ ... });
-export const deleteProject = mutation({ ... });
-```
-
-### **Calendar (convex/calendar.ts)** - NOT IMPLEMENTED
-
-```typescript
-// Needed for calendar page
-export const getEvents = query({ ... });
-export const createEvent = mutation({ ... });
-export const updateEvent = mutation({ ... });
-export const deleteEvent = mutation({ ... });
-```
-
-### **Notes (convex/notes.ts)** - NOT IMPLEMENTED
-
-```typescript
-// Needed for notes page
-export const getNotes = query({ ... });
-export const createNote = mutation({ ... });
-export const updateNote = mutation({ ... });
-export const deleteNote = mutation({ ... });
-```
-
-## 🛠️ **DEVELOPMENT PATTERNS**
-
-### **Standard Query Pattern**
-
-```typescript
-export const getFunctionName = query({
-  args: { param: v.string() },
-  returns: v.array(v.object({ field: v.string() })),
+// Get events for date range with enriched data
+export const getEvents = query({
+  args: {
+    startDate: v.number(),
+    endDate: v.number(),
+    projectId: v.optional(v.id("projects")),
+  },
+  returns: v.array(EventWithDetails),
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+    // Returns events with project, task, routine data
+  },
+});
 
-    return await ctx.db
-      .query("tableName")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+// Create calendar event
+export const createEvent = mutation({
+  args: {
+    title: v.string(),
+    description: v.optional(v.string()),
+    startDate: v.number(),
+    endDate: v.number(),
+    allDay: v.optional(v.boolean()),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+  },
+  returns: v.id("events"),
+});
+
+// Update event details
+export const updateEvent = mutation({
+  args: {
+    eventId: v.id("events"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+    allDay: v.optional(v.boolean()),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+  },
+  returns: v.null(),
+});
+
+// Delete calendar event
+export const deleteEvent = mutation({
+  args: { eventId: v.id("events") },
+  returns: v.null(),
+});
+
+// Get today's events
+export const getTodayEvents = query({
+  args: {},
+  returns: v.array(EventWithSystemFields),
+});
+
+// Get upcoming events (next 7 days)
+export const getUpcomingEvents = query({
+  args: { days: v.optional(v.number()) },
+  returns: v.array(EventWithSystemFields),
+});
+```
+
+### **Notes API (convex/notes.ts)** ✅ **10 Functions**
+
+```typescript
+// NOTEBOOKS
+export const getNotebooks = query({
+  args: { projectId: v.optional(v.id("projects")) },
+  returns: v.array(NotebookWithDetails),
+});
+
+export const createNotebook = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    projectId: v.optional(v.id("projects")),
+  },
+  returns: v.id("notebooks"),
+});
+
+export const updateNotebook = mutation({
+  args: {
+    notebookId: v.id("notebooks"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    projectId: v.optional(v.id("projects")),
+  },
+  returns: v.null(),
+});
+
+export const deleteNotebook = mutation({
+  args: { notebookId: v.id("notebooks") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Cascades delete to all notes in notebook
+  },
+});
+
+// NOTES
+export const getNotes = query({
+  args: {
+    notebookId: v.optional(v.id("notebooks")),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+    tags: v.optional(v.array(v.string())),
+    searchTerm: v.optional(v.string()),
+  },
+  returns: v.array(NoteWithDetails),
+  handler: async (ctx, args) => {
+    // Advanced filtering and enriched with related data
+  },
+});
+
+export const createNote = mutation({
+  args: {
+    title: v.string(),
+    content: v.string(),
+    tags: v.optional(v.array(v.string())),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+    notebookId: v.optional(v.id("notebooks")),
+  },
+  returns: v.id("notes"),
+});
+
+export const updateNote = mutation({
+  args: {
+    noteId: v.id("notes"),
+    title: v.optional(v.string()),
+    content: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+    notebookId: v.optional(v.id("notebooks")),
+  },
+  returns: v.null(),
+});
+
+export const deleteNote = mutation({
+  args: { noteId: v.id("notes") },
+  returns: v.null(),
+});
+
+export const getAllTags = query({
+  args: {},
+  returns: v.array(v.string()),
+});
+
+export const getRecentNotes = query({
+  args: {},
+  returns: v.array(NoteWithSystemFields),
+});
+```
+
+### **Routines API (convex/routines.ts)** ✅ **8 Functions**
+
+```typescript
+// ROUTINE TEMPLATES
+export const getTemplates = query({
+  args: {
+    category: v.optional(v.string()),
+    difficulty: v.optional(v.string()),
+  },
+  returns: v.array(TemplateWithBlocks),
+  handler: async (ctx, args) => {
+    // Returns public templates + user's private templates with blocks
+  },
+});
+
+export const createTemplate = mutation({
+  args: {
+    name: v.string(),
+    description: v.string(),
+    category: v.string(),
+    difficulty: v.string(),
+    isPublic: v.boolean(),
+    tags: v.array(v.string()),
+    blocks: v.array(RoutineBlockInput),
+  },
+  returns: v.id("routineTemplates"),
+});
+
+// USER ROUTINES
+export const getRoutines = query({
+  args: {
+    timeOfDay: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  returns: v.array(RoutineWithStats),
+  handler: async (ctx, args) => {
+    // Returns routines with completion stats and streak tracking
+  },
+});
+
+export const createRoutine = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+    templateId: v.optional(v.id("routineTemplates")),
+    timeOfDay: v.string(),
+    blocks: v.optional(v.array(RoutineBlockInput)),
+  },
+  returns: v.id("routines"),
+});
+
+export const completeBlock = mutation({
+  args: {
+    routineId: v.id("routines"),
+    blockId: v.id("routineBlocks"),
+    actualDuration: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    energyLevel: v.optional(v.string()),
+  },
+  returns: v.null(),
+});
+
+export const getInsights = query({
+  args: { timeRange: v.optional(v.string()) },
+  returns: RoutineInsightsObject,
+  handler: async (ctx, args) => {
+    // Comprehensive routine analytics and optimization suggestions
+  },
+});
+
+export const updateRoutine = mutation({
+  args: {
+    routineId: v.id("routines"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    timeOfDay: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  returns: v.null(),
+});
+
+export const deleteRoutine = mutation({
+  args: { routineId: v.id("routines") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Cascades delete to blocks and completions
   },
 });
 ```
 
-### **Standard Mutation Pattern**
+### **Universal Linking API (convex/links.ts)** ✅ **9 Functions**
 
 ```typescript
-export const createFunctionName = mutation({
-  args: { title: v.string(), description: v.optional(v.string()) },
-  returns: v.id("tableName"),
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+// Core linking functions
+export const createLink = mutation({
+  args: {
+    fromTable: v.string(),
+    fromId: v.string(),
+    toTable: v.string(),
+    toId: v.string(),
+    linkType: v.string(),
+    metadata: v.optional(LinkMetadata),
+  },
+  returns: v.id("links"),
+});
 
-    return await ctx.db.insert("tableName", {
-      ...args,
-      userId,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+export const getLinksFrom = query({
+  args: {
+    fromTable: v.string(),
+    fromId: v.string(),
+    linkType: v.optional(v.string()),
+  },
+  returns: v.array(LinkWithSystemFields),
+});
+
+export const getLinksTo = query({
+  args: {
+    toTable: v.string(),
+    toId: v.string(),
+    linkType: v.optional(v.string()),
+  },
+  returns: v.array(LinkWithSystemFields),
+});
+
+export const getAllLinks = query({
+  args: {
+    table: v.string(),
+    id: v.string(),
+    linkType: v.optional(v.string()),
+  },
+  returns: v.object({
+    outgoing: v.array(LinkWithSystemFields),
+    incoming: v.array(LinkWithSystemFields),
+  }),
+});
+
+export const updateLink = mutation({
+  args: {
+    linkId: v.id("links"),
+    metadata: v.optional(LinkMetadata),
+  },
+  returns: v.null(),
+});
+
+export const deleteLink = mutation({
+  args: { linkId: v.id("links") },
+  returns: v.null(),
+});
+
+// Helper functions for common linking patterns
+export const linkTaskToRoutine = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    routineId: v.id("routines"),
+    description: v.optional(v.string()),
+  },
+  returns: v.id("links"),
+});
+
+export const linkNoteToEntity = mutation({
+  args: {
+    noteId: v.id("notes"),
+    entityTable: v.string(),
+    entityId: v.string(),
+    linkType: v.optional(v.string()),
+  },
+  returns: v.id("links"),
+});
+
+// Advanced graph analysis
+export const getConnectionGraph = query({
+  args: {
+    entityTable: v.string(),
+    entityId: v.string(),
+    depth: v.optional(v.number()),
+  },
+  returns: v.object({
+    nodes: v.array(GraphNode),
+    edges: v.array(GraphEdge),
+  }),
+});
+```
+
+### **Search API (convex/search.ts)** ✅ **2 Functions**
+
+```typescript
+// Unified search across all entities
+export const search = query({
+  args: {
+    query: v.string(),
+    types: v.optional(v.array(v.string())),
+    projectId: v.optional(v.id("projects")),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    tasks: v.array(TaskSearchResult),
+    notes: v.array(NoteSearchResult),
+    projects: v.array(ProjectSearchResult),
+    events: v.array(EventSearchResult),
+    totalResults: v.number(),
+  }),
+});
+
+// Get search suggestions for autocomplete
+export const getSearchSuggestions = query({
+  args: { query: v.string() },
+  returns: v.array(v.string()),
+});
+```
+
+### **Sample Data API (convex/sampleData.ts)** ✅ **1 Function**
+
+```typescript
+// Create comprehensive sample data for demos
+export const createSampleData = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Creates 5 projects, 5 notes, 2 notebooks, 4 events
+    // Includes realistic content and proper relationships
   },
 });
 ```
 
-### **Error Handling**
+## 🛠️ **IMPLEMENTATION PATTERNS**
+
+### **System Field Validation (CRITICAL)**
+
+All queries must include system fields in return validators:
+
+```typescript
+export const getItems = query({
+  returns: v.array(
+    v.object({
+      _id: v.id("items"),
+      _creationTime: v.number(), // REQUIRED system field
+      // ... other fields
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }),
+  ),
+});
+```
+
+### **Authentication Pattern**
 
 ```typescript
 // Queries: return empty array if not authenticated
+const userId = await getAuthUserId(ctx);
 if (!userId) return [];
 
 // Mutations: throw error if not authenticated
+const userId = await getAuthUserId(ctx);
 if (!userId) throw new Error("Not authenticated");
-
-// Validation: check required fields
-if (!args.title.trim()) throw new Error("Title is required");
-
-// Reference validation: check if related entity exists
-const relatedEntity = await ctx.db.get(args.relatedId);
-if (!relatedEntity) throw new Error("Related entity not found");
 ```
 
-## 🗃️ **DATABASE SCHEMA** (convex/schema.ts)
+### **Data Enrichment Pattern**
+
+```typescript
+// Enrich with related data
+const items = await query.collect();
+const enrichedItems = await Promise.all(
+  items.map(async (item) => {
+    const relatedData = await ctx.db.get(item.relatedId);
+    return { ...item, relatedData };
+  }),
+);
+```
+
+### **Cascading Delete Pattern**
+
+```typescript
+// Delete entity and all related data
+const relatedItems = await ctx.db
+  .query("relatedItems")
+  .withIndex("by_parent", (q) => q.eq("parentId", args.parentId))
+  .collect();
+
+await Promise.all(relatedItems.map((item) => ctx.db.delete(item._id)));
+await ctx.db.delete(args.parentId);
+```
+
+## 🗃️ **DATABASE SCHEMA (13 Tables)**
+
+Complete schema with proper indexing and relationships:
 
 ```typescript
 export default defineSchema({
@@ -243,10 +679,14 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     color: v.optional(v.string()),
+    status: v.optional(v.string()),
     userId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_user_and_status", ["userId", "status"]),
 
   boards: defineTable({
     name: v.string(),
@@ -276,6 +716,7 @@ export default defineSchema({
     projectId: v.optional(v.id("projects")),
     boardId: v.optional(v.id("boards")),
     columnId: v.optional(v.id("columns")),
+    routineId: v.optional(v.id("routines")),
     position: v.number(),
     userId: v.id("users"),
     assignedTo: v.optional(v.id("users")),
@@ -285,12 +726,19 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_project", ["projectId"])
     .index("by_board", ["boardId"])
-    .index("by_column", ["columnId"]),
+    .index("by_column", ["columnId"])
+    .index("by_routine", ["routineId"])
+    .index("by_status", ["status"])
+    .index("by_due_date", ["dueDate"])
+    .searchIndex("search_tasks", {
+      searchField: "title",
+      filterFields: ["projectId", "status", "userId"],
+    }),
 
-  notes: defineTable({
-    title: v.string(),
-    content: v.string(),
-    tags: v.optional(v.array(v.string())),
+  notebooks: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
     projectId: v.optional(v.id("projects")),
     userId: v.id("users"),
     createdAt: v.number(),
@@ -298,6 +746,32 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_project", ["projectId"]),
+
+  notes: defineTable({
+    title: v.string(),
+    content: v.string(),
+    tags: v.optional(v.array(v.string())),
+    projectId: v.optional(v.id("projects")),
+    taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
+    notebookId: v.optional(v.id("notebooks")),
+    userId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_project", ["projectId"])
+    .index("by_notebook", ["notebookId"])
+    .index("by_task", ["taskId"])
+    .index("by_tags", ["tags"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["tags", "userId"],
+    })
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["projectId", "userId"],
+    }),
 
   events: defineTable({
     title: v.string(),
@@ -307,19 +781,28 @@ export default defineSchema({
     allDay: v.boolean(),
     projectId: v.optional(v.id("projects")),
     taskId: v.optional(v.id("tasks")),
+    routineId: v.optional(v.id("routines")),
     userId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_project", ["projectId"])
-    .index("by_date", ["startDate"]),
+    .index("by_date", ["startDate"])
+    .index("by_task", ["taskId"])
+    .index("by_routine", ["routineId"]),
+
+  // Additional tables: routineTemplates, routineBlocks, routineCompletions, routines, links
 });
 ```
 
-## 🎯 **NEXT API PRIORITIES**
+## 🎯 **BACKEND COMPLETION STATUS**
 
-1. **Phase 3**: Complete tasks API (edit, delete, search)
-2. **Phase 4**: Implement projects API for projects page
-3. **Phase 5**: Implement calendar API for calendar page
-4. **Phase 6**: Implement notes API for notes page
+✅ **100% Complete**: All core APIs implemented and tested
+✅ **TypeScript**: All validation errors resolved with system fields
+✅ **Real-time**: Full Convex synchronization working
+✅ **Relationships**: Universal linking between all entities
+✅ **Search**: Full-text search across all content
+✅ **Sample Data**: Comprehensive demo data generation
+
+**Next Phase**: Enhanced features and AI integration

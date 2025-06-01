@@ -30,6 +30,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface RoutineBlock {
   id: string;
@@ -217,105 +219,34 @@ const mockTemplates: RoutineTemplate[] = [
   },
 ];
 
-const mockRoutines: Routine[] = [
-  {
-    id: "r1",
-    name: "My Morning Flow",
-    description: "Energizing morning routine",
-    timeOfDay: "morning",
-    totalDuration: 32,
-    completionRate: 85,
-    isActive: true,
-    lastCompleted: "2024-01-15",
-    blocks: [
-      {
-        id: "b1",
-        name: "Hydrate",
-        description: "Drink 16oz of water",
-        duration: 2,
-        category: "health",
-        energyLevel: "low",
-        color: "blue",
-        icon: Coffee,
-        isCompleted: true,
-        streak: 12,
-        bestStreak: 18,
-      },
-      {
-        id: "b2",
-        name: "Meditation",
-        description: "10 minutes mindfulness",
-        duration: 10,
-        category: "wellness",
-        energyLevel: "low",
-        color: "purple",
-        icon: Brain,
-        isCompleted: true,
-        streak: 8,
-        bestStreak: 15,
-      },
-      {
-        id: "b3",
-        name: "Exercise",
-        description: "20 minutes workout",
-        duration: 20,
-        category: "health",
-        energyLevel: "high",
-        color: "green",
-        icon: Dumbbell,
-        isCompleted: false,
-        streak: 0,
-        bestStreak: 12,
-      },
-    ],
-  },
-  {
-    id: "r2",
-    name: "Evening Calm",
-    description: "Peaceful evening routine",
-    timeOfDay: "evening",
-    totalDuration: 25,
-    completionRate: 92,
-    isActive: true,
-    lastCompleted: "2024-01-14",
-    blocks: [
-      {
-        id: "b4",
-        name: "Reading",
-        description: "20 minutes of fiction",
-        duration: 20,
-        category: "learning",
-        energyLevel: "low",
-        color: "blue",
-        icon: Book,
-        isCompleted: true,
-        streak: 15,
-        bestStreak: 20,
-      },
-      {
-        id: "b5",
-        name: "Reflection",
-        description: "Review the day",
-        duration: 5,
-        category: "wellness",
-        energyLevel: "low",
-        color: "purple",
-        icon: Heart,
-        isCompleted: true,
-        streak: 22,
-        bestStreak: 30,
-      },
-    ],
-  },
-];
+// Mock data removed - now using real Convex data
 
 export default function RoutinesPage() {
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState<
     "my-routines" | "templates" | "builder" | "insights"
   >("my-routines");
-  const [routines, setRoutines] = useState<Routine[]>(mockRoutines);
-  const [templates] = useState<RoutineTemplate[]>(mockTemplates);
+
+  // Real data from Convex
+  const routines = useQuery(api.routines.getRoutines) || [];
+  const templates = useQuery(api.routines.getTemplates) || [];
+  const insights = useQuery(api.routines.getInsights) || {
+    totalActiveRoutines: 0,
+    averageCompletionRate: 0,
+    currentStreaks: [],
+    weeklyProgress: [],
+    energyOptimization: {
+      peakEnergyTime: undefined,
+      lowEnergyTime: undefined,
+      averageEnergyByHour: [],
+    },
+    timeInvested: 0,
+  };
+
+  // Mutations
+  const createRoutineMutation = useMutation(api.routines.createRoutine);
+  const completeBlockMutation = useMutation(api.routines.completeBlock);
+
   const [selectedTemplate, setSelectedTemplate] =
     useState<RoutineTemplate | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
@@ -865,25 +796,27 @@ export default function RoutinesPage() {
                 {[
                   {
                     label: "Active Routines",
-                    value: "3",
+                    value: insights.totalActiveRoutines.toString(),
                     icon: Target,
                     color: "purple",
                   },
                   {
                     label: "Avg Completion",
-                    value: "87%",
+                    value: `${insights.averageCompletionRate}%`,
                     icon: TrendingUp,
                     color: "green",
                   },
                   {
                     label: "Current Streak",
-                    value: "12 days",
+                    value: insights.currentStreaks[0]
+                      ? `${insights.currentStreaks[0].streak} days`
+                      : "0 days",
                     icon: Flame,
                     color: "red",
                   },
                   {
                     label: "Time Invested",
-                    value: "2.3h",
+                    value: `${Math.round(insights.timeInvested / 60)}h`,
                     icon: Timer,
                     color: "blue",
                   },
@@ -941,27 +874,32 @@ export default function RoutinesPage() {
                   Weekly Progress
                 </h3>
                 <div className="grid grid-cols-7 gap-2">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                    (day, index) => (
-                      <div key={day} className="text-center">
-                        <div
-                          className={`text-sm font-medium mb-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                        >
-                          {day}
-                        </div>
-                        <div
-                          className={`h-20 rounded-lg flex items-end justify-center ${
-                            isDarkMode ? "bg-gray-800/50" : "bg-gray-100/50"
-                          }`}
-                        >
-                          <div
-                            className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-lg transition-all duration-300"
-                            style={{ height: `${20 + Math.random() * 60}%` }}
-                          />
-                        </div>
+                  {insights.weeklyProgress.map((dayData, index) => (
+                    <div key={dayData.day} className="text-center">
+                      <div
+                        className={`text-sm font-medium mb-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                      >
+                        {dayData.day.substring(0, 3)}
                       </div>
-                    ),
-                  )}
+                      <div
+                        className={`h-20 rounded-lg flex items-end justify-center ${
+                          isDarkMode ? "bg-gray-800/50" : "bg-gray-100/50"
+                        }`}
+                      >
+                        <div
+                          className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-lg transition-all duration-300"
+                          style={{
+                            height: `${Math.max(10, (dayData.completions / Math.max(dayData.totalBlocks, 1)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <div
+                        className={`text-xs mt-1 ${isDarkMode ? "text-gray-500" : "text-gray-600"}`}
+                      >
+                        {dayData.completions}/{dayData.totalBlocks}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

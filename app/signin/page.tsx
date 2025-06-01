@@ -14,7 +14,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Abstract Background */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden m-2 rounded-2xl">
         <div className="absolute inset-0">
           <Image
             src="/abstract-bg.png"
@@ -54,7 +54,7 @@ export default function SignInPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center">
@@ -192,7 +192,7 @@ export default function SignInPage() {
 
           {/* Sign Up Link */}
           <div className="text-center">
-            <span className="text-gray-600">Don't have an account? </span>
+            <span className="text-gray-600">Don&apos;t have an account? </span>
             <Link
               href="/signup"
               className="text-purple-600 hover:text-purple-700 font-semibold transition-colors"

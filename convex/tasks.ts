@@ -8,6 +8,7 @@ export const getBoards = query({
   returns: v.array(
     v.object({
       _id: v.id("boards"),
+      _creationTime: v.number(),
       name: v.string(),
       description: v.optional(v.string()),
       projectId: v.optional(v.id("projects")),
@@ -35,6 +36,7 @@ export const getColumns = query({
   returns: v.array(
     v.object({
       _id: v.id("columns"),
+      _creationTime: v.number(),
       name: v.string(),
       boardId: v.id("boards"),
       position: v.number(),
@@ -57,6 +59,7 @@ export const getTasks = query({
   returns: v.array(
     v.object({
       _id: v.id("tasks"),
+      _creationTime: v.number(),
       title: v.string(),
       description: v.optional(v.string()),
       status: v.string(),
@@ -194,4 +197,3 @@ export const updateTaskPosition = mutation({
     return null;
   },
 });
- 
