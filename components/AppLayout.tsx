@@ -74,19 +74,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   if (!isHydrated) {
     return (
-      <div className="h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-xl font-medium text-gray-700">Loading...</div>
+      <div
+        className={`h-screen flex items-center justify-center ${
+          isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
+        }`}
+      >
+        <div className="text-xl font-medium">Loading...</div>
       </div>
     );
   }
 
   const themeClasses = {
     container: isDarkMode
-      ? "h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex overflow-hidden"
-      : "h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex overflow-hidden",
-    fullScreen: isDarkMode
-      ? "h-screen bg-gradient-to-br from-gray-900 to-slate-900"
-      : "h-screen bg-gradient-to-br from-purple-50 to-indigo-100",
+      ? "h-screen bg-gray-900 flex overflow-hidden"
+      : "h-screen bg-gray-50 flex overflow-hidden",
+    fullScreen: isDarkMode ? "h-screen bg-gray-900" : "h-screen bg-gray-50",
   };
 
   return (

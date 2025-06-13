@@ -25,19 +25,19 @@ const bgClass = isDarkMode
 
 ```css
 /* Dark Mode */
---bg-primary: rgba(17, 24, 39, 0.6); /* gray-900/60 */
---bg-secondary: rgba(31, 41, 55, 0.8); /* gray-800/80 */
+  --bg-primary: rgba(17, 24, 39, 0.6); /* gray-900/60 */
+  --bg-secondary: rgba(31, 41, 55, 0.8); /* gray-800/80 */
 --border: rgba(75, 85, 99, 0.6); /* gray-600/60 */
 --text-primary: white;
---text-secondary: rgba(156, 163, 175, 1); /* gray-400 */
+  --text-secondary: rgba(156, 163, 175, 1); /* gray-400 */
 --accent: rgba(147, 51, 234, 1); /* purple-600 */
 
 /* Light Mode */
---bg-primary: rgba(255, 255, 255, 0.9); /* white/90 */
---bg-secondary: rgba(249, 250, 251, 0.8); /* gray-50/80 */
+  --bg-primary: rgba(255, 255, 255, 0.9); /* white/90 */
+  --bg-secondary: rgba(249, 250, 251, 0.8); /* gray-50/80 */
 --border: rgba(229, 231, 235, 0.6); /* gray-200/60 */
---text-primary: rgba(17, 24, 39, 1); /* gray-900 */
---text-secondary: rgba(107, 114, 128, 1); /* gray-500 */
+  --text-primary: rgba(17, 24, 39, 1); /* gray-900 */
+  --text-secondary: rgba(107, 114, 128, 1); /* gray-500 */
 --accent: rgba(147, 51, 234, 1); /* purple-600 */
 ```
 
@@ -91,34 +91,34 @@ const priorityClasses = {
 <div className={`
   rounded-2xl backdrop-blur-xl border shadow-2xl p-6
   ${isDarkMode
-    ? "bg-gray-900/60 border-gray-800/60 shadow-black/25"
-    : "bg-white/90 border-gray-200/60 shadow-gray-900/15"
-  }
+        ? "bg-gray-900/60 border-gray-800/60 shadow-black/25"
+        : "bg-white/90 border-gray-200/60 shadow-gray-900/15"
+    }
 `}>
-  {children}
-</div>
+    {children}
+  </div>
 ```
 
 ### **2. Widget Header**
 
 ```typescript
-<div className="flex items-center justify-between mb-8">
-  <div className="flex items-center space-x-4">
+  <div className="flex items-center justify-between mb-8">
+    <div className="flex items-center space-x-4">
     <div className={`p-2.5 rounded-xl backdrop-blur-sm border shadow-sm ${
-      isDarkMode
+          isDarkMode
         ? "bg-gray-800/80 border-gray-700/50 text-purple-400"
         : "bg-white/80 border-gray-200/60 text-purple-600"
     }`}>
-      <Icon className="w-5 h-5" />
-    </div>
+        <Icon className="w-5 h-5" />
+      </div>
     <h3 className={`text-2xl font-medium ${
-      isDarkMode ? "text-white" : "text-gray-900"
+          isDarkMode ? "text-white" : "text-gray-900"
     }`}>
-      {title}
-    </h3>
+        {title}
+      </h3>
+    </div>
+    {children}
   </div>
-  {children}
-</div>
 ```
 
 ### **3. Horizontal Scroll Container**
@@ -137,36 +137,36 @@ const priorityClasses = {
 
 ```typescript
 <div className={`p-3 rounded-xl cursor-pointer transition-all duration-200 backdrop-blur-sm border shadow-md ${
-  isDarkMode
-    ? "bg-gray-800/50 border-gray-700/50 shadow-black/20"
-    : "bg-white/80 border-gray-200/60 shadow-gray-900/10"
+      isDarkMode
+        ? "bg-gray-800/50 border-gray-700/50 shadow-black/20"
+        : "bg-white/80 border-gray-200/60 shadow-gray-900/10"
 }`}>
   {/* Task header */}
-  <div className="flex items-start justify-between mb-2">
-    <span className="font-medium text-sm leading-tight flex-1">
-      {task.title}
-    </span>
-    <div className="flex flex-col items-end space-y-0.5 flex-shrink-0 ml-2">
+    <div className="flex items-start justify-between mb-2">
+      <span className="font-medium text-sm leading-tight flex-1">
+        {task.title}
+      </span>
+      <div className="flex flex-col items-end space-y-0.5 flex-shrink-0 ml-2">
       <span className="text-xs opacity-75 font-medium">
         {task.dueTime}
-      </span>
+        </span>
       <span className="text-xs opacity-60">
         {task.timeEstimate}
-      </span>
+        </span>
+      </div>
     </div>
-  </div>
 
   {/* Task description */}
   <p className="text-xs opacity-75 mb-2 leading-relaxed">
-    {task.description}
-  </p>
+      {task.description}
+    </p>
 
   {/* Task tags */}
-  <div className="flex items-center justify-between">
-    <ProjectTag isDarkMode={isDarkMode} project={task.project} />
-    <PriorityTag isDarkMode={isDarkMode} priority={task.priority} />
+    <div className="flex items-center justify-between">
+      <ProjectTag isDarkMode={isDarkMode} project={task.project} />
+      <PriorityTag isDarkMode={isDarkMode} priority={task.priority} />
+    </div>
   </div>
-</div>
 ```
 
 ### **5. Tag Components**
@@ -175,9 +175,9 @@ const priorityClasses = {
 // Project Tag
 const ProjectTag = ({ isDarkMode, project }) => (
   <span className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
-    isDarkMode
-      ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
-      : "bg-white/80 text-gray-600 border-gray-300/60"
+      isDarkMode
+        ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
+        : "bg-white/80 text-gray-600 border-gray-300/60"
   }`}>
     {project}
   </span>
@@ -188,9 +188,9 @@ const PriorityTag = ({ isDarkMode, priority }) => (
   <span className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
     priorityClasses[priority]
   }`}>
-    {priority}
-  </span>
-);
+      {priority}
+    </span>
+  );
 ```
 
 ## 📱 **RESPONSIVE PATTERNS**

@@ -264,6 +264,9 @@ export const getTodayEvents = query({
       projectId: v.optional(v.id("projects")),
       taskId: v.optional(v.id("tasks")),
       routineId: v.optional(v.id("routines")),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
     }),
   ),
   handler: async (ctx, args) => {
@@ -324,3 +327,116 @@ export const getUpcomingEvents = query({
       .collect();
   },
 });
+
+// Fix broken events with NaN dates
+export const fixBrokenEvents = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const events = await ctx.db
+      .query("events")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneHour = 60 * 60 * 1000;
+
+    const sampleDates = [
+      { start: now + oneDay + 9 * oneHour, end: now + oneDay + 9.5 * oneHour }, // Tomorrow 9 AM
+      {
+        start: now + 2 * oneDay + 14 * oneHour,
+        end: now + 2 * oneDay + 15 * oneHour,
+      }, // Day after tomorrow 2 PM
+      {
+        start: now + 3 * oneDay + 10 * oneHour,
+        end: now + 3 * oneDay + 12 * oneHour,
+      }, // 3 days from now 10 AM
+      {
+        start: now + 5 * oneDay + 9 * oneHour,
+        end: now + 5 * oneDay + 11 * oneHour,
+      }, // Friday 9 AM
+    ];
+
+    let fixedCount = 0;
+    for (let i = 0; i < events.length && i < sampleDates.length; i++) {
+      const event = events[i];
+      const dates = sampleDates[i];
+
+      // Check if dates are NaN or null
+      if (
+        isNaN(event.startDate) ||
+        isNaN(event.endDate) ||
+        event.startDate === null ||
+        event.endDate === null
+      ) {
+        await ctx.db.patch(event._id, {
+          startDate: dates.start,
+          endDate: dates.end,
+          updatedAt: Date.now(),
+        });
+        fixedCount++;
+      }
+    }
+
+    console.log(`Fixed ${fixedCount} events with broken dates`);
+    return null;
+  },
+});
+
+// Temporary fix for all broken events (no auth required for testing)
+export const fixAllBrokenEventsTemp = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const events = await ctx.db.query("events").collect();
+
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneHour = 60 * 60 * 1000;
+
+    const sampleDates = [
+      { start: now + oneDay + 9 * oneHour, end: now + oneDay + 9.5 * oneHour }, // Tomorrow 9 AM
+      {
+        start: now + 2 * oneDay + 14 * oneHour,
+        end: now + 2 * oneDay + 15 * oneHour,
+      }, // Day after tomorrow 2 PM
+      {
+        start: now + 3 * oneDay + 10 * oneHour,
+        end: now + 3 * oneDay + 12 * oneHour,
+      }, // 3 days from now 10 AM
+      {
+        start: now + 5 * oneDay + 9 * oneHour,
+        end: now + 5 * oneDay + 11 * oneHour,
+      }, // Friday 9 AM
+    ];
+
+    let fixedCount = 0;
+    for (let i = 0; i < events.length && i < sampleDates.length; i++) {
+      const event = events[i];
+      const dates = sampleDates[i];
+
+      // Check if dates are NaN or null
+      if (
+        isNaN(event.startDate) ||
+        isNaN(event.endDate) ||
+        event.startDate === null ||
+        event.endDate === null
+      ) {
+        await ctx.db.patch(event._id, {
+          startDate: dates.start,
+          endDate: dates.end,
+          updatedAt: Date.now(),
+        });
+        fixedCount++;
+      }
+    }
+
+    console.log(`Fixed ${fixedCount} events with broken dates`);
+    return null;
+  },
+});
+ 

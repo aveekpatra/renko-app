@@ -137,6 +137,10 @@ export const createTask = mutation({
     columnId: v.id("columns"),
     priority: v.optional(v.string()),
     dueDate: v.optional(v.number()),
+    projectId: v.optional(v.id("projects")),
+    tags: v.optional(v.array(v.string())),
+    assignedTo: v.optional(v.id("users")),
+    timeEstimate: v.optional(v.number()),
   },
   returns: v.id("tasks"),
   handler: async (ctx, args) => {
@@ -145,10 +149,31 @@ export const createTask = mutation({
       throw new Error("Not authenticated");
     }
 
+    // Validate title
+    if (!args.title.trim()) {
+      throw new Error("Task title is required");
+    }
+
     // Get the column to find the board
     const column = await ctx.db.get(args.columnId);
     if (!column) {
       throw new Error("Column not found");
+    }
+
+    // Validate project if provided
+    if (args.projectId) {
+      const project = await ctx.db.get(args.projectId);
+      if (!project || project.userId !== userId) {
+        throw new Error("Project not found or not accessible");
+      }
+    }
+
+    // Validate assigned user if provided
+    if (args.assignedTo) {
+      const assignedUser = await ctx.db.get(args.assignedTo);
+      if (!assignedUser) {
+        throw new Error("Assigned user not found");
+      }
     }
 
     // Get the current task count for position
@@ -159,18 +184,154 @@ export const createTask = mutation({
 
     const now = Date.now();
     return await ctx.db.insert("tasks", {
-      title: args.title,
-      description: args.description,
+      title: args.title.trim(),
+      description: args.description?.trim(),
       status: "todo",
       priority: args.priority,
       dueDate: args.dueDate,
+      projectId: args.projectId,
       boardId: column.boardId,
       columnId: args.columnId,
       position: tasksInColumn.length,
       userId: userId,
+      assignedTo: args.assignedTo,
+      tags: args.tags,
+      timeEstimate: args.timeEstimate,
       createdAt: now,
       updatedAt: now,
     });
+  },
+});
+
+// Get a single task
+export const getTask = query({
+  args: { taskId: v.id("tasks") },
+  returns: v.union(
+    v.object({
+      _id: v.id("tasks"),
+      _creationTime: v.number(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(),
+      priority: v.optional(v.string()),
+      dueDate: v.optional(v.number()),
+      projectId: v.optional(v.id("projects")),
+      boardId: v.optional(v.id("boards")),
+      columnId: v.optional(v.id("columns")),
+      routineId: v.optional(v.id("routines")),
+      eventId: v.optional(v.id("events")),
+      position: v.number(),
+      userId: v.id("users"),
+      assignedTo: v.optional(v.id("users")),
+      tags: v.optional(v.array(v.string())),
+      timeEstimate: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) {
+      return null;
+    }
+
+    return task;
+  },
+});
+
+// Update a task
+export const updateTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    priority: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    projectId: v.optional(v.id("projects")),
+    tags: v.optional(v.array(v.string())),
+    assignedTo: v.optional(v.id("users")),
+    timeEstimate: v.optional(v.number()),
+    status: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task || task.userId !== userId) {
+      throw new Error("Task not found or not accessible");
+    }
+
+    const updates: any = { updatedAt: Date.now() };
+
+    if (args.title !== undefined) {
+      if (!args.title.trim()) {
+        throw new Error("Task title is required");
+      }
+      updates.title = args.title.trim();
+    }
+
+    if (args.description !== undefined) {
+      updates.description = args.description?.trim();
+    }
+
+    if (args.priority !== undefined) {
+      updates.priority = args.priority;
+    }
+
+    if (args.dueDate !== undefined) {
+      updates.dueDate = args.dueDate;
+    }
+
+    if (args.projectId !== undefined) {
+      if (args.projectId) {
+        const project = await ctx.db.get(args.projectId);
+        if (!project || project.userId !== userId) {
+          throw new Error("Project not found or not accessible");
+        }
+      }
+      updates.projectId = args.projectId;
+    }
+
+    if (args.tags !== undefined) {
+      updates.tags = args.tags;
+    }
+
+    if (args.assignedTo !== undefined) {
+      if (args.assignedTo) {
+        const assignedUser = await ctx.db.get(args.assignedTo);
+        if (!assignedUser) {
+          throw new Error("Assigned user not found");
+        }
+      }
+      updates.assignedTo = args.assignedTo;
+    }
+
+    if (args.timeEstimate !== undefined) {
+      updates.timeEstimate = args.timeEstimate;
+    }
+
+    if (args.status !== undefined) {
+      updates.status = args.status;
+      if (args.status === "done" && !task.completedAt) {
+        updates.completedAt = Date.now();
+      } else if (args.status !== "done" && task.completedAt) {
+        updates.completedAt = undefined;
+      }
+    }
+
+    await ctx.db.patch(args.taskId, updates);
+    return null;
   },
 });
 

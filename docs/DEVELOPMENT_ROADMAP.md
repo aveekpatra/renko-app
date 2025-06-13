@@ -1,497 +1,502 @@
-# Development Roadmap
+# 🚀 Renko Productivity Platform - Detailed Development Roadmap
 
-## 🎯 Project Timeline
+## 🎯 **VISION STATEMENT**
 
-**Total Estimated Duration**: 12-16 weeks (Realistic Solo Dev Timeline)
-**Current Status**: Phase 2 COMPLETE ✅ - Moving to Phase 3 🚧
-**Next Major Milestone**: Enhanced Task Management & UI Polish (Phase 3)
-**Philosophy**: Work Smart, Not Hard - Ship Value Early and Often
-**Development Strategy**: Leverage Cursor + Claude to accelerate development
-**Latest Update**: Phase 2 COMPLETED with comprehensive backend (January 2025) ✅
+**Renko** is a comprehensive personal productivity platform that evolves from a solid task and calendar management system into an intelligent productivity partner. Built with interconnected elements and designed for future AI enhancement:
 
-## 🎉 **MAJOR BREAKTHROUGH: PHASE 2 COMPLETED**
+**Phase 1 Foundation**: Excellent task management, calendar integration, and project organization
+**Phase 2 Intelligence**: Pattern tracking, basic suggestions, and simple automation  
+**Phase 3 AI Integration**: Learning algorithms, natural language commands, and smart optimization
+**Final Vision**: "Hey, I'm busy this evening, reschedule my tasks" - AI that learns your patterns and optimizes your productivity automatically
 
-### **🚀 What We've Accomplished (Beyond Original Goals)**
+**Core Principles**:
 
-**Original Phase 2 Plan**: Basic dashboard with design system
-**ACTUAL Achievement**: Complete production-ready backend + real data integration
+- **Solid Foundation First**: Great productivity app that works perfectly without AI
+- **Universal Entity Linking**: Tasks, events, projects, notes all interconnected
+- **Gradual Intelligence**: AI features that enhance rather than replace core functionality
+- **Pattern-Based Learning**: System learns your habits and suggests improvements over time
+- **Natural Language Evolution**: Start with quick commands, evolve to conversational AI
+- **Personal Optimization**: Focus on individual productivity, not team collaboration
 
-✅ **Complete Backend Implementation (47+ Functions)**
+## 📈 **PROJECT TIMELINE OVERVIEW**
 
-- Projects API: 7 functions with full CRUD and analytics
-- Tasks API: 6 functions with kanban management
-- Calendar API: 6 functions with event management
-- Notes API: 10 functions with notebooks and tagging
-- Routines API: 9 functions with templates and tracking
-- Links API: 8 functions for universal entity linking
-- Search API: 2 functions for full-text search
-- Sample Data API: 1 function for demo data generation
+**Total Duration**: 16-20 weeks (4-5 months)
+**Current Status**: Phase 2 COMPLETE ✅ (Week 5)
+**Next Phase**: Launch-Ready Platform (Week 6)
+**Beta Launch**: Week 8 (Connected productivity platform)
+**Public Launch**: Week 10 (Full MVP with Google Calendar)
+**Smart Platform**: Week 14 (AI suggestions and learning)
+**AI-Powered Platform**: Week 18+ (Advanced conversational AI)
 
-✅ **Advanced Database Schema (11 Tables)**
-
-- Proper indexing and relationships
-- Full-text search capabilities
-- Universal linking between all entities
-- System field validation resolved
-
-✅ **Real-Time Dashboard Integration**
-
-- Transformed from dummy data to live Convex data
-- Real-time updates across all widgets
-- Professional loading states and error handling
-- Sample data generation for demos
-
-✅ **Production-Ready Features**
-
-- TypeScript compilation fully resolved
-- Comprehensive error handling
-- Proper authentication patterns
-- Data enrichment and validation
-
-## 🚀 Solo Developer Strategy (Updated)
-
-### **ACCELERATED TIMELINE: We're Ahead of Schedule!**
-
-**Original Plan**: 6 weeks for functional backend
-**ACTUAL**: Complete backend in ~4 weeks using Cursor + Claude
-
-**New Strategy**: Leverage this momentum for enhanced features
-
-1. **Phase 3 (2 weeks)**: Enhanced Task Management
-
-   - Advanced drag & drop with animations
-   - Rich text editing and task templates
-   - Advanced search and filtering
-   - Bulk operations and keyboard shortcuts
-
-2. **Phase 4 (2 weeks)**: Calendar & Time Management
-
-   - Advanced calendar views (month, week, day)
-   - Time blocking and scheduling
-   - Calendar integrations
-   - Time tracking and analytics
-
-3. **Phase 5 (2 weeks)**: Enhanced Features & Polish
-
-   - Advanced note features with rich text
-   - Routine automation and insights
-   - Export/import functionality
-   - Performance optimization
-
-4. **Phase 6 (2 weeks)**: Production Deployment
-
-   - User testing and feedback
-   - Performance optimization
-   - Mobile responsiveness improvements
-   - SEO and accessibility
-
-5. **Phase 7-8 (4 weeks)**: AI Integration
-   - Smart suggestions and automation
-   - Natural language processing
-   - Pattern learning and optimization
-   - Advanced AI assistant features
+## 🏗️ **DEVELOPMENT PHASES**
 
 ---
 
-## Phase 1: Foundation Setup ✅ (Week 1-2) **COMPLETE**
+## 🎯 **STRATEGIC PIVOT: AI-FIRST TASK MANAGEMENT**
 
-### Completed Tasks ✅
+Based on comprehensive market research and solo-dev constraints, we're pivoting from an all-in-one productivity app to **AI-powered task and goal management**. This focused approach allows us to:
 
-- [x] Next.js project initialization with TypeScript
-- [x] Convex backend setup and authentication
-- [x] Tailwind CSS configuration and design system
-- [x] Basic project structure and routing
-- [x] Database schema definition and deployment
-- [x] Core UI components (Sidebar, Layout)
-- [x] Basic kanban board implementation
-- [x] User authentication flow with Password provider
-- [x] Authentication debugging and troubleshooting
-- [x] Comprehensive auth.config.ts setup
-- [x] Robust middleware error handling
-- [x] Google OAuth integration and setup
-- [x] Multi-provider authentication system
-- [x] Complete authentication documentation with OAuth
+- Compete on AI intelligence rather than feature breadth
+- Target individual users with simple, value-based pricing
+- Build defensible moats through personalized AI agents
+- Achieve faster time-to-market with focused scope
 
 ---
 
-## Phase 2: Complete Backend & Dashboard ✅ **PHASE COMPLETED BEYOND EXPECTATIONS**
+## 📅 **IMPLEMENTATION TIMELINE**
 
-### **🎉 MASSIVE OVERACHIEVEMENT - Original 2 Week Goal Expanded to Full Backend**
+### **🚀 PHASE 1: AI FOUNDATION** (Weeks 1-2)
 
-### Completed Tasks ✅ **ALL EXCEEDED EXPECTATIONS**
+_Goal: Core AI agent working with basic task analysis_
 
-- [x] **Complete Convex Backend Implementation** ✅ **MAJOR MILESTONE**
+**Week 1: OpenRouter Integration**
 
-  - [x] 47+ API functions across 6 backend files ✅
-  - [x] 11 interconnected database tables ✅
-  - [x] Universal linking system between all entities ✅
-  - [x] Full-text search across all content ✅
-  - [x] Proper TypeScript validation with system fields ✅
-  - [x] Real-time data synchronization ✅
-  - [x] Sample data generation system ✅
+- [ ] Set up OpenRouter account + Gemini 2.5 Flash
+- [ ] Create AI service layer in Convex
+- [ ] Implement basic task analysis endpoint
+- [ ] Add AI usage tracking and cost monitoring
+- [ ] Build simple AI testing interface
 
-- [x] **Professional Design System Enhanced** ✅
+**Week 2: Agent Framework**
 
-  - [x] Glassmorphic design implementation ✅
-  - [x] Professional color palette and typography ✅
-  - [x] Horizontal scrolling layout patterns ✅
-  - [x] Dark/light mode with seamless transitions ✅
-  - [x] Responsive mobile-first design ✅
+- [ ] Design TaskAgent class architecture
+- [ ] Implement user pattern analysis
+- [ ] Create task prioritization algorithm
+- [ ] Add AI memory/context persistence
+- [ ] Build agent state management
 
-- [x] **Real Data Integration** ✅ **MAJOR BREAKTHROUGH**
+**Success Criteria**:
 
-  - [x] Dashboard transformed from dummy to real Convex data ✅
-  - [x] All widgets connected to live backend APIs ✅
-  - [x] Real-time updates across all components ✅
-  - [x] Proper loading states and error handling ✅
-  - [x] Sample data generation for demos ✅
-
-- [x] **Advanced Database Features** ✅ **BEYOND ORIGINAL SCOPE**
-  - [x] Cross-entity relationships and linking ✅
-  - [x] Full-text search with indexing ✅
-  - [x] Advanced querying and filtering ✅
-  - [x] Data enrichment and aggregation ✅
-  - [x] Proper indexing for performance ✅
-
-### Phase 2 Backend APIs Implemented ✅
-
-**Projects API (7 functions)** ✅
-
-- getProjects, getProject, createProject, updateProject, deleteProject, getProjectStats, archiveProject
-
-**Tasks API (6 functions)** ✅
-
-- getBoards, getColumns, getTasks, createBoard, createTask, updateTaskPosition
-
-**Calendar API (6 functions)** ✅
-
-- getEvents, createEvent, updateEvent, deleteEvent, getTodayEvents, getUpcomingEvents
-
-**Notes API (10 functions)** ✅
-
-- getNotebooks, createNotebook, updateNotebook, deleteNotebook, getNotes, createNote, updateNote, deleteNote, getAllTags, getRecentNotes
-
-**Routines API (9 functions)** ✅
-
-- getTemplates, createTemplate, getRoutines, createRoutine, completeBlock, getInsights, updateRoutine, deleteRoutine
-
-**Links API (8 functions)** ✅
-
-- createLink, getLinksFrom, getLinksTo, getAllLinks, updateLink, deleteLink, linkTaskToRoutine, linkNoteToEntity, getConnectionGraph
-
-**Search API (2 functions)** ✅
-
-- search, getSearchSuggestions
-
-**Sample Data API (1 function)** ✅
-
-- createSampleData
-
-### Phase 2 Deliverables ✅ **ALL EXCEEDED**
-
-- ✅ **Complete production-ready backend** (47+ functions)
-- ✅ **Real-time dashboard** with live data integration
-- ✅ **Professional design system** with glassmorphic aesthetic
-- ✅ **Universal linking system** between all entities
-- ✅ **Full-text search** functionality
-- ✅ **Sample data generation** for demos
-- ✅ **TypeScript compilation** fully resolved
-- ✅ **Comprehensive API coverage** for all features
+- AI can analyze user's tasks and provide smart suggestions
+- Usage tracking works and costs are monitored
+- Basic agent memory persists across sessions
 
 ---
 
-## Phase 3: Enhanced Task Management 🚧 (Week 5-6) **CURRENT PHASE**
+### **💳 PHASE 2: SUBSCRIPTION SYSTEM** (Weeks 2-3)
 
-### **GOAL: Build Advanced Task Management Features**
+_Goal: Complete billing system with 7-day trials_
 
-**Focus**: Leverage the complete backend to build sophisticated task management UI
+**Week 2-3: Stripe Integration**
 
-- [ ] **Advanced Task Interactions**
+- [ ] Set up Stripe account with billing enabled
+- [ ] Create subscription plans and pricing tiers
+- [ ] Implement 7-day free trial (no credit card)
+- [ ] Build subscription signup flow
+- [ ] Add usage limit enforcement
 
-  - [ ] Enhanced drag & drop with smooth animations
-  - [ ] Inline editing for quick updates
-  - [ ] Modal editing for complex changes
-  - [ ] Bulk select and operations (delete, move, update)
+**Week 3: Billing Dashboard**
 
-- [ ] **Rich Task Features**
+- [ ] Create user billing interface
+- [ ] Add usage meters and progress bars
+- [ ] Implement payment method management
+- [ ] Build subscription upgrade/downgrade flow
+- [ ] Add trial reminder system
 
-  - [ ] Task templates and quick creation
-  - [ ] Sub-tasks and hierarchical organization
-  - [ ] Task dependencies and blocking
-  - [ ] Time tracking and estimates vs actual
+**Success Criteria**:
 
-- [ ] **Advanced Search & Filtering**
-
-  - [ ] Advanced filter UI (priority, status, tags, dates)
-  - [ ] Saved search queries
-  - [ ] Smart filters (overdue, this week, etc.)
-  - [ ] Global search across all entities
-
-- [ ] **UI/UX Enhancements**
-  - [ ] Keyboard shortcuts for power users
-  - [ ] Quick add floating action button
-  - [ ] Better mobile touch interactions
-  - [ ] Undo/redo functionality
-
-### Phase 3 Components to Build
-
-- [ ] `TaskEditModal` - Rich task editing with all fields
-- [ ] `AdvancedFilters` - Comprehensive filtering UI
-- [ ] `DragDropProvider` - Enhanced drag & drop with animations
-- [ ] `BulkOperations` - Multi-select and bulk actions
-- [ ] `TaskTemplates` - Template creation and management
-- [ ] `GlobalSearch` - Unified search interface
-
-### Phase 3 Backend Enhancements (Already Available)
-
-- [x] Complete task CRUD operations ✅
-- [x] Advanced querying and filtering ✅
-- [x] Full-text search integration ✅
-- [x] Real-time updates ✅
-- [x] Proper error handling ✅
-
-### Phase 3 Deliverables
-
-- [ ] **Sophisticated task management** with advanced features
-- [ ] **Professional drag & drop** with smooth animations
-- [ ] **Advanced search and filtering** capabilities
-- [ ] **Power user features** (keyboard shortcuts, bulk operations)
-- [ ] **Template system** for quick task creation
-- [ ] **Mobile-optimized** touch interactions
+- Users can start 7-day trial without payment info
+- Subscription flow works end-to-end
+- Usage limits are enforced for different plans
+- Trial users receive appropriate notifications
 
 ---
 
-## Phase 4: Advanced Calendar & Time Management 📅 (Week 7-8)
+### **🧠 PHASE 3: AI-POWERED FEATURES** (Weeks 3-4)
 
-### **GOAL: Professional Calendar with Time Blocking**
+_Goal: Complete AI-first task management experience_
 
-**Focus**: Build on the complete calendar API to create advanced scheduling features
+**Week 3-4: Smart Task Management**
 
-- [ ] **Enhanced Calendar Views**
+- [ ] AI-powered task prioritization
+- [ ] Automatic deadline prediction and risk alerts
+- [ ] AI-generated daily/weekly schedules
+- [ ] Workflow optimization suggestions
+- [ ] Context-aware task recommendations
 
-  - [ ] Month, week, day views with smooth transitions
-  - [ ] Mini calendar for quick navigation
-  - [ ] Multiple calendar overlay (projects, personal, etc.)
-  - [ ] Timezone support
+**Week 4: User Experience**
 
-- [ ] **Time Blocking & Scheduling**
+- [ ] AI onboarding that demonstrates value quickly
+- [ ] Real-time AI insights in task interface
+- [ ] Smart notifications and reminders
+- [ ] AI coaching for productivity improvement
+- [ ] Seamless AI interaction patterns
 
-  - [ ] Drag tasks from kanban to calendar
-  - [ ] Time block creation and management
-  - [ ] Calendar conflict detection
-  - [ ] Automatic scheduling suggestions
+**Success Criteria**:
 
-- [ ] **Calendar Integrations**
-  - [ ] Import/export to Google Calendar
-  - [ ] Meeting link generation
-  - [ ] Calendar sharing and collaboration
-  - [ ] External calendar sync
-
-### Phase 4 Deliverables
-
-- [ ] **Professional calendar interface** with multiple views
-- [ ] **Time blocking system** for focused work
-- [ ] **Calendar integrations** with external services
-- [ ] **Conflict detection** and smart scheduling
+- AI provides measurably better task prioritization
+- Users save significant time on scheduling/planning
+- High engagement with AI recommendations
+- Clear value demonstration within trial period
 
 ---
 
-## Phase 5: Enhanced Features & Polish 🎨 (Week 9-10)
+### **📈 PHASE 4: OPTIMIZATION & GROWTH** (Weeks 4+)
 
-### **GOAL: Production-Ready Feature Set**
+_Goal: Scale, optimize, and expand AI capabilities_
 
-**Focus**: Polish all features and add advanced capabilities
+**Month 2: Performance & Scale**
 
-- [ ] **Advanced Notes Features**
+- [ ] Optimize AI response times (<2s for all operations)
+- [ ] Implement intelligent caching for AI responses
+- [ ] Add rate limiting and abuse prevention
+- [ ] Scale infrastructure for 1000+ users
+- [ ] Implement advanced AI cost optimization
 
-  - [ ] Rich text editor with formatting
-  - [ ] Note linking and references
-  - [ ] Note templates and snippets
-  - [ ] Markdown support and export
+**Month 2-3: Advanced Features**
 
-- [ ] **Routine Automation**
+- [ ] Custom AI training on user data (Business plan)
+- [ ] API access for third-party integrations
+- [ ] Advanced workflow automation
+- [ ] Team collaboration features (future)
+- [ ] Mobile app optimization
 
-  - [ ] Smart routine scheduling
-  - [ ] Habit tracking and streaks
-  - [ ] Routine optimization suggestions
-  - [ ] Progress analytics and insights
+**Month 3+: Market Expansion**
 
-- [ ] **Export & Import**
-
-  - [ ] Data export in multiple formats
-  - [ ] Backup and restore functionality
-  - [ ] Migration tools from other apps
-  - [ ] API for third-party integrations
-
-- [ ] **Performance & Polish**
-  - [ ] Performance optimization
-  - [ ] Loading optimization and caching
-  - [ ] Error boundary implementation
-  - [ ] Accessibility improvements
-
-### Phase 5 Deliverables
-
-- [ ] **Rich text editing** for notes
-- [ ] **Routine automation** and optimization
-- [ ] **Export/import** functionality
-- [ ] **Performance-optimized** application
+- [ ] International pricing and currencies
+- [ ] Advanced analytics and insights
+- [ ] Enterprise features and custom plans
+- [ ] Partner integrations and marketplace
+- [ ] AI model fine-tuning and personalization
 
 ---
 
-## Phase 6: Production Deployment & User Testing 🚀 (Week 11-12)
+## 💰 **PRICING & MONETIZATION STRATEGY**
 
-### **GOAL: Production-Ready Application**
+### **Subscription Tiers**
 
-**Focus**: Deploy, test, and optimize based on real user feedback
+```
+🌱 STARTER - $19/month
+- Core AI task management
+- 1,000 AI operations/month
+- Basic integrations
+- 7-day free trial
 
-- [ ] **Production Deployment**
+💼 PROFESSIONAL - $49/month
+- Advanced AI insights & predictions
+- 5,000 AI operations/month
+- Priority support & custom workflows
+- Advanced analytics
 
-  - [ ] Vercel deployment with custom domain
-  - [ ] Environment optimization
-  - [ ] SEO and meta tag optimization
-  - [ ] Analytics and monitoring setup
+🚀 BUSINESS - $99/month
+- Unlimited AI operations
+- Custom AI training on your data
+- API access & integrations
+- White-glove onboarding
+```
 
-- [ ] **User Testing Program**
+### **Value Proposition by Tier**
 
-  - [ ] Beta user recruitment (10-20 users)
-  - [ ] User feedback collection system
-  - [ ] Usage analytics and tracking
-  - [ ] Performance monitoring
-
-- [ ] **Optimization & Fixes**
-  - [ ] Performance optimization based on usage
-  - [ ] UI/UX improvements from feedback
-  - [ ] Bug fixes and stability improvements
-  - [ ] Mobile responsiveness polish
-
-### Phase 6 Deliverables
-
-- [ ] **Production-deployed application** with real users
-- [ ] **User feedback system** and analytics
-- [ ] **Performance-optimized** based on real usage
-- [ ] **Market-ready product** with proven value
+- **Starter**: "Save 5 hours/week on task planning"
+- **Professional**: "AI learns your patterns, optimizes your workflow"
+- **Business**: "Custom AI agent trained on your specific needs"
 
 ---
 
-## Phase 7: Smart AI Features (Rule-Based) 🤖 (Week 13-14)
+## 🎯 **SUCCESS METRICS & GOALS**
 
-### **GOAL: Intelligent Assistance Without API Costs**
+### **Week 2 Milestone**
 
-**Focus**: Add smart features using rule-based logic before expensive AI APIs
+- [ ] AI task analysis working reliably
+- [ ] Basic subscription system functional
+- [ ] 10 beta users testing core features
+- [ ] AI cost <$1 per user per month
 
-- [ ] **Smart Suggestions**
+### **Week 4 Milestone**
 
-  - [ ] Task prioritization based on deadlines and effort
-  - [ ] Optimal work time suggestions based on patterns
-  - [ ] Calendar conflict detection and resolution
-  - [ ] Workload balancing recommendations
+- [ ] Complete AI-first task management experience
+- [ ] 50 trial users signed up
+- [ ] 5+ trial→paid conversions (10% conversion rate)
+- [ ] Users reporting measurable time savings
 
-- [ ] **Pattern Recognition**
+### **Month 2 Milestone**
 
-  - [ ] Productivity pattern analysis
-  - [ ] Time usage optimization
-  - [ ] Habit formation tracking
-  - [ ] Performance insights
+- [ ] $1,000 MRR (Monthly Recurring Revenue)
+- [ ] 15%+ trial→paid conversion rate
+- [ ] AI handling 80% of user scheduling decisions
+- [ ] 90%+ user satisfaction with AI recommendations
 
-- [ ] **Renko Assistant Interface**
-  - [ ] Chat-like interface for suggestions
-  - [ ] Natural language command parsing
-  - [ ] Contextual help and tips
-  - [ ] Personalized recommendations
+### **Month 3 Milestone**
 
-### Phase 7 Deliverables
-
-- [ ] **Smart assistant** with rule-based intelligence
-- [ ] **Pattern recognition** and optimization
-- [ ] **Contextual suggestions** for productivity
-- [ ] **Validated AI UX** for future enhancement
+- [ ] $5,000 MRR
+- [ ] 100+ active paying customers
+- [ ] AI cost optimization achieving 70%+ gross margins
+- [ ] Clear product-market fit signals
 
 ---
 
-## Phase 8: Advanced AI Integration 🧠 (Week 15-16)
+## 🔄 **FEEDBACK LOOPS & ITERATION**
 
-### **GOAL: Real AI-Powered Productivity Assistant**
+### **Weekly Reviews**
 
-**Focus**: Integrate real AI where it provides clear value, building on validated UX
+- AI performance metrics and user feedback
+- Subscription conversion rates and churn analysis
+- Cost optimization and margin monitoring
+- Feature usage analytics and prioritization
 
-- [ ] **Natural Language Processing**
+### **Monthly Pivots**
 
-  - [ ] Natural language task creation
-  - [ ] Voice-to-task conversion
-  - [ ] Smart calendar scheduling via text
-  - [ ] Intelligent content suggestions
+- Strategic direction based on user behavior
+- Pricing adjustments based on value delivery
+- Feature roadmap updates based on AI capabilities
+- Market expansion opportunities
 
-- [ ] **Predictive AI Features**
+### **Quarterly Vision**
 
-  - [ ] Predictive scheduling and planning
-  - [ ] Intelligent workload distribution
-  - [ ] Smart deadline management
-  - [ ] Context-aware suggestions
-
-- [ ] **Cost-Effective Implementation**
-  - [ ] Usage-based AI quota system
-  - [ ] Intelligent caching and optimization
-  - [ ] Fallback to rule-based when appropriate
-  - [ ] ROI tracking for AI features
-
-### Phase 8 Deliverables
-
-- [ ] **AI-powered productivity assistant** with real intelligence
-- [ ] **Natural language interface** for task management
-- [ ] **Predictive scheduling** and optimization
-- [ ] **Cost-effective AI** implementation
+- Long-term AI development strategy
+- Competitive landscape analysis
+- Technology stack evolution planning
+- Business model optimization and scaling
 
 ---
 
-## 🎯 **UPDATED SUCCESS METRICS**
+## 🛠️ **TECHNICAL ARCHITECTURE DECISIONS**
 
-### **Phase 3 Success (Enhanced Tasks - Week 5-6)**
+### **AI Stack**
 
-- ✅ **Advanced task management** with drag & drop animations
-- ✅ **Professional search and filtering** capabilities
-- ✅ **Power user features** (shortcuts, bulk operations)
-- ✅ **Mobile-optimized** touch interactions
+- **LLM**: OpenRouter + Gemini 2.5 Flash (cost-effective, fast)
+- **Framework**: Custom-built (start simple, scale as needed)
+- **Context**: Vector database for user pattern storage
+- **Functions**: Structured outputs for reliable AI actions
 
-### **Phase 4-6 Success (Complete System - Week 7-12)**
+### **Billing Stack**
 
-- 🎯 **Professional calendar** with time blocking
-- 🎯 **Advanced features** (rich text, automation)
-- 🎯 **Production deployment** with real users
-- 🎯 **Validated product-market fit**
+- **Payment Processing**: Stripe Billing (industry standard)
+- **Trial Strategy**: 7-day free trial, no credit card required
+- **Usage Tracking**: Real-time operation metering
+- **Global Support**: 135+ currencies via Stripe
 
-### **Phase 7-8 Success (AI Integration - Week 13-16)**
+### **Core Platform**
 
-- 🤖 **Smart AI assistant** with proven value
-- 📈 **Increased productivity** for users
-- 💰 **Cost-effective** AI implementation
-- 🏆 **Market differentiation** with AI features
+- **Backend**: Convex (real-time, serverless, type-safe)
+- **Frontend**: Next.js + React (performance + SEO)
+- **Database**: Convex (integrated, no additional setup)
+- **Hosting**: Vercel (seamless Next.js deployment)
 
-### **Key Performance Indicators (KPIs)**
-
-- **Development Velocity**: Leveraging complete backend for rapid feature development
-- **User Experience**: Professional, polished interface matching design system
-- **Feature Completeness**: Advanced capabilities beyond basic productivity apps
-- **AI Readiness**: Foundation built for intelligent features
-- **Market Position**: Production-ready with unique AI-powered value proposition
+This roadmap balances ambitious AI capabilities with practical implementation constraints, ensuring we can deliver real value to users while building a sustainable business model.
 
 ---
 
-## 🛠️ **TECHNICAL ADVANTAGES FROM PHASE 2 COMPLETION**
+## **🚀 ADVANCED FEATURES INTEGRATION PHASE** (Weeks 12-16)
 
-### **Accelerated Development Capabilities**
+_Goal: Implement advanced integrations for platform differentiation_
 
-1. **Complete Backend Foundation**: 47+ API functions ready for any feature
-2. **Real-Time Infrastructure**: Live data updates across all components
-3. **Search & Linking**: Advanced data relationships and discoverability
-4. **Proven Patterns**: Established development patterns for consistency
-5. **TypeScript Safety**: Fully validated types and error handling
+### **Week 12: Feature Flags System**
 
-### **Competitive Advantages**
+**Monday-Tuesday: Core Infrastructure**
 
-- **Universal Linking**: Connect any entity to any other (unique feature)
-- **Full-Text Search**: Find anything instantly across all content
-- **Real-Time Collaboration**: Foundation for team features
-- **Modular Architecture**: Easy to extend with new features
-- **Professional Design**: Glassmorphic UI that stands out
+- [ ] Set up feature flag database schema in Convex
+- [ ] Create `convex/featureFlags.ts` with user-based flag resolution
+- [ ] Implement A/B testing framework for gradual rollouts
+- [ ] Build admin dashboard for flag management
+- [ ] Add flag dependency management system
 
-**Status**: Phase 2 COMPLETED beyond expectations. Ready for advanced feature development with significant competitive advantages.
+**Wednesday-Thursday: Frontend Integration**
+
+- [ ] Create `useFeatureFlags` hook for components
+- [ ] Implement conditional rendering patterns
+- [ ] Add feature flag debugging tools
+- [ ] Create user segment classification system
+- [ ] Build rollout percentage controls
+
+**Friday: Advanced Testing**
+
+- [ ] A/B testing infrastructure for AI features
+- [ ] Statistical significance tracking
+- [ ] User experience impact measurement
+- [ ] Automated rollback mechanisms
+- [ ] Performance impact monitoring
+
+**Deliverables:**
+
+- ✅ Complete feature flag system
+- ✅ A/B testing capability
+- ✅ Safe AI feature rollouts
+- ✅ User segmentation controls
+
+### **Week 13: Multiple Google Calendar Integration**
+
+**Monday-Tuesday: Multi-Calendar OAuth**
+
+- [ ] Enhanced Google OAuth for multiple calendar access
+- [ ] Calendar selection and permission management
+- [ ] Multiple calendar storage schema
+- [ ] Calendar type classification (personal/work/shared)
+- [ ] Sync preference management per calendar
+
+**Wednesday-Thursday: Relationship-Aware Features**
+
+- [ ] Partner/family calendar sharing interface
+- [ ] Shared calendar availability analysis
+- [ ] Relationship type configuration
+- [ ] Mutual optimization settings
+- [ ] Conflict resolution preferences
+
+**Friday: AI-Powered Multi-Calendar Optimization**
+
+- [ ] Cross-calendar pattern analysis
+- [ ] Shared activity suggestion algorithm
+- [ ] Work-life balance optimization
+- [ ] Meeting fatigue detection across calendars
+- [ ] Relationship time tracking and insights
+
+**Deliverables:**
+
+- ✅ Multiple calendar sync working
+- ✅ Relationship-aware scheduling
+- ✅ Cross-calendar AI optimization
+- ✅ Shared activity suggestions
+
+### **Week 14: Zapier Integration Foundation**
+
+**Monday-Tuesday: Webhook Infrastructure**
+
+- [ ] Set up Zapier developer account and app
+- [ ] Build webhook endpoint infrastructure
+- [ ] Create trigger event system for task/goal completion
+- [ ] Implement action handlers for external data
+- [ ] Add webhook security and validation
+
+**Wednesday-Thursday: Core AI-Enhanced Integrations**
+
+- [ ] Smart email processing (Gmail → Renko tasks)
+- [ ] Calendar intelligence (external events → focus time)
+- [ ] Cross-platform habit tracking integration
+- [ ] Social accountability posting features
+- [ ] AI insight generation for external sharing
+
+**Friday: Integration Testing & Optimization**
+
+- [ ] End-to-end Zapier workflow testing
+- [ ] AI enhancement for automation quality
+- [ ] User control over automation levels
+- [ ] Integration health monitoring
+- [ ] Performance optimization for webhook processing
+
+**Deliverables:**
+
+- ✅ Working Zapier integration
+- ✅ AI-enhanced automation workflows
+- ✅ Smart cross-platform connections
+- ✅ User-controlled automation
+
+### **Week 15: iOS Design System Implementation**
+
+**Monday-Tuesday: Design System Migration**
+
+- [ ] Implement iOS-inspired color system
+- [ ] Update spacing and layout patterns
+- [ ] Replace glassmorphic cards with minimal design
+- [ ] Implement new typography scale
+- [ ] Add iOS-style component library
+
+**Wednesday-Thursday: Component Refinement**
+
+- [ ] Redesign task cards with compact layout
+- [ ] Update button system to iOS patterns
+- [ ] Implement refined widget headers
+- [ ] Add mobile-first responsive patterns
+- [ ] Create touch-friendly interface elements
+
+**Friday: Performance & Accessibility**
+
+- [ ] Remove heavy backdrop-blur effects
+- [ ] Implement efficient animations
+- [ ] Add reduced motion support
+- [ ] Optimize for better information density
+- [ ] Ensure accessibility compliance
+
+**Deliverables:**
+
+- ✅ Professional iOS-inspired design
+- ✅ Improved performance and density
+- ✅ Better mobile experience
+- ✅ Accessibility optimized
+
+### **Week 16: Integration Polish & Launch Prep**
+
+**Monday-Tuesday: Advanced Feature Integration**
+
+- [ ] All advanced features working together seamlessly
+- [ ] Feature flag controlled rollout of new design
+- [ ] Multi-calendar AI optimization active
+- [ ] Zapier automation working reliably
+- [ ] Cross-feature analytics and insights
+
+**Wednesday-Thursday: User Experience Excellence**
+
+- [ ] Smooth onboarding for advanced features
+- [ ] Clear feature explanations and help content
+- [ ] Advanced settings and user controls
+- [ ] Error handling and graceful degradation
+- [ ] Mobile optimization for all new features
+
+**Friday: Advanced Platform Launch**
+
+- [ ] Complete testing of all advanced features
+- [ ] User documentation and help system
+- [ ] Advanced feature announcement materials
+- [ ] Analytics tracking for new capabilities
+- [ ] Community engagement for power users
+
+**Deliverables:**
+
+- ✅ Fully integrated advanced platform
+- ✅ Professional design implementation
+- ✅ Multi-platform integration working
+- ✅ Ready for advanced user adoption
+
+---
+
+## **🎯 ADVANCED FEATURES SUCCESS METRICS**
+
+### **Feature Flag System**
+
+- **Technical**: 99%+ uptime, <100ms flag resolution
+- **Product**: Enable 5+ A/B tests simultaneously
+- **Business**: 20%+ improvement in feature adoption rates
+
+### **Multi-Calendar Integration**
+
+- **User Value**: 30%+ reduction in calendar switching
+- **AI Enhancement**: 80%+ accuracy in shared activity suggestions
+- **Relationship Impact**: Measurable improvement in personal time management
+
+### **Zapier Integration**
+
+- **Platform Value**: 50+ automation workflows created by community
+- **User Engagement**: 40%+ of power users adopt external integrations
+- **Differentiation**: Unique AI-enhanced automation capabilities
+
+### **iOS Design System**
+
+- **Performance**: 60%+ reduction in visual effects overhead
+- **UX Quality**: 90%+ user satisfaction with new design
+- **Information Density**: 30% more content visible without scrolling
+
+---
+
+## **🔄 CONTINUOUS IMPROVEMENT** (Weeks 17+)
+
+### **Advanced AI Capabilities** (Weeks 17-20)
+
+- Custom AI training on user data
+- Advanced pattern recognition
+- Predictive calendar optimization
+- Natural language workflow automation
+
+### **Platform Expansion** (Weeks 21-24)
+
+- Native mobile applications
+- Advanced API for third-party developers
+- Enterprise team features
+- International market expansion
+
+### **Market Leadership** (Weeks 25+)
+
+- Industry-leading AI productivity assistant
+- Platform ecosystem with partner integrations
+- Thought leadership in personal AI optimization
+- Potential acquisition or scaling opportunities
+
+This comprehensive roadmap creates a truly differentiated productivity platform that evolves from connected tools to intelligent AI partner, with advanced integrations that no competitor can match.

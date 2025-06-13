@@ -27,12 +27,6 @@ export interface EnrichedRoutine {
   timeOfDay: string;
 }
 
-export interface EnrichedNotebook {
-  _id: Id<"notebooks">;
-  name: string;
-  color?: string;
-}
-
 // Common enums/constants
 export const TaskStatus = {
   TODO: "todo",
@@ -114,29 +108,6 @@ export interface PaginatedResponse<T> {
   currentPage: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-}
-
-export interface AnalyticsInsight {
-  totalActiveRoutines: number;
-  averageCompletionRate: number;
-  currentStreaks: Array<{
-    routineName: string;
-    streak: number;
-  }>;
-  weeklyProgress: Array<{
-    day: string;
-    completions: number;
-    totalBlocks: number;
-  }>;
-  energyOptimization: {
-    peakEnergyTime?: string;
-    lowEnergyTime?: string;
-    averageEnergyByHour: Array<{
-      hour: number;
-      averageEnergy: number;
-    }>;
-  };
-  timeInvested: number;
 }
 
 // Search and filter types

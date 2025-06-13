@@ -304,31 +304,6 @@ export const linkTaskToRoutine: any = mutation({
   },
 });
 
-// Link a note to multiple entities
-export const linkNoteToEntity: any = mutation({
-  args: {
-    noteId: v.id("notes"),
-    entityTable: v.string(),
-    entityId: v.string(),
-    linkType: v.optional(v.string()),
-  },
-  returns: v.id("links"),
-  handler: async (ctx, args) => {
-    return await ctx.runMutation(api.links.createLink, {
-      fromTable: "notes",
-      fromId: args.noteId,
-      toTable: args.entityTable,
-      toId: args.entityId,
-      linkType: args.linkType || "reference",
-      metadata: {
-        description: `Note references ${args.entityTable}`,
-        strength: 5,
-        tags: ["documentation"],
-      },
-    });
-  },
-});
-
 // Get connection graph for visualization
 export const getConnectionGraph = query({
   args: {

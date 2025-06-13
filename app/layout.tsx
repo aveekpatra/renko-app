@@ -6,7 +6,7 @@ import AppLayout from "@/components/AppLayout";
 
 export const metadata: Metadata = {
   title: "Productivity - All-in-One Task Manager",
-  description: "Manage your tasks, projects, calendar, and notes in one place",
+  description: "Manage your tasks, projects, calendar, and habits in one place",
   icons: {
     icon: "/convex.svg",
   },

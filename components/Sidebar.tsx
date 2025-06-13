@@ -22,6 +22,8 @@ import {
   Target,
   LogOut,
   ChevronUp,
+  Layout,
+  Kanban,
 } from "lucide-react";
 
 // Mock data for boards
@@ -50,12 +52,10 @@ const mockBoards = [
 ];
 
 const navigationItems = [
-  { icon: HomeIcon, label: "Dashboard", href: "/" },
-  { icon: Target, label: "Routines", href: "/habits" },
-  { icon: FolderKanban, label: "Boards", href: "/boards" },
+  { icon: Layout, label: "Dashboard", href: "/" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: FileText, label: "Notes", href: "/notes" },
-  { icon: BarChart3, label: "Analytics", href: "/analytics" },
+  { icon: Kanban, label: "Boards", href: "/boards" },
+  { icon: Target, label: "Habits", href: "/habits" },
 ];
 
 interface SidebarProps {
@@ -200,19 +200,17 @@ export default function Sidebar({
   // Theme classes
   const themeClasses = {
     sidebar: isDarkMode
-      ? "bg-gray-800/90 backdrop-blur-xl border-r border-gray-700/50 text-gray-100 flex flex-col shadow-xl shadow-black/20 h-full relative"
-      : "bg-white/50 backdrop-blur-xl border-r border-white/40 text-gray-800 flex flex-col shadow-xl shadow-gray-900/10 h-full relative",
-    sidebarSection: isDarkMode
-      ? "bg-gradient-to-r from-gray-700/20 to-gray-800/10"
-      : "bg-gradient-to-r from-white/20 to-white/10",
+      ? "bg-gray-800/70 border-r border-gray-700/50 text-gray-100 flex flex-col shadow-lg h-full relative"
+      : "bg-white/80 border-r border-gray-200/60 text-gray-800 flex flex-col shadow-lg h-full relative",
+    sidebarSection: isDarkMode ? "bg-gray-700/20" : "bg-gray-50/30",
     text: {
       primary: isDarkMode ? "text-gray-100" : "text-gray-800",
       secondary: isDarkMode ? "text-gray-300" : "text-gray-700",
       tertiary: isDarkMode ? "text-gray-400" : "text-gray-600",
     },
     quickAddButton: isDarkMode
-      ? "w-full px-3 py-2 bg-purple-600/80 hover:bg-purple-600/90 backdrop-blur-md border border-purple-500/60 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 shadow-sm shadow-purple-500/20 hover:shadow-md hover:shadow-purple-500/30 flex items-center justify-center space-x-2"
-      : "w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 backdrop-blur-md border border-purple-500/60 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 shadow-sm shadow-purple-500/20 hover:shadow-md hover:shadow-purple-500/30 flex items-center justify-center space-x-2",
+      ? "w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2"
+      : "w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2",
   };
 
   return (
@@ -222,7 +220,7 @@ export default function Sidebar({
     >
       {/* Logo Section - More compact */}
       <div
-        className={`p-3 border-b ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection}`}
+        className={`p-3 border-b ${isDarkMode ? "border-gray-700/50" : "border-gray-200/50"} flex-shrink-0 ${themeClasses.sidebarSection}`}
       >
         <div className="flex items-center justify-between">
           <div
@@ -231,7 +229,7 @@ export default function Sidebar({
             <div
               className={`${
                 isHydrated && isCollapsed ? "w-10 h-10" : "w-8 h-8"
-              } bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 ${
+              } bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md ${
                 isHydrated && isCollapsed
                   ? "cursor-pointer hover:scale-105"
                   : ""
@@ -245,7 +243,7 @@ export default function Sidebar({
             </div>
             {!(isHydrated && isCollapsed) && (
               <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-purple-700 to-indigo-700 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                   Renko
                 </h1>
                 <p
@@ -261,10 +259,10 @@ export default function Sidebar({
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className={`p-1.5 rounded-md transition-all duration-200 hover:shadow-sm ${
+                className={`p-1.5 rounded-md transition-all duration-200 ${
                   isDarkMode
                     ? "hover:bg-gray-700/50 text-gray-400 hover:text-gray-200"
-                    : "hover:bg-white/60 text-gray-600 hover:text-gray-800"
+                    : "hover:bg-gray-100/60 text-gray-600 hover:text-gray-800"
                 }`}
               >
                 {isDarkMode ? (
@@ -277,10 +275,10 @@ export default function Sidebar({
               {/* Collapse Button */}
               <button
                 onClick={toggleSidebar}
-                className={`p-1.5 rounded-md transition-all duration-200 hover:shadow-sm ${
+                className={`p-1.5 rounded-md transition-all duration-200 ${
                   isDarkMode
                     ? "hover:bg-gray-700/50 text-gray-400 hover:text-gray-200"
-                    : "hover:bg-white/60 text-gray-600 hover:text-gray-800"
+                    : "hover:bg-gray-100/60 text-gray-600 hover:text-gray-800"
                 }`}
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -305,8 +303,8 @@ export default function Sidebar({
             onClick={handleQuickAdd}
             className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
               isDarkMode
-                ? "bg-purple-600/80 hover:bg-purple-600/90 text-white shadow-purple-500/20 hover:shadow-purple-500/30"
-                : "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20 hover:shadow-purple-500/30"
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -340,10 +338,8 @@ export default function Sidebar({
                 Recent Projects
               </h3>
               <button
-                className={`p-1 rounded-md transition-all duration-200 shadow-sm hover:shadow-md ${
-                  isDarkMode
-                    ? "hover:bg-gray-700/50 shadow-black/10 hover:shadow-black/20"
-                    : "hover:bg-white/60 shadow-gray-900/5 hover:shadow-gray-900/10"
+                className={`p-1 rounded-md transition-all duration-200 ${
+                  isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-100/60"
                 }`}
               >
                 <Plus className={`w-3 h-3 ${themeClasses.text.tertiary}`} />
@@ -367,10 +363,10 @@ export default function Sidebar({
         <div className="p-3 flex-shrink-0">
           <button
             onClick={toggleSidebar}
-            className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center justify-center hover:shadow-lg ${
+            className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
               isDarkMode
-                ? "bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-gray-100 shadow-black/10 hover:shadow-black/20"
-                : "bg-gray-100/60 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800 shadow-gray-200/20 hover:shadow-gray-300/30"
+                ? "bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-gray-100"
+                : "bg-gray-100/60 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800"
             }`}
             title="Expand sidebar"
           >
@@ -381,15 +377,13 @@ export default function Sidebar({
 
       {/* User Profile - Fixed at bottom with consistent height */}
       <div
-        className={`p-3 border-t ${isDarkMode ? "border-gray-700/50" : "border-white/30"} flex-shrink-0 ${themeClasses.sidebarSection} relative`}
+        className={`p-3 border-t ${isDarkMode ? "border-gray-700/50" : "border-gray-200/50"} flex-shrink-0 ${themeClasses.sidebarSection} relative`}
         ref={userDropdownRef}
       >
         <div
           onClick={toggleUserDropdown}
           className={`flex items-center ${isHydrated && isCollapsed ? "justify-center" : "space-x-2"} p-2 rounded-lg transition-all duration-200 cursor-pointer group ${
-            isDarkMode
-              ? "hover:bg-gray-700/50 shadow-sm hover:shadow-lg shadow-black/10 hover:shadow-black/20"
-              : "hover:bg-white/60 shadow-sm hover:shadow-lg shadow-gray-900/5 hover:shadow-gray-900/15"
+            isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-100/60"
           }`}
           style={{
             // Ensure consistent container dimensions
@@ -398,7 +392,7 @@ export default function Sidebar({
           }}
         >
           <div className="relative flex-shrink-0">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md shadow-purple-500/30">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
               <span className="text-white font-semibold text-sm">A</span>
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
@@ -431,10 +425,8 @@ export default function Sidebar({
           isHydrated &&
           createPortal(
             <div
-              className={`fixed rounded-xl backdrop-blur-xl border shadow-xl z-[99999] overflow-hidden ${
-                isDarkMode
-                  ? "bg-gray-800/95 border-gray-700/60 shadow-black/30"
-                  : "bg-white/95 border-gray-200/60 shadow-gray-900/20"
+              className={`fixed ios-card z-[99999] overflow-hidden ${
+                isDarkMode ? "bg-gray-800/95" : "bg-white/95"
               }`}
               style={{
                 top: dropdownPosition.top,
@@ -480,7 +472,7 @@ export default function Sidebar({
       {!(isHydrated && isCollapsed) && (
         <div
           className={`absolute top-0 right-0 w-1 h-full cursor-ew-resize group transition-colors ${
-            isDarkMode ? "hover:bg-purple-400/40" : "hover:bg-purple-500/40"
+            isDarkMode ? "hover:bg-blue-400/40" : "hover:bg-blue-500/40"
           }`}
           onMouseDown={handleMouseDown}
         >
@@ -513,22 +505,22 @@ function SidebarItem({
   return (
     <Link
       href={href}
-      className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+      className={`w-full flex items-center ${isCollapsed ? "justify-center" : "space-x-3"} px-3 py-2.5 rounded-lg transition-all duration-200 group ${
         active
           ? isDarkMode
-            ? "bg-gradient-to-r from-purple-900/50 to-indigo-900/50 text-purple-300 shadow-md shadow-purple-900/30 backdrop-blur-sm border border-purple-800/50"
-            : "bg-gradient-to-r from-purple-100/90 to-indigo-100/90 text-purple-800 shadow-md shadow-purple-200/60 backdrop-blur-sm border border-purple-200/70"
+            ? "bg-blue-600/20 text-blue-300 border border-blue-500/30"
+            : "bg-blue-100/80 text-blue-800 border border-blue-200/70"
           : isDarkMode
-            ? "text-gray-300 hover:text-gray-100 hover:bg-gray-700/50 hover:shadow-sm hover:shadow-black/10"
-            : "text-gray-700 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:shadow-gray-900/10"
+            ? "text-gray-300 hover:text-gray-100 hover:bg-gray-700/50"
+            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100/60"
       }`}
     >
       <Icon
         className={`w-4 h-4 transition-colors ${
           active
             ? isDarkMode
-              ? "text-purple-400"
-              : "text-purple-700"
+              ? "text-blue-400"
+              : "text-blue-700"
             : isDarkMode
               ? "text-gray-400 group-hover:text-gray-200"
               : "text-gray-600 group-hover:text-gray-800"
@@ -536,7 +528,7 @@ function SidebarItem({
       />
       {!isCollapsed && <span className="font-semibold text-sm">{label}</span>}
       {active && !isCollapsed && (
-        <div className="ml-auto w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-sm"></div>
+        <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full"></div>
       )}
     </Link>
   );
@@ -553,12 +545,10 @@ function ProjectItem({ board, isDarkMode }: ProjectItemProps) {
   return (
     <button
       className={`w-full flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 group ${
-        isDarkMode
-          ? "hover:bg-gray-700/50 hover:shadow-sm hover:shadow-black/10"
-          : "hover:bg-white/70 hover:shadow-sm hover:shadow-gray-900/10"
+        isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-100/60"
       }`}
     >
-      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full shadow-sm shadow-purple-500/30 flex-shrink-0"></div>
+      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
       <div className="flex-1 min-w-0 text-left">
         <p
           className={`text-xs font-semibold truncate transition-colors ${
@@ -571,12 +561,12 @@ function ProjectItem({ board, isDarkMode }: ProjectItemProps) {
         </p>
         <div className="flex items-center space-x-1.5 mt-0.5">
           <div
-            className={`w-10 rounded-full h-0.5 shadow-inner ${
+            className={`w-10 rounded-full h-0.5 ${
               isDarkMode ? "bg-gray-600/80" : "bg-gray-200/80"
             }`}
           >
             <div
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 h-0.5 rounded-full transition-all duration-300 shadow-sm"
+              className="bg-blue-500 h-0.5 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

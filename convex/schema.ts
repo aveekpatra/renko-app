@@ -48,7 +48,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     status: v.string(), // "todo", "in-progress", "done", etc.
-    priority: v.optional(v.string()), // "low", "medium", "high", "urgent"
+    priority: v.optional(v.string()), // "low", "medium", "high", "critical"
     dueDate: v.optional(v.number()),
     projectId: v.optional(v.id("projects")),
     boardId: v.optional(v.id("boards")),
@@ -58,6 +58,8 @@ export default defineSchema({
     position: v.number(),
     userId: v.id("users"),
     assignedTo: v.optional(v.id("users")),
+    tags: v.optional(v.array(v.string())), // Task tags
+    timeEstimate: v.optional(v.number()), // Estimated time in minutes
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -73,46 +75,6 @@ export default defineSchema({
       searchField: "title",
       filterFields: ["userId", "status", "projectId"],
     }),
-
-  // Notes table
-  notes: defineTable({
-    title: v.string(),
-    content: v.string(),
-    tags: v.optional(v.array(v.string())),
-    projectId: v.optional(v.id("projects")),
-    taskId: v.optional(v.id("tasks")), // Link to tasks
-    routineId: v.optional(v.id("routines")), // Link to routines
-    notebookId: v.optional(v.id("notebooks")), // Organize notes
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"])
-    .index("by_task", ["taskId"])
-    .index("by_notebook", ["notebookId"])
-    .index("by_tags", ["tags"])
-    .searchIndex("search_content", {
-      searchField: "content",
-      filterFields: ["userId", "projectId"],
-    })
-    .searchIndex("search_title", {
-      searchField: "title",
-      filterFields: ["userId", "tags"],
-    }),
-
-  // Notebooks for organizing notes
-  notebooks: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    color: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"]),
 
   // Calendar events
   events: defineTable({
@@ -199,24 +161,22 @@ export default defineSchema({
     blockId: v.id("routineBlocks"),
     userId: v.id("users"),
     completedAt: v.number(),
-    actualDuration: v.optional(v.number()), // how long it actually took
+    actualDuration: v.optional(v.number()), // actual vs planned
+    energyLevel: v.optional(v.string()), // how user felt
     notes: v.optional(v.string()),
-    energyLevel: v.optional(v.string()), // how user felt during this block
   })
-    .index("by_routine", ["routineId"])
     .index("by_user", ["userId"])
-    .index("by_date", ["completedAt"])
-    .index("by_user_and_date", ["userId", "completedAt"]),
+    .index("by_routine", ["routineId"])
+    .index("by_block", ["blockId"])
+    .index("by_date", ["completedAt"]),
 
-  // === UNIVERSAL LINKING SYSTEM ===
-
-  // Universal connections between any entities
+  // Links between entities (for relationship tracking)
   links: defineTable({
-    fromTable: v.string(), // table name
-    fromId: v.string(), // document ID
-    toTable: v.string(), // table name
-    toId: v.string(), // document ID
-    linkType: v.string(), // "related", "blocks", "subtask", "reference", etc.
+    fromTable: v.string(), // "tasks", "projects", "events", etc.
+    fromId: v.string(), // entity ID
+    toTable: v.string(),
+    toId: v.string(),
+    linkType: v.string(), // "blocks", "depends_on", "references", etc.
     metadata: v.optional(
       v.object({
         description: v.optional(v.string()),
@@ -224,11 +184,32 @@ export default defineSchema({
         tags: v.optional(v.array(v.string())),
       }),
     ),
-    userId: v.id("users"),
     createdAt: v.number(),
   })
     .index("by_from", ["fromTable", "fromId"])
     .index("by_to", ["toTable", "toId"])
-    .index("by_user", ["userId"])
-    .index("by_link_type", ["linkType"]),
+    .index("by_type", ["linkType"]),
+
+  // User preferences and settings
+  userPreferences: defineTable({
+    userId: v.id("users"),
+    theme: v.optional(v.string()), // "light", "dark", "auto"
+    timeZone: v.optional(v.string()),
+    workingHours: v.optional(
+      v.object({
+        start: v.string(), // "09:00"
+        end: v.string(), // "17:00"
+        days: v.array(v.string()), // ["monday", "tuesday", ...]
+      }),
+    ),
+    notifications: v.optional(
+      v.object({
+        email: v.boolean(),
+        push: v.boolean(),
+        desktop: v.boolean(),
+        reminders: v.boolean(),
+      }),
+    ),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });

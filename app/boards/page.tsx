@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Plus,
   CheckCircle2,
@@ -9,279 +9,176 @@ import {
   Folder,
   Clock,
   Target,
+  Edit,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import TaskModal from "@/components/TaskModal";
 
 interface Task {
-  id: string;
+  _id: Id<"tasks">;
   title: string;
   description?: string;
-  completed: boolean;
-  priority: "urgent" | "normal" | "low";
-  dueDate?: string;
-  project?: string;
-  color: "blue" | "green" | "orange" | "purple" | "pink";
+  status: string;
+  priority?: string;
+  dueDate?: number;
+  projectId?: Id<"projects">;
+  columnId?: Id<"columns">;
+  position: number;
 }
 
-interface Project {
-  id: string;
+interface Column {
+  _id: Id<"columns">;
   name: string;
-  description: string;
-  color: "blue" | "green" | "orange" | "purple" | "pink";
-  tasks: {
-    todo: Task[];
-    inProgress: Task[];
-    done: Task[];
-  };
+  boardId: Id<"boards">;
+  position: number;
+  color?: string;
 }
-
-// Simple project data with rich task styling
-const mockProjects: Project[] = [
-  {
-    id: "0",
-    name: "Plans",
-    description: "Time-based task organization and planning",
-    color: "purple",
-    tasks: {
-      todo: [
-        // Today's tasks
-        {
-          id: "p1",
-          title: "Review client proposal presentation",
-          description:
-            "Final review of Q4 marketing proposal before afternoon client meeting",
-          completed: false,
-          priority: "urgent",
-          color: "pink",
-          project: "Marketing",
-          dueDate: "2024-01-12T14:00:00Z",
-        },
-        {
-          id: "p2",
-          title: "Update dashboard analytics metrics",
-          description:
-            "Add new KPI tracking for user engagement and retention analysis",
-          completed: false,
-          priority: "normal",
-          color: "purple",
-          project: "Analytics",
-          dueDate: "2024-01-12T16:30:00Z",
-        },
-        {
-          id: "p3",
-          title: "Bug fix: User authentication timeout",
-          description:
-            "Fix session timeout issue affecting user login persistence",
-          completed: false,
-          priority: "urgent",
-          color: "blue",
-          project: "Backend",
-          dueDate: "2024-01-12T11:00:00Z",
-        },
-      ],
-      inProgress: [
-        // This week's tasks
-        {
-          id: "p4",
-          title: "Design system documentation update",
-          description:
-            "Complete component library documentation for new team members",
-          completed: false,
-          priority: "normal",
-          color: "blue",
-          project: "Design System",
-          dueDate: "2024-01-15T17:00:00Z",
-        },
-        {
-          id: "p5",
-          title: "Database performance optimization",
-          description:
-            "Optimize database queries and add proper indexing for improved performance",
-          completed: false,
-          priority: "urgent",
-          color: "blue",
-          project: "Backend",
-          dueDate: "2024-01-14T12:00:00Z",
-        },
-        {
-          id: "p6",
-          title: "Mobile app beta release",
-          description: "Prepare and deploy beta version for internal testing",
-          completed: false,
-          priority: "urgent",
-          color: "orange",
-          project: "Mobile",
-          dueDate: "2024-01-17T16:00:00Z",
-        },
-      ],
-      done: [
-        // This month's tasks
-        {
-          id: "p7",
-          title: "Q1 budget planning and resource allocation",
-          description:
-            "Strategic planning for next quarter's project priorities and team assignments",
-          completed: true,
-          priority: "urgent",
-          color: "green",
-          project: "General",
-          dueDate: "2024-01-25T17:00:00Z",
-        },
-        {
-          id: "p8",
-          title: "Security audit and compliance review",
-          description:
-            "Comprehensive security assessment and compliance documentation update",
-          completed: true,
-          priority: "urgent",
-          color: "pink",
-          project: "Security",
-          dueDate: "2024-01-30T12:00:00Z",
-        },
-      ],
-    },
-  },
-  {
-    id: "1",
-    name: "Product Development",
-    description: "Main product roadmap and features",
-    color: "purple",
-    tasks: {
-      todo: [
-        {
-          id: "1",
-          title: "Design user interface",
-          description: "Create wireframes and mockups for the main dashboard",
-          completed: false,
-          priority: "urgent",
-          color: "purple",
-          project: "Frontend",
-        },
-        {
-          id: "2",
-          title: "Implement authentication",
-          description: "Set up JWT tokens and user sessions",
-          completed: false,
-          priority: "normal",
-          color: "blue",
-          project: "Backend",
-        },
-        {
-          id: "3",
-          title: "Setup database schema",
-          description: "Design tables and relationships",
-          completed: false,
-          priority: "normal",
-          color: "green",
-          project: "Database",
-        },
-        {
-          id: "4",
-          title: "Write documentation",
-          description: "API docs and user guides",
-          completed: false,
-          priority: "low",
-          color: "orange",
-          project: "Docs",
-        },
-      ],
-      inProgress: [
-        {
-          id: "5",
-          title: "Build API endpoints",
-          description: "REST API for user management",
-          completed: false,
-          priority: "urgent",
-          color: "pink",
-          project: "Backend",
-        },
-        {
-          id: "6",
-          title: "Frontend components",
-          description: "Reusable UI components library",
-          completed: false,
-          priority: "normal",
-          color: "blue",
-          project: "Frontend",
-        },
-      ],
-      done: [
-        {
-          id: "7",
-          title: "Project setup",
-          description: "Initialize repository and dependencies",
-          completed: true,
-          priority: "normal",
-          color: "green",
-          project: "Setup",
-        },
-        {
-          id: "8",
-          title: "Initial design",
-          description: "Color scheme and typography",
-          completed: true,
-          priority: "normal",
-          color: "purple",
-          project: "Design",
-        },
-      ],
-    },
-  },
-  {
-    id: "2",
-    name: "Marketing Website",
-    description: "Landing page and marketing materials",
-    color: "blue",
-    tasks: {
-      todo: [
-        {
-          id: "9",
-          title: "Write copy",
-          description: "Marketing copy for landing page",
-          completed: false,
-          priority: "normal",
-          color: "orange",
-          project: "Content",
-        },
-        {
-          id: "10",
-          title: "Design assets",
-          description: "Icons, images, and illustrations",
-          completed: false,
-          priority: "urgent",
-          color: "purple",
-          project: "Design",
-        },
-      ],
-      inProgress: [
-        {
-          id: "11",
-          title: "SEO optimization",
-          description: "Meta tags and search optimization",
-          completed: false,
-          priority: "low",
-          color: "green",
-          project: "Marketing",
-        },
-      ],
-      done: [
-        {
-          id: "12",
-          title: "Domain setup",
-          description: "Register domain and configure DNS",
-          completed: true,
-          priority: "normal",
-          color: "blue",
-          project: "Infrastructure",
-        },
-      ],
-    },
-  },
-];
 
 export default function BoardsPage() {
   const { isDarkMode } = useTheme();
-  const [selectedProject, setSelectedProject] = useState(mockProjects[0]);
+  const [selectedBoardId, setSelectedBoardId] = useState<Id<"boards"> | null>(
+    null,
+  );
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [taskModalState, setTaskModalState] = useState<{
+    isOpen: boolean;
+    mode: "create" | "edit";
+    columnId?: Id<"columns">;
+    taskId?: Id<"tasks">;
+  }>({
+    isOpen: false,
+    mode: "create",
+  });
+
+  // Drag and drop sensors - must be called unconditionally
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
+
+  // Fetch real data from Convex
+  const boards = useQuery(api.tasks.getBoards);
+  const projects = useQuery(api.projects.getProjects, {});
+
+  // Get columns and tasks for selected board
+  const columns = useQuery(
+    api.tasks.getColumns,
+    selectedBoardId ? { boardId: selectedBoardId } : "skip",
+  );
+
+  // Mutations
+  const updateTaskPosition = useMutation(api.tasks.updateTaskPosition);
+
+  // Set default board if not selected
+  React.useEffect(() => {
+    if (boards && boards.length > 0 && !selectedBoardId) {
+      setSelectedBoardId(boards[0]._id);
+    }
+  }, [boards, selectedBoardId]);
+
+  // Show loading state
+  if (boards === undefined || projects === undefined) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div
+          className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+        >
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state for columns
+  if (selectedBoardId && columns === undefined) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div
+          className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+        >
+          Loading board...
+        </div>
+      </div>
+    );
+  }
+
+  // Drag and drop sensors - moved to top to avoid conditional hook calls
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveTask(event.active.data.current?.task || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+
+    if (!over) return;
+
+    const taskId = active.id as Id<"tasks">;
+    const newColumnId = over.id as Id<"columns">;
+
+    // Find the task to get current position
+    const task = activeTask;
+    if (!task) return;
+
+    // Calculate new position (for now, just append to end)
+    const newPosition = 0; // This could be calculated based on drop position
+
+    try {
+      await updateTaskPosition({
+        taskId,
+        newColumnId,
+        newPosition,
+      });
+    } catch (error) {
+      console.error("Failed to update task position:", error);
+    }
+  };
+
+  const openCreateTaskModal = (columnId: Id<"columns">) => {
+    setTaskModalState({
+      isOpen: true,
+      mode: "create",
+      columnId,
+    });
+  };
+
+  const openEditTaskModal = (taskId: Id<"tasks">) => {
+    setTaskModalState({
+      isOpen: true,
+      mode: "edit",
+      taskId,
+    });
+  };
+
+  const closeTaskModal = () => {
+    setTaskModalState({
+      isOpen: false,
+      mode: "create",
+    });
+  };
 
   const themeClasses = {
     projectSidebar: isDarkMode
@@ -294,178 +191,239 @@ export default function BoardsPage() {
     },
   };
 
-  const getTaskColor = (color: string, isDark: boolean) => {
-    const colors = {
-      blue: isDark
-        ? "bg-blue-500/15 text-blue-300 border-blue-400/30 shadow-blue-900/20"
-        : "bg-blue-50/95 text-blue-800 border-blue-200/60 shadow-blue-200/30",
-      green: isDark
-        ? "bg-green-500/15 text-green-300 border-green-400/30 shadow-green-900/20"
-        : "bg-green-50/95 text-green-800 border-green-200/60 shadow-green-200/30",
-      orange: isDark
-        ? "bg-orange-500/15 text-orange-300 border-orange-400/30 shadow-orange-900/20"
-        : "bg-orange-50/95 text-orange-800 border-orange-200/60 shadow-orange-200/30",
-      purple: isDark
-        ? "bg-purple-500/15 text-purple-300 border-purple-400/30 shadow-purple-900/20"
-        : "bg-purple-50/95 text-purple-800 border-purple-200/60 shadow-purple-200/30",
-      pink: isDark
-        ? "bg-pink-500/15 text-pink-300 border-pink-400/30 shadow-pink-900/20"
-        : "bg-pink-50/95 text-pink-800 border-pink-200/60 shadow-pink-200/30",
+  const DraggableTaskCard = ({ task }: { task: Task }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({
+      id: task._id,
+      data: { task },
+    });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
     };
-    return colors[color as keyof typeof colors] || colors.blue;
-  };
 
-  const getPriorityColor = (priority: string, isDark: boolean) => {
-    switch (priority) {
-      case "urgent":
-        return isDark
-          ? "bg-red-500/20 text-red-300 border-red-400/40"
-          : "bg-red-100 text-red-700 border-red-300/60";
-      case "normal":
-        return isDark
-          ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
-          : "bg-blue-100 text-blue-700 border-blue-300/60";
-      case "low":
-        return isDark
-          ? "bg-green-500/20 text-green-300 border-green-400/40"
-          : "bg-green-100 text-green-700 border-green-300/60";
-      default:
-        return isDark
-          ? "bg-gray-500/20 text-gray-300 border-gray-400/40"
-          : "bg-gray-100 text-gray-700 border-gray-300/60";
-    }
-  };
+    const getTaskColor = () => {
+      // Default blue color for tasks
+      return isDarkMode
+        ? "bg-blue-500/15 text-blue-300 border-blue-400/30 shadow-blue-900/20"
+        : "bg-blue-50/95 text-blue-800 border-blue-200/60 shadow-blue-200/30";
+    };
 
-  const TaskCard = ({
-    task,
-    columnType,
-  }: {
-    task: Task;
-    columnType: string;
-  }) => (
-    <div
-      className={`p-3 rounded-xl cursor-pointer backdrop-blur-sm border shadow-md transition-all duration-200 hover:shadow-lg group ${getTaskColor(task.color, isDarkMode)}`}
-    >
-      {/* Task Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-start space-x-2 flex-1">
-          <button className="mt-1 transition-colors">
-            {columnType === "done" ? (
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-            ) : (
-              <Circle className="w-4 h-4 opacity-60" />
-            )}
-          </button>
-          <span
-            className={`font-medium text-sm leading-tight flex-1 ${task.completed ? "line-through opacity-60" : ""}`}
-          >
-            {task.title}
-          </span>
-        </div>
-        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded">
-          <MoreHorizontal className="w-4 h-4 opacity-60" />
-        </button>
-      </div>
+    const getPriorityColor = (priority?: string) => {
+      switch (priority) {
+        case "urgent":
+          return isDarkMode
+            ? "bg-red-500/20 text-red-300 border-red-400/40"
+            : "bg-red-100 text-red-700 border-red-300/60";
+        case "normal":
+          return isDarkMode
+            ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
+            : "bg-blue-100 text-blue-700 border-blue-300/60";
+        case "low":
+          return isDarkMode
+            ? "bg-green-500/20 text-green-300 border-green-400/40"
+            : "bg-green-100 text-green-700 border-green-300/60";
+        default:
+          return isDarkMode
+            ? "bg-gray-500/20 text-gray-300 border-gray-400/40"
+            : "bg-gray-100 text-gray-700 border-gray-300/60";
+      }
+    };
 
-      {/* Task Description */}
-      {task.description && (
-        <p className="text-xs opacity-75 mb-2 leading-relaxed">
-          {task.description}
-        </p>
-      )}
-
-      {/* Task Footer */}
-      <div className="flex items-center justify-between">
-        <span
-          className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
-            isDarkMode
-              ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
-              : "bg-white/80 text-gray-600 border-gray-300/60"
-          }`}
-        >
-          {task.project}
-        </span>
-        <span
-          className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${getPriorityColor(task.priority, isDarkMode)}`}
-        >
-          {task.priority}
-        </span>
-      </div>
-    </div>
-  );
-
-  const Column = ({
-    title,
-    tasks,
-    columnType,
-  }: {
-    title: string;
-    tasks: Task[];
-    columnType: string;
-  }) => (
-    <div className="flex-1 min-w-0 h-full flex flex-col">
-      {/* Column Header */}
-      <div className="flex items-center justify-between mb-4 px-1">
-        <div className="flex items-center space-x-3">
-          <div
-            className={`p-2 rounded-xl backdrop-blur-sm border shadow-lg ${
-              columnType === "todo"
-                ? isDarkMode
-                  ? "bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-blue-900/30"
-                  : "bg-blue-50/80 text-blue-600 border-blue-200/70 shadow-blue-200/40"
-                : columnType === "progress"
-                  ? isDarkMode
-                    ? "bg-orange-500/15 text-orange-400 border-orange-500/30 shadow-orange-900/30"
-                    : "bg-orange-50/80 text-orange-600 border-orange-200/70 shadow-orange-200/40"
-                  : isDarkMode
-                    ? "bg-green-500/15 text-green-400 border-green-500/30 shadow-green-900/30"
-                    : "bg-green-50/80 text-green-600 border-green-200/70 shadow-green-200/40"
-            }`}
-          >
-            {columnType === "todo" ? (
-              <Target className="w-4 h-4" />
-            ) : columnType === "progress" ? (
-              <Clock className="w-4 h-4" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4" />
-            )}
-          </div>
-          <div>
-            <h3 className={`font-medium ${themeClasses.text.primary}`}>
-              {title}
-            </h3>
-            <p className={`text-sm ${themeClasses.text.tertiary}`}>
-              {tasks.length} tasks
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Column Content */}
+    return (
       <div
-        className={`flex-1 min-h-0 overflow-y-auto scrollbar-none rounded-lg p-3 backdrop-blur-sm border ${
-          isDarkMode
-            ? "bg-gray-800/30 border-gray-700/40"
-            : "bg-gray-50/80 border-gray-200/50"
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={`p-3 rounded-xl cursor-grab backdrop-blur-sm border shadow-md transition-all duration-200 hover:shadow-lg group ${getTaskColor()} ${
+          isDragging ? "opacity-50 rotate-3 scale-105" : ""
         }`}
       >
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} columnType={columnType} />
-          ))}
-          <button
-            className={`w-full p-3 rounded-lg border-2 border-dashed transition-all duration-200 text-sm font-medium ${
+        {/* Task Header */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-start space-x-2 flex-1">
+            <button className="mt-1 transition-colors">
+              {task.status === "done" ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <Circle className="w-4 h-4 opacity-60" />
+              )}
+            </button>
+            <span
+              className={`font-medium text-sm leading-tight flex-1 ${
+                task.status === "done" ? "line-through opacity-60" : ""
+              }`}
+            >
+              {task.title}
+            </span>
+          </div>
+          <div className="flex space-x-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openEditTaskModal(task._id);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded"
+            >
+              <Edit className="w-4 h-4 opacity-60" />
+            </button>
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded">
+              <MoreHorizontal className="w-4 h-4 opacity-60" />
+            </button>
+          </div>
+        </div>
+
+        {/* Task Description */}
+        {task.description && (
+          <p className="text-xs opacity-75 mb-2 leading-relaxed">
+            {task.description}
+          </p>
+        )}
+
+        {/* Task Footer */}
+        <div className="flex items-center justify-between">
+          <span
+            className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${
               isDarkMode
-                ? "border-gray-600 hover:border-gray-500 text-gray-400 hover:bg-gray-700/30"
-                : "border-gray-300 hover:border-gray-400 text-gray-600 hover:bg-gray-50/50"
+                ? "bg-gray-700/50 text-gray-300 border-gray-600/50"
+                : "bg-white/80 text-gray-600 border-gray-300/60"
             }`}
           >
-            + Add task
-          </button>
+            {task.status}
+          </span>
+          {task.priority && (
+            <span
+              className={`text-xs px-2 py-1 rounded-lg font-medium backdrop-blur-sm border ${getPriorityColor(task.priority)}`}
+            >
+              {task.priority}
+            </span>
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const DroppableColumn = ({ column }: { column: Column }) => {
+    const tasks = useQuery(api.tasks.getTasks, { columnId: column._id });
+    const { setNodeRef, isOver } = useDroppable({
+      id: column._id,
+    });
+
+    if (tasks === undefined) {
+      return (
+        <div className="flex-1 min-w-0 h-full flex flex-col">
+          <div className="flex items-center justify-center h-32">
+            <div
+              className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+            >
+              Loading tasks...
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const getColumnIcon = (position: number) => {
+      switch (position) {
+        case 0:
+          return <Target className="w-4 h-4" />;
+        case 1:
+          return <Clock className="w-4 h-4" />;
+        case 2:
+          return <CheckCircle2 className="w-4 h-4" />;
+        default:
+          return <Circle className="w-4 h-4" />;
+      }
+    };
+
+    const getColumnColor = (position: number) => {
+      switch (position) {
+        case 0:
+          return isDarkMode
+            ? "bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-blue-900/30"
+            : "bg-blue-50/80 text-blue-600 border-blue-200/70 shadow-blue-200/40";
+        case 1:
+          return isDarkMode
+            ? "bg-orange-500/15 text-orange-400 border-orange-500/30 shadow-orange-900/30"
+            : "bg-orange-50/80 text-orange-600 border-orange-200/70 shadow-orange-200/40";
+        case 2:
+          return isDarkMode
+            ? "bg-green-500/15 text-green-400 border-green-500/30 shadow-green-900/30"
+            : "bg-green-50/80 text-green-600 border-green-200/70 shadow-green-200/40";
+        default:
+          return isDarkMode
+            ? "bg-gray-500/15 text-gray-400 border-gray-500/30 shadow-gray-900/30"
+            : "bg-gray-50/80 text-gray-600 border-gray-200/70 shadow-gray-200/40";
+      }
+    };
+
+    return (
+      <div className="flex-1 min-w-0 h-full flex flex-col">
+        {/* Column Header */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center space-x-3">
+            <div
+              className={`p-2 rounded-xl backdrop-blur-sm border shadow-lg ${getColumnColor(column.position)}`}
+            >
+              {getColumnIcon(column.position)}
+            </div>
+            <div>
+              <h3 className={`font-medium ${themeClasses.text.primary}`}>
+                {column.name}
+              </h3>
+              <p className={`text-sm ${themeClasses.text.tertiary}`}>
+                {tasks.length} tasks
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Column Content - Droppable Area */}
+        <div
+          ref={setNodeRef}
+          className={`flex-1 min-h-0 overflow-y-auto scrollbar-none rounded-lg p-3 backdrop-blur-sm border transition-all duration-200 ${
+            isOver
+              ? isDarkMode
+                ? "bg-blue-800/40 border-blue-500/60 shadow-lg shadow-blue-900/30"
+                : "bg-blue-50/90 border-blue-300/70 shadow-lg shadow-blue-200/40"
+              : isDarkMode
+                ? "bg-gray-800/30 border-gray-700/40"
+                : "bg-gray-50/80 border-gray-200/50"
+          }`}
+        >
+          <SortableContext
+            items={tasks.map((task) => task._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {tasks.map((task) => (
+                <DraggableTaskCard key={task._id} task={task} />
+              ))}
+              <button
+                onClick={() => openCreateTaskModal(column._id)}
+                className={`w-full p-3 rounded-lg border-2 border-dashed transition-all duration-200 text-sm font-medium ${
+                  isDarkMode
+                    ? "border-gray-600 hover:border-gray-500 text-gray-400 hover:bg-gray-700/30"
+                    : "border-gray-300 hover:border-gray-400 text-gray-600 hover:bg-gray-50/50"
+                }`}
+              >
+                <Plus className="w-4 h-4 inline mr-2" />
+                Add task
+              </button>
+            </div>
+          </SortableContext>
+        </div>
+      </div>
+    );
+  };
 
   const ProjectSidebar = () => (
     <div className={`w-80 ${themeClasses.projectSidebar} flex flex-col`}>
@@ -512,22 +470,13 @@ export default function BoardsPage() {
           </div>
 
           <div className="space-y-2">
-            {mockProjects.map((project) => {
-              const isSelected = selectedProject.id === project.id;
-              const totalTasks =
-                project.tasks.todo.length +
-                project.tasks.inProgress.length +
-                project.tasks.done.length;
-              const completedTasks = project.tasks.done.length;
-              const progressPercentage =
-                totalTasks > 0
-                  ? Math.round((completedTasks / totalTasks) * 100)
-                  : 0;
+            {boards.map((board) => {
+              const isSelected = selectedBoardId === board._id;
 
               return (
                 <button
-                  key={project.id}
-                  onClick={() => setSelectedProject(project)}
+                  key={board._id}
+                  onClick={() => setSelectedBoardId(board._id)}
                   className={`w-full p-2.5 rounded-lg transition-all duration-200 text-left group border backdrop-blur-md ${
                     isSelected
                       ? isDarkMode
@@ -539,47 +488,20 @@ export default function BoardsPage() {
                   }`}
                 >
                   <div className="flex items-start space-x-2.5 mb-2">
-                    <div
-                      className={`w-3 h-3 rounded-full mt-0.5 flex-shrink-0 shadow-sm ${
-                        project.color === "purple"
-                          ? "bg-purple-500"
-                          : project.color === "blue"
-                            ? "bg-blue-500"
-                            : project.color === "green"
-                              ? "bg-green-500"
-                              : project.color === "orange"
-                                ? "bg-orange-500"
-                                : "bg-pink-500"
-                      }`}
-                    />
+                    <div className="w-3 h-3 rounded-full mt-0.5 flex-shrink-0 shadow-sm bg-purple-500" />
                     <div className="min-w-0 flex-1">
                       <h3 className="text-xs font-semibold leading-tight truncate">
-                        {project.name}
+                        {board.name}
                       </h3>
                       <p className="text-xs opacity-60 leading-tight mt-0.5 line-clamp-1">
-                        {project.description}
+                        {board.description || "Board description"}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-xs opacity-75">
-                      <span>{totalTasks} tasks</span>
-                      <span>•</span>
-                      <span>{completedTasks} done</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-xs opacity-60">
-                        {progressPercentage}%
-                      </span>
-                      <div
-                        className={`w-8 h-1.5 rounded-full ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}
-                      >
-                        <div
-                          className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                          style={{ width: `${progressPercentage}%` }}
-                        ></div>
-                      </div>
+                      <span>Board</span>
                     </div>
                   </div>
                 </button>
@@ -599,51 +521,60 @@ export default function BoardsPage() {
     </div>
   );
 
-  // Helper function to get column titles based on project type
-  const getColumnTitles = () => {
-    if (selectedProject.name === "Plans") {
-      return {
-        todo: "Today",
-        progress: "This Week",
-        done: "This Month",
-      };
-    }
-    return {
-      todo: "To Do",
-      progress: "In Progress",
-      done: "Done",
-    };
-  };
-
-  const columnTitles = getColumnTitles();
+  if (!selectedBoardId || !columns) {
+    return (
+      <div className="flex h-full overflow-hidden">
+        <ProjectSidebar />
+        <main className="flex-1 overflow-hidden flex items-center justify-center">
+          <div
+            className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+          >
+            {boards.length === 0
+              ? "No boards available"
+              : "Select a board to get started"}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Project Sidebar */}
-      <ProjectSidebar />
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex h-full overflow-hidden">
+        {/* Project Sidebar */}
+        <ProjectSidebar />
 
-      {/* Main Kanban Area */}
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full p-6">
-          <div className="h-full grid grid-cols-3 gap-6">
-            <Column
-              title={columnTitles.todo}
-              tasks={selectedProject.tasks.todo}
-              columnType="todo"
-            />
-            <Column
-              title={columnTitles.progress}
-              tasks={selectedProject.tasks.inProgress}
-              columnType="progress"
-            />
-            <Column
-              title={columnTitles.done}
-              tasks={selectedProject.tasks.done}
-              columnType="done"
-            />
+        {/* Main Kanban Area */}
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full p-6">
+            <div className="h-full grid grid-cols-3 gap-6">
+              {columns
+                .sort((a, b) => a.position - b.position)
+                .map((column) => (
+                  <DroppableColumn key={column._id} column={column} />
+                ))}
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeTask ? <DraggableTaskCard task={activeTask} /> : null}
+        </DragOverlay>
+      </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={taskModalState.isOpen}
+        onClose={closeTaskModal}
+        columnId={taskModalState.columnId}
+        taskId={taskModalState.taskId}
+        mode={taskModalState.mode}
+      />
+    </DndContext>
   );
 }

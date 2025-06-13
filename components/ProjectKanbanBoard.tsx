@@ -217,11 +217,11 @@ export default function ProjectKanbanBoard({
   // Theme classes
   const themeClasses = {
     container: isDarkMode
-      ? "bg-gray-900/60 backdrop-blur-xl text-gray-100"
-      : "bg-gray-50/80 backdrop-blur-xl text-gray-800",
+      ? "bg-gray-900/90 text-gray-100"
+      : "bg-gray-50/95 text-gray-800",
     header: isDarkMode
-      ? "bg-gray-800/60 backdrop-blur-xl border-b border-gray-700/50"
-      : "bg-white/80 backdrop-blur-xl border-b border-gray-200/60",
+      ? "bg-gray-800/80 border-b border-gray-700/50"
+      : "bg-white/90 border-b border-gray-200/60",
     text: {
       primary: isDarkMode ? "text-gray-100" : "text-gray-800",
       secondary: isDarkMode ? "text-gray-300" : "text-gray-700",

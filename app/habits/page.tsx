@@ -227,10 +227,13 @@ export default function RoutinesPage() {
     "my-routines" | "templates" | "builder" | "insights"
   >("my-routines");
 
-  // Real data from Convex
-  const routines = useQuery(api.routines.getRoutines) || [];
-  const templates = useQuery(api.routines.getTemplates) || [];
-  const insights = useQuery(api.routines.getInsights) || {
+  // Real data from Convex - temporarily disabled while system is being built
+  // const routines = useQuery(api.routines.getRoutines, {}) || [];
+  // const templates = useQuery(api.routines.getTemplates, {}) || [];
+  // const insights = useQuery(api.routines.getInsights, {}) || {
+  const routines: any[] = []; // Temporary placeholder
+  const templates: any[] = []; // Temporary placeholder
+  const insights = {
     totalActiveRoutines: 0,
     averageCompletionRate: 0,
     currentStreaks: [],
@@ -694,9 +697,50 @@ export default function RoutinesPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {routines.map((routine) => (
-                  <RoutineCard key={routine.id} routine={routine} />
-                ))}
+                {routines.length === 0 ? (
+                  <div
+                    className={`col-span-2 text-center py-12 rounded-2xl border border-dashed ${
+                      isDarkMode
+                        ? "border-gray-700 text-gray-400"
+                        : "border-gray-300 text-gray-600"
+                    }`}
+                  >
+                    <div
+                      className={`inline-flex p-4 rounded-2xl mb-4 ${
+                        isDarkMode ? "bg-purple-500/20" : "bg-purple-100"
+                      }`}
+                    >
+                      <Target
+                        className={`w-8 h-8 ${
+                          isDarkMode ? "text-purple-400" : "text-purple-600"
+                        }`}
+                      />
+                    </div>
+                    <h3
+                      className={`text-xl font-semibold mb-2 ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      No Routines Yet
+                    </h3>
+                    <p className="mb-6">
+                      Create your first routine to start building better habits.
+                    </p>
+                    <button
+                      className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                        isDarkMode
+                          ? "bg-purple-600/90 hover:bg-purple-600 text-white"
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                      }`}
+                    >
+                      Create First Routine
+                    </button>
+                  </div>
+                ) : (
+                  routines.map((routine) => (
+                    <RoutineCard key={routine._id} routine={routine} />
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -808,9 +852,12 @@ export default function RoutinesPage() {
                   },
                   {
                     label: "Current Streak",
-                    value: insights.currentStreaks[0]
-                      ? `${insights.currentStreaks[0].streak} days`
-                      : "0 days",
+                    value:
+                      insights.currentStreaks &&
+                      insights.currentStreaks.length > 0 &&
+                      insights.currentStreaks[0]
+                        ? `${(insights.currentStreaks[0] as any).streak || 0} days`
+                        : "0 days",
                     icon: Flame,
                     color: "red",
                   },

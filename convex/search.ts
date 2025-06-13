@@ -1,15 +1,14 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth } from "./utils";
-import { DataLoader } from "./dataLoaders";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Unified search across all entities
+// Universal search function
 export const search = query({
   args: {
     query: v.string(),
-    types: v.optional(v.array(v.string())), // ["tasks", "notes", "projects", "events"]
-    projectId: v.optional(v.id("projects")),
     limit: v.optional(v.number()),
+    projectId: v.optional(v.id("projects")),
+    types: v.optional(v.array(v.string())), // ["tasks", "projects", "events"]
   },
   returns: v.object({
     tasks: v.array(
@@ -18,23 +17,6 @@ export const search = query({
         title: v.string(),
         description: v.optional(v.string()),
         status: v.string(),
-        projectId: v.optional(v.id("projects")),
-        project: v.optional(
-          v.object({
-            _id: v.id("projects"),
-            name: v.string(),
-            color: v.optional(v.string()),
-          }),
-        ),
-        relevanceScore: v.number(),
-      }),
-    ),
-    notes: v.array(
-      v.object({
-        _id: v.id("notes"),
-        title: v.string(),
-        content: v.string(),
-        tags: v.optional(v.array(v.string())),
         projectId: v.optional(v.id("projects")),
         project: v.optional(
           v.object({
@@ -75,215 +57,150 @@ export const search = query({
     totalResults: v.number(),
   }),
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-    const limit = args.limit || 20;
-    const searchTypes = args.types || ["tasks", "notes", "projects", "events"];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return {
+        tasks: [],
+        projects: [],
+        events: [],
+        totalResults: 0,
+      };
+    }
 
-    const loader = new DataLoader(ctx);
-    const results: any = {
-      tasks: [],
-      notes: [],
-      projects: [],
-      events: [],
+    const limit = args.limit || 50;
+    const searchQuery = args.query.toLowerCase().trim();
+
+    if (!searchQuery) {
+      return {
+        tasks: [],
+        projects: [],
+        events: [],
+        totalResults: 0,
+      };
+    }
+
+    const searchTypes = args.types || ["tasks", "projects", "events"];
+
+    const results = {
+      tasks: [] as any[],
+      projects: [] as any[],
+      events: [] as any[],
       totalResults: 0,
     };
 
     // Search tasks
     if (searchTypes.includes("tasks")) {
-      let taskQuery = ctx.db
+      const taskMap = new Map();
+
+      // Search by title
+      const tasksByTitle = await ctx.db
         .query("tasks")
         .withSearchIndex("search_tasks", (q) =>
-          q.search("title", args.query).eq("userId", userId),
-        );
+          q.search("title", searchQuery).eq("userId", userId),
+        )
+        .take(limit);
 
-      if (args.projectId) {
-        taskQuery = taskQuery.filter((q) =>
-          q.eq(q.field("projectId"), args.projectId),
-        );
-      }
-
-      const tasks = await taskQuery.take(limit);
-
-      // Enrich with project data
-      const projectIds = tasks.map((t) => t.projectId);
-      const projects = await loader.loadProjects(projectIds);
-
-      results.tasks = tasks.map((task, index) => ({
-        ...task,
-        project: projects[index],
-        relevanceScore: calculateRelevanceScore(
-          args.query,
-          task.title,
-          task.description,
-        ),
-      }));
-    }
-
-    // Search notes
-    if (searchTypes.includes("notes")) {
-      // Search both title and content
-      const [titleResults, contentResults] = await Promise.all([
-        ctx.db
-          .query("notes")
-          .withSearchIndex("search_title", (q) =>
-            q.search("title", args.query).eq("userId", userId),
-          )
-          .take(limit / 2),
-        ctx.db
-          .query("notes")
-          .withSearchIndex("search_content", (q) =>
-            q.search("content", args.query).eq("userId", userId),
-          )
-          .take(limit / 2),
-      ]);
-
-      // Merge and dedupe results
-      const noteMap = new Map();
-      [...titleResults, ...contentResults].forEach((note) => {
-        if (!noteMap.has(note._id)) {
-          noteMap.set(note._id, note);
+      tasksByTitle.forEach((task, index) => {
+        if (!taskMap.has(task._id)) {
+          taskMap.set(task._id, {
+            ...task,
+            relevanceScore: 1.0 - index * 0.01,
+          });
         }
       });
 
-      const notes = Array.from(noteMap.values());
+      const tasks = Array.from(taskMap.values());
 
       // Filter by project if specified
-      const filteredNotes = args.projectId
-        ? notes.filter((n) => n.projectId === args.projectId)
-        : notes;
+      const filteredTasks = args.projectId
+        ? tasks.filter((t) => t.projectId === args.projectId)
+        : tasks;
 
-      // Enrich with project data
-      const projectIds = filteredNotes.map((n) => n.projectId);
-      const projects = await loader.loadProjects(projectIds);
+      // Get project data for tasks
+      const projectIds = filteredTasks.map((t) => t.projectId);
+      const projects = await Promise.all(
+        [...new Set(projectIds)].filter(Boolean).map((id) => ctx.db.get(id)),
+      );
 
-      results.notes = filteredNotes.map((note, index) => ({
-        ...note,
-        project: projects[index],
-        relevanceScore: calculateRelevanceScore(
-          args.query,
-          note.title,
-          note.content,
-        ),
+      results.tasks = filteredTasks.map((task, index) => ({
+        _id: task._id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        projectId: task.projectId,
+        project: task.projectId
+          ? projects.find((p) => p?._id === task.projectId) || null
+          : null,
+        relevanceScore: task.relevanceScore || 1.0 - index * 0.01,
       }));
     }
 
     // Search projects
     if (searchTypes.includes("projects")) {
-      const projects = await ctx.db
+      const projectsByName = await ctx.db
         .query("projects")
         .withIndex("by_user", (q) => q.eq("userId", userId))
-        .collect();
-
-      const matchingProjects = projects
-        .filter(
-          (p) =>
-            p.name.toLowerCase().includes(args.query.toLowerCase()) ||
-            (p.description &&
-              p.description.toLowerCase().includes(args.query.toLowerCase())),
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("name"), searchQuery),
+            q.eq(q.field("description"), searchQuery),
+          ),
         )
-        .slice(0, limit);
+        .take(limit);
 
-      results.projects = matchingProjects.map((project) => ({
-        ...project,
-        relevanceScore: calculateRelevanceScore(
-          args.query,
-          project.name,
-          project.description,
-        ),
+      results.projects = projectsByName.map((project, index) => ({
+        _id: project._id,
+        name: project.name,
+        description: project.description,
+        color: project.color,
+        relevanceScore: 1.0 - index * 0.01,
       }));
     }
 
     // Search events
     if (searchTypes.includes("events")) {
-      const events = await ctx.db
+      const eventsByTitle = await ctx.db
         .query("events")
         .withIndex("by_user", (q) => q.eq("userId", userId))
-        .collect();
-
-      const matchingEvents = events
-        .filter(
-          (e) =>
-            e.title.toLowerCase().includes(args.query.toLowerCase()) ||
-            (e.description &&
-              e.description.toLowerCase().includes(args.query.toLowerCase())),
+        .filter((q) =>
+          q.or(
+            q.eq(q.field("title"), searchQuery),
+            q.eq(q.field("description"), searchQuery),
+          ),
         )
-        .slice(0, limit);
+        .take(limit);
 
-      // Filter by project if specified
       const filteredEvents = args.projectId
-        ? matchingEvents.filter((e) => e.projectId === args.projectId)
-        : matchingEvents;
+        ? eventsByTitle.filter((e) => e.projectId === args.projectId)
+        : eventsByTitle;
 
-      // Enrich with project data
+      // Get project data for events
       const projectIds = filteredEvents.map((e) => e.projectId);
-      const projects = await loader.loadProjects(projectIds);
+      const projects = await Promise.all(
+        [...new Set(projectIds)].filter(Boolean).map((id) => ctx.db.get(id)),
+      );
 
       results.events = filteredEvents.map((event, index) => ({
-        ...event,
-        project: projects[index],
-        relevanceScore: calculateRelevanceScore(
-          args.query,
-          event.title,
-          event.description,
-        ),
+        _id: event._id,
+        title: event.title,
+        description: event.description,
+        startDate: event.startDate,
+        projectId: event.projectId,
+        project: event.projectId
+          ? projects.find((p) => p?._id === event.projectId) || null
+          : null,
+        relevanceScore: 1.0 - index * 0.01,
       }));
     }
 
-    // Sort all results by relevance
-    Object.keys(results).forEach((key) => {
-      if (key !== "totalResults" && Array.isArray(results[key])) {
-        results[key] = results[key]
-          .sort((a: any, b: any) => b.relevanceScore - a.relevanceScore)
-          .slice(0, Math.ceil(limit / searchTypes.length));
-      }
-    });
-
     results.totalResults =
-      results.tasks.length +
-      results.notes.length +
-      results.projects.length +
-      results.events.length;
+      results.tasks.length + results.projects.length + results.events.length;
 
     return results;
   },
 });
 
-// Simple relevance scoring
-function calculateRelevanceScore(
-  query: string,
-  title: string,
-  content?: string,
-): number {
-  const queryLower = query.toLowerCase();
-  const titleLower = title.toLowerCase();
-  const contentLower = content?.toLowerCase() || "";
-
-  let score = 0;
-
-  // Exact title match gets highest score
-  if (titleLower === queryLower) score += 100;
-  // Title starts with query
-  else if (titleLower.startsWith(queryLower)) score += 50;
-  // Title contains query
-  else if (titleLower.includes(queryLower)) score += 25;
-
-  // Content matches
-  if (contentLower.includes(queryLower)) score += 10;
-
-  // Word matches (split by spaces)
-  const queryWords = queryLower.split(/\s+/);
-  const titleWords = titleLower.split(/\s+/);
-  const contentWords = contentLower.split(/\s+/);
-
-  queryWords.forEach((word) => {
-    if (titleWords.includes(word)) score += 5;
-    if (contentWords.includes(word)) score += 2;
-  });
-
-  return score;
-}
-
-// Get search suggestions/autocomplete
+// Get search suggestions for autocomplete
 export const getSearchSuggestions = query({
   args: {
     query: v.string(),
@@ -291,77 +208,80 @@ export const getSearchSuggestions = query({
   },
   returns: v.array(
     v.object({
-      text: v.string(),
-      type: v.string(),
       id: v.string(),
+      text: v.string(),
+      type: v.string(), // "task", "project", "event", "tag"
     }),
   ),
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-    const limit = args.limit || 10;
-    const queryLower = args.query.toLowerCase();
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
-    const suggestions: Array<{ text: string; type: string; id: string }> = [];
+    const limit = args.limit || 10;
+    const searchQuery = args.query.toLowerCase().trim();
+
+    if (!searchQuery || searchQuery.length < 2) return [];
+
+    const suggestions: Array<{ id: string; text: string; type: string }> = [];
 
     // Get project suggestions
     const projects = await ctx.db
       .query("projects")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .filter((q) => q.gte(q.field("name"), searchQuery))
+      .take(5);
 
-    projects
-      .filter((p) => p.name.toLowerCase().includes(queryLower))
-      .slice(0, 3)
-      .forEach((p) => {
+    projects.forEach((project) => {
+      if (project.name.toLowerCase().includes(searchQuery)) {
         suggestions.push({
-          text: p.name,
+          id: project._id,
+          text: project.name,
           type: "project",
-          id: p._id,
         });
-      });
+      }
+    });
 
     // Get task suggestions
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .filter((q) => q.gte(q.field("title"), searchQuery))
+      .take(5);
 
-    tasks
-      .filter((t) => t.title.toLowerCase().includes(queryLower))
-      .slice(0, 5)
-      .forEach((t) => {
+    tasks.forEach((task) => {
+      if (task.title.toLowerCase().includes(searchQuery)) {
         suggestions.push({
-          text: t.title,
+          id: task._id,
+          text: task.title,
           type: "task",
-          id: t._id,
         });
-      });
-
-    // Get tag suggestions from notes
-    const notes = await ctx.db
-      .query("notes")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const allTags = new Set<string>();
-    notes.forEach((note) => {
-      note.tags?.forEach((tag) => {
-        if (tag.toLowerCase().includes(queryLower)) {
-          allTags.add(tag);
-        }
-      });
+      }
     });
 
-    Array.from(allTags)
-      .slice(0, 3)
-      .forEach((tag) => {
-        suggestions.push({
-          text: tag,
-          type: "tag",
-          id: tag,
-        });
-      });
+    // Get event suggestions
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) => q.gte(q.field("title"), searchQuery))
+      .take(5);
 
-    return suggestions.slice(0, limit);
+    events.forEach((event) => {
+      if (event.title.toLowerCase().includes(searchQuery)) {
+        suggestions.push({
+          id: event._id,
+          text: event.title,
+          type: "event",
+        });
+      }
+    });
+
+    // Sort by relevance and limit
+    return suggestions
+      .sort((a, b) => {
+        const aMatch = a.text.toLowerCase().indexOf(searchQuery);
+        const bMatch = b.text.toLowerCase().indexOf(searchQuery);
+        return aMatch - bMatch;
+      })
+      .slice(0, limit);
   },
 });
