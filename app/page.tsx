@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Plus,
   ArrowRight,
@@ -86,12 +86,31 @@ const FocusButton = ({
   );
 };
 
+interface Task {
+  _id: Id<"tasks">;
+  title: string;
+  description?: string;
+  status: string;
+  priority?: string;
+  dueDate?: number;
+  projectId?: Id<"projects">;
+  columnId?: Id<"columns">;
+  position: number;
+  userId: Id<"users">;
+  assignedTo?: Id<"users">;
+  tags?: string[];
+  timeEstimate?: number;
+  completedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 const TodayTask = ({
   task,
   isDarkMode,
   onClick,
 }: {
-  task: any;
+  task: Task;
   isDarkMode: boolean;
   onClick?: () => void;
 }) => (
@@ -133,7 +152,9 @@ const TodayTask = ({
 function AuthenticatedContent() {
   const { isDarkMode } = useTheme();
   const { signOut } = useAuthActions();
-  const currentDate = new Date();
+
+  // Optimize currentDate to prevent unnecessary re-renders
+  const currentDate = useMemo(() => new Date(), []);
 
   // Fetch minimal data needed for focus
   const projects = useQuery(api.projects.getProjects, {});
@@ -168,7 +189,7 @@ function AuthenticatedContent() {
   const [taskModalState, setTaskModalState] = React.useState<{
     isOpen: boolean;
     mode: "create" | "edit";
-    columnId?: string;
+    columnId?: Id<"columns">;
     taskId?: Id<"tasks">;
   }>({
     isOpen: false,
@@ -367,7 +388,7 @@ function AuthenticatedContent() {
                     <h2
                       className={`text-xl font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
                     >
-                      Today's Focus
+                      Today&apos;s Focus
                     </h2>
                   </div>
                   <span
@@ -479,7 +500,11 @@ function AuthenticatedContent() {
                 <Calendar className="w-4 h-4 mr-2" />
                 Calendar
               </FocusButton>
-              <FocusButton variant="ghost" isDarkMode={isDarkMode}>
+              <FocusButton
+                variant="ghost"
+                isDarkMode={isDarkMode}
+                onClick={() => (window.location.href = "/boards")}
+              >
                 View All Projects
                 <ArrowRight className="w-4 h-4 ml-2" />
               </FocusButton>

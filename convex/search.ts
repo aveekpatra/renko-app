@@ -117,9 +117,9 @@ export const search = query({
         : tasks;
 
       // Get project data for tasks
-      const projectIds = filteredTasks.map((t) => t.projectId);
+      const projectIds = filteredTasks.map((t) => t.projectId).filter(Boolean);
       const projects = await Promise.all(
-        [...new Set(projectIds)].filter(Boolean).map((id) => ctx.db.get(id)),
+        [...new Set(projectIds)].map((id) => ctx.db.get(id!)),
       );
 
       results.tasks = filteredTasks.map((task, index) => ({
@@ -175,9 +175,9 @@ export const search = query({
         : eventsByTitle;
 
       // Get project data for events
-      const projectIds = filteredEvents.map((e) => e.projectId);
+      const projectIds = filteredEvents.map((e) => e.projectId).filter(Boolean);
       const projects = await Promise.all(
-        [...new Set(projectIds)].filter(Boolean).map((id) => ctx.db.get(id)),
+        [...new Set(projectIds)].map((id) => ctx.db.get(id!)),
       );
 
       results.events = filteredEvents.map((event, index) => ({

@@ -53,8 +53,8 @@ const mockBoards = [
 
 const navigationItems = [
   { icon: Layout, label: "Dashboard", href: "/" },
+  { icon: FolderKanban, label: "Projects", href: "/boards" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: Kanban, label: "Boards", href: "/boards" },
   { icon: Target, label: "Habits", href: "/habits" },
 ];
 

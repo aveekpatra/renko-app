@@ -168,7 +168,8 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_routine", ["routineId"])
     .index("by_block", ["blockId"])
-    .index("by_date", ["completedAt"]),
+    .index("by_date", ["completedAt"])
+    .index("by_user_and_date", ["userId", "completedAt"]),
 
   // Links between entities (for relationship tracking)
   links: defineTable({
@@ -177,6 +178,7 @@ export default defineSchema({
     toTable: v.string(),
     toId: v.string(),
     linkType: v.string(), // "blocks", "depends_on", "references", etc.
+    userId: v.id("users"), // owner of the link
     metadata: v.optional(
       v.object({
         description: v.optional(v.string()),
@@ -188,7 +190,8 @@ export default defineSchema({
   })
     .index("by_from", ["fromTable", "fromId"])
     .index("by_to", ["toTable", "toId"])
-    .index("by_type", ["linkType"]),
+    .index("by_type", ["linkType"])
+    .index("by_user", ["userId"]),
 
   // User preferences and settings
   userPreferences: defineTable({
