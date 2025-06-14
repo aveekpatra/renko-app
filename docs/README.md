@@ -4,17 +4,17 @@
 
 ## 🚀 **CURRENT STATUS**
 
-### ✅ **FULLY IMPLEMENTED BACKEND + CALENDAR FIXES**
+### ✅ **FULLY IMPLEMENTED BACKEND + TYPESCRIPT MIGRATION COMPLETE**
 
 - **Auth**: Password + Google OAuth (Convex Auth) ✅
-- **Database**: 13 interconnected tables with proper indexing ✅
-- **API**: 49 functions across 6 backend files ✅
-- **Frontend**: 6 pages with real Convex data integration ✅
-- **Components**: 13+ reusable components with dynamic data ✅
+- **Database**: 12 interconnected tables with proper indexing ✅
+- **API**: 42 functions across 15 backend files ✅
+- **Frontend**: 5 pages with real Convex data integration ✅
+- **Components**: 7 reusable components with dynamic data ✅
 - **TypeScript**: All compilation errors resolved ✅
+- **Schema Migration**: Complete boards→projects migration ✅
 - **Sample Data**: Comprehensive demo data system ✅
-- **Calendar Widget**: Drag & drop functionality fully working ✅
-- **Data Integrity**: All corrupted timestamps repaired ✅
+- **Data Integrity**: Clean schema with consistent relationships ✅
 
 ### 📁 **PROJECT STRUCTURE**
 
@@ -23,26 +23,35 @@ app/
 ├── page.tsx           # Dashboard with real Convex data
 ├── boards/page.tsx    # Kanban management
 ├── calendar/page.tsx  # Calendar with events API
-├── notes/page.tsx     # Notes with notebooks API
 ├── habits/page.tsx    # Routines with templates & insights
+├── projects/page.tsx  # Project management
 └── signin/page.tsx    # Multi-provider auth
 
 components/
 ├── UnifiedKanbanWidget.tsx  # Dynamic widget with real data
 ├── Sidebar.tsx             # Navigation with user data
-└── [13+ other components]
+├── TaskModal.tsx           # Task creation/editing
+├── ProjectKanbanBoard.tsx  # Kanban board component
+├── QuickTasks.tsx          # Quick task overview
+├── AppLayout.tsx           # Main layout wrapper
+└── ConvexClientProvider.tsx # Convex integration
 
 convex/
-├── schema.ts       # 13 tables with relationships
-├── projects.ts     # 7 functions - project management
-├── tasks.ts        # 6 functions - task management
-├── calendar.ts     # 6 functions - event management
-├── notes.ts        # 10 functions - notes & notebooks
-├── routines.ts     # 9 functions - routine templates & tracking
+├── schema.ts       # 11 tables with relationships (boards unified with projects)
+├── projects.ts     # 3 functions - project management
+├── tasks.ts        # 10 functions - task/project management (boards→projects)
+├── calendar.ts     # 8 functions - event management
+├── routines.ts     # 8 functions - routine templates & tracking
 ├── links.ts        # 8 functions - universal entity linking
 ├── search.ts       # 2 functions - full-text search
-├── sampleData.ts   # Demo data generation
-└── auth.ts         # Multi-provider auth setup
+├── users.ts        # 2 functions - user management
+├── sampleData.ts   # 1 function - demo data generation
+├── auth.ts         # 1 function - multi-provider auth setup
+├── types.ts        # Type definitions and constants
+├── utils.ts        # Utility functions
+├── dataLoaders.ts  # Data loading helpers
+├── http.ts         # HTTP endpoints
+└── auth.config.ts  # Auth configuration
 ```
 
 ## 🔌 **COMPLETE API COVERAGE**
@@ -50,24 +59,24 @@ convex/
 ### ✅ **PROJECTS API** (convex/projects.ts)
 
 ```typescript
-getProjects(status?): Project[]
-getProject(projectId): Project | null
+getProjects(): Project[]
 createProject(name, description?, color?, status?): projectId
 updateProject(projectId, updates): null
-deleteProject(projectId): null
-getProjectStats(projectId?, timeRange?): ProjectStats
-archiveProject(projectId, archive): null
 ```
 
 ### ✅ **TASKS API** (convex/tasks.ts)
 
 ```typescript
-getBoards(): Board[]
-getColumns(boardId): Column[]
+getBoards(): Project[] // Returns projects (boards unified)
+getColumns(boardId: Id<"projects">): Column[] // Expects project ID
 getTasks(columnId): Task[]
-createBoard(name, description?, projectId?): boardId
+createBoard(name, description?, projectId?): Id<"projects"> // Creates projects
 createTask(title, description?, columnId, priority?, dueDate?): taskId
+getTask(taskId): Task | null
+updateTask(taskId, updates): null
 updateTaskPosition(taskId, newColumnId, newPosition): null
+updateProject(projectId, updates): null
+deleteProject(projectId): null
 ```
 
 ### ✅ **CALENDAR API** (convex/calendar.ts)
@@ -79,22 +88,15 @@ updateEvent(eventId, updates): null
 deleteEvent(eventId): null
 getTodayEvents(): Event[]
 getUpcomingEvents(days?): Event[]
+fixBrokenEvents(): null
 fixAllBrokenEventsTemp(): null
 ```
 
-### ✅ **NOTES API** (convex/notes.ts)
+### ✅ **USERS API** (convex/users.ts)
 
 ```typescript
-getNotebooks(projectId?): Notebook[]
-createNotebook(name, description?, color?, projectId?): notebookId
-updateNotebook(notebookId, updates): null
-deleteNotebook(notebookId): null
-getNotes(notebookId?, projectId?, taskId?, routineId?, tags?, searchTerm?): Note[]
-createNote(title, content, tags?, projectId?, taskId?, routineId?, notebookId?): noteId
-updateNote(noteId, updates): null
-deleteNote(noteId): null
-getAllTags(): string[]
-getRecentNotes(): Note[]
+getUsers(): User[]
+getCurrentUser(): User | null
 ```
 
 ### ✅ **ROUTINES API** (convex/routines.ts)
@@ -120,7 +122,6 @@ getAllLinks(table, id, linkType?): {outgoing: Link[], incoming: Link[]}
 updateLink(linkId, metadata): null
 deleteLink(linkId): null
 linkTaskToRoutine(taskId, routineId, description?): linkId
-linkNoteToEntity(noteId, entityTable, entityId, linkType?): linkId
 getConnectionGraph(entityTable, entityId, depth?): {nodes: Node[], edges: Edge[]}
 ```
 
@@ -135,6 +136,12 @@ getSearchSuggestions(query): string[]
 
 ```typescript
 createSampleData(): null
+```
+
+### ✅ **AUTH API** (convex/auth.ts)
+
+```typescript
+auth, signIn, signOut, store, isAuthenticated; // Convex Auth exports
 ```
 
 ## 🛠️ **DEVELOPMENT GUIDE**
@@ -353,11 +360,11 @@ returns: v.array(
 
 ## 📊 **COMPREHENSIVE STATISTICS**
 
-- **Backend Functions**: 49 implemented across 6 files
-- **Database Tables**: 13 interconnected with proper indexing
+- **Backend Functions**: 42 implemented across 15 files
+- **Database Tables**: 11 interconnected with proper indexing (+ authTables)
 - **API Coverage**: 100% of core functionality + data repair utilities
-- **Frontend Pages**: 6 with real data integration
-- **Components**: 13+ reusable with dynamic data
+- **Frontend Pages**: 5 with real data integration
+- **Components**: 7 reusable with dynamic data
 - **Authentication**: Multi-provider (Password + Google OAuth)
 - **Real-time**: Full Convex real-time synchronization
 - **Search**: Full-text search across all entities

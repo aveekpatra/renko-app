@@ -8,40 +8,33 @@ import { authTables } from "@convex-dev/auth/server";
 export default defineSchema({
   ...authTables,
 
-  // Projects table
+  // Projects table (boards are projects with kanban view)
   projects: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
     color: v.optional(v.string()),
     status: v.optional(v.string()), // "active", "completed", "archived"
+    priority: v.optional(v.string()), // "low", "medium", "high", "critical"
+    dueDate: v.optional(v.number()), // Project deadline
+    tags: v.optional(v.array(v.string())), // Project tags
     userId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
-    .index("by_user_and_status", ["userId", "status"]),
+    .index("by_user_and_status", ["userId", "status"])
+    .index("by_priority", ["priority"])
+    .index("by_due_date", ["dueDate"]),
 
-  // Boards table for kanban boards
-  boards: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"]),
-
-  // Columns for kanban boards
+  // Columns for kanban boards (within projects)
   columns: defineTable({
     name: v.string(),
-    boardId: v.id("boards"),
+    projectId: v.id("projects"),
     position: v.number(),
     color: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_board", ["boardId"]),
+  }).index("by_project", ["projectId"]),
 
   // Tasks table
   tasks: defineTable({
@@ -50,9 +43,7 @@ export default defineSchema({
     status: v.string(), // "todo", "in-progress", "done", etc.
     priority: v.optional(v.string()), // "low", "medium", "high", "critical"
     dueDate: v.optional(v.number()),
-    projectId: v.optional(v.id("projects")),
-    boardId: v.optional(v.id("boards")),
-    columnId: v.optional(v.id("columns")),
+    columnId: v.id("columns"), // Tasks belong to columns, which belong to projects
     routineId: v.optional(v.id("routines")), // Link to routines
     eventId: v.optional(v.id("events")), // Link to calendar events
     position: v.number(),
@@ -65,15 +56,13 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_project", ["projectId"])
-    .index("by_board", ["boardId"])
     .index("by_column", ["columnId"])
     .index("by_routine", ["routineId"])
     .index("by_status", ["status"])
     .index("by_due_date", ["dueDate"])
     .searchIndex("search_tasks", {
       searchField: "title",
-      filterFields: ["userId", "status", "projectId"],
+      filterFields: ["userId", "status"],
     }),
 
   // Calendar events
@@ -83,7 +72,7 @@ export default defineSchema({
     startDate: v.number(),
     endDate: v.number(),
     allDay: v.boolean(),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // Events can be linked to projects
     taskId: v.optional(v.id("tasks")),
     routineId: v.optional(v.id("routines")), // Link to routines
     userId: v.id("users"),

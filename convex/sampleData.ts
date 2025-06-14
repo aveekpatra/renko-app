@@ -47,30 +47,16 @@ export const createSampleData = mutation({
       projectIds.push(projectId);
     }
 
-    // Create boards for each project
-    const boardIds = [];
-    for (let i = 0; i < projectIds.length; i++) {
-      const boardId = await ctx.db.insert("boards", {
-        name: `${sampleProjects[i].name} Board`,
-        description: `Kanban board for ${sampleProjects[i].name}`,
-        projectId: projectIds[i],
-        userId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
-      boardIds.push(boardId);
-    }
-
-    // Create columns for each board
+    // Create columns for each project (projects are now the boards)
     const columnIds = [];
     const columnNames = ["Todo", "In Progress", "Review", "Done"];
 
-    for (const boardId of boardIds) {
-      const boardColumnIds = [];
+    for (const projectId of projectIds) {
+      const projectColumnIds = [];
       for (let i = 0; i < columnNames.length; i++) {
         const columnId = await ctx.db.insert("columns", {
           name: columnNames[i],
-          boardId,
+          projectId,
           position: i,
           color:
             i === 0
@@ -82,9 +68,9 @@ export const createSampleData = mutation({
                   : "#10b981",
           createdAt: Date.now(),
         });
-        boardColumnIds.push(columnId);
+        projectColumnIds.push(columnId);
       }
-      columnIds.push(boardColumnIds);
+      columnIds.push(projectColumnIds);
     }
 
     // Sample tasks
@@ -158,8 +144,6 @@ export const createSampleData = mutation({
     // Create tasks
     for (let i = 0; i < sampleTasks.length; i++) {
       const task = sampleTasks[i];
-      const projectId = projectIds[task.projectIndex];
-      const boardId = boardIds[task.projectIndex];
       const columnId = columnIds[task.projectIndex][task.columnIndex];
 
       await ctx.db.insert("tasks", {
@@ -167,8 +151,6 @@ export const createSampleData = mutation({
         description: task.description,
         status: task.status,
         priority: task.priority,
-        projectId,
-        boardId,
         columnId,
         position: i,
         userId,
@@ -222,7 +204,6 @@ export const createSampleData = mutation({
     }
 
     console.log(`Created ${sampleProjects.length} projects`);
-    console.log(`Created ${boardIds.length} boards`);
     console.log(`Created ${columnIds.flat().length} columns`);
     console.log(`Created ${sampleTasks.length} tasks`);
     console.log(`Created ${sampleEvents.length} events`);

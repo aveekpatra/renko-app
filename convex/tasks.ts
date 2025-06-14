@@ -2,16 +2,20 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Get all boards for a user
+// Get all projects for a user (projects are the boards)
 export const getBoards = query({
   args: {},
   returns: v.array(
     v.object({
-      _id: v.id("boards"),
+      _id: v.id("projects"),
       _creationTime: v.number(),
       name: v.string(),
       description: v.optional(v.string()),
-      projectId: v.optional(v.id("projects")),
+      color: v.optional(v.string()),
+      status: v.optional(v.string()),
+      priority: v.optional(v.string()),
+      dueDate: v.optional(v.number()),
+      tags: v.optional(v.array(v.string())),
       userId: v.id("users"),
       createdAt: v.number(),
       updatedAt: v.number(),
@@ -24,21 +28,21 @@ export const getBoards = query({
     }
 
     return await ctx.db
-      .query("boards")
+      .query("projects")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
   },
 });
 
-// Get columns for a board
+// Get columns for a project
 export const getColumns = query({
-  args: { boardId: v.id("boards") },
+  args: { boardId: v.id("projects") },
   returns: v.array(
     v.object({
       _id: v.id("columns"),
       _creationTime: v.number(),
       name: v.string(),
-      boardId: v.id("boards"),
+      projectId: v.id("projects"),
       position: v.number(),
       color: v.optional(v.string()),
       createdAt: v.number(),
@@ -47,7 +51,7 @@ export const getColumns = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("columns")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_project", (q) => q.eq("projectId", args.boardId))
       .order("asc")
       .collect();
   },
@@ -65,12 +69,12 @@ export const getTasks = query({
       status: v.string(),
       priority: v.optional(v.string()),
       dueDate: v.optional(v.number()),
-      projectId: v.optional(v.id("projects")),
-      boardId: v.optional(v.id("boards")),
-      columnId: v.optional(v.id("columns")),
+      columnId: v.id("columns"),
       position: v.number(),
       userId: v.id("users"),
       assignedTo: v.optional(v.id("users")),
+      tags: v.optional(v.array(v.string())),
+      timeEstimate: v.optional(v.number()),
       createdAt: v.number(),
       updatedAt: v.number(),
     }),
@@ -84,14 +88,13 @@ export const getTasks = query({
   },
 });
 
-// Create a new board
+// Create a new project (with kanban board)
 export const createBoard = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
   },
-  returns: v.id("boards"),
+  returns: v.id("projects"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -99,10 +102,10 @@ export const createBoard = mutation({
     }
 
     const now = Date.now();
-    const boardId = await ctx.db.insert("boards", {
+    const projectId = await ctx.db.insert("projects", {
       name: args.name,
       description: args.description,
-      projectId: args.projectId,
+      status: "active",
       userId: userId,
       createdAt: now,
       updatedAt: now,
@@ -118,14 +121,14 @@ export const createBoard = mutation({
     for (let i = 0; i < defaultColumns.length; i++) {
       await ctx.db.insert("columns", {
         name: defaultColumns[i].name,
-        boardId,
+        projectId,
         position: i,
         color: defaultColumns[i].color,
         createdAt: now,
       });
     }
 
-    return boardId;
+    return projectId;
   },
 });
 
@@ -137,7 +140,6 @@ export const createTask = mutation({
     columnId: v.id("columns"),
     priority: v.optional(v.string()),
     dueDate: v.optional(v.number()),
-    projectId: v.optional(v.id("projects")),
     tags: v.optional(v.array(v.string())),
     assignedTo: v.optional(v.id("users")),
     timeEstimate: v.optional(v.number()),
@@ -154,18 +156,10 @@ export const createTask = mutation({
       throw new Error("Task title is required");
     }
 
-    // Get the column to find the board
+    // Get the column to validate it exists
     const column = await ctx.db.get(args.columnId);
     if (!column) {
       throw new Error("Column not found");
-    }
-
-    // Validate project if provided
-    if (args.projectId) {
-      const project = await ctx.db.get(args.projectId);
-      if (!project || project.userId !== userId) {
-        throw new Error("Project not found or not accessible");
-      }
     }
 
     // Validate assigned user if provided
@@ -189,8 +183,6 @@ export const createTask = mutation({
       status: "todo",
       priority: args.priority,
       dueDate: args.dueDate,
-      projectId: args.projectId,
-      boardId: column.boardId,
       columnId: args.columnId,
       position: tasksInColumn.length,
       userId: userId,
@@ -215,9 +207,7 @@ export const getTask = query({
       status: v.string(),
       priority: v.optional(v.string()),
       dueDate: v.optional(v.number()),
-      projectId: v.optional(v.id("projects")),
-      boardId: v.optional(v.id("boards")),
-      columnId: v.optional(v.id("columns")),
+      columnId: v.id("columns"),
       routineId: v.optional(v.id("routines")),
       eventId: v.optional(v.id("events")),
       position: v.number(),
@@ -254,7 +244,6 @@ export const updateTask = mutation({
     description: v.optional(v.string()),
     priority: v.optional(v.string()),
     dueDate: v.optional(v.number()),
-    projectId: v.optional(v.id("projects")),
     tags: v.optional(v.array(v.string())),
     assignedTo: v.optional(v.id("users")),
     timeEstimate: v.optional(v.number()),
@@ -291,16 +280,6 @@ export const updateTask = mutation({
 
     if (args.dueDate !== undefined) {
       updates.dueDate = args.dueDate;
-    }
-
-    if (args.projectId !== undefined) {
-      if (args.projectId) {
-        const project = await ctx.db.get(args.projectId);
-        if (!project || project.userId !== userId) {
-          throw new Error("Project not found or not accessible");
-        }
-      }
-      updates.projectId = args.projectId;
     }
 
     if (args.tags !== undefined) {
@@ -355,6 +334,112 @@ export const updateTaskPosition = mutation({
       updatedAt: Date.now(),
     });
 
+    return null;
+  },
+});
+
+// Update a project
+export const updateProject = mutation({
+  args: {
+    projectId: v.id("projects"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    priority: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
+    status: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.userId !== userId) {
+      throw new Error("Project not found or not accessible");
+    }
+
+    const updates: any = { updatedAt: Date.now() };
+
+    if (args.name !== undefined) {
+      if (!args.name.trim()) {
+        throw new Error("Project name is required");
+      }
+      updates.name = args.name.trim();
+    }
+
+    if (args.description !== undefined) {
+      updates.description = args.description?.trim();
+    }
+
+    if (args.color !== undefined) {
+      updates.color = args.color;
+    }
+
+    if (args.priority !== undefined) {
+      updates.priority = args.priority;
+    }
+
+    if (args.dueDate !== undefined) {
+      updates.dueDate = args.dueDate;
+    }
+
+    if (args.tags !== undefined) {
+      updates.tags = args.tags;
+    }
+
+    if (args.status !== undefined) {
+      updates.status = args.status;
+    }
+
+    await ctx.db.patch(args.projectId, updates);
+    return null;
+  },
+});
+
+// Delete a project
+export const deleteProject = mutation({
+  args: {
+    projectId: v.id("projects"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.userId !== userId) {
+      throw new Error("Project not found or not accessible");
+    }
+
+    // Delete all columns and tasks in this project
+    const columns = await ctx.db
+      .query("columns")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    for (const column of columns) {
+      // Delete all tasks in this column
+      const tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_column", (q) => q.eq("columnId", column._id))
+        .collect();
+
+      for (const task of tasks) {
+        await ctx.db.delete(task._id);
+      }
+
+      // Delete the column
+      await ctx.db.delete(column._id);
+    }
+
+    // Delete the project
+    await ctx.db.delete(args.projectId);
     return null;
   },
 });

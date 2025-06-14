@@ -1,12 +1,12 @@
 # 🔌 API Reference
 
-**For AI Development**: Complete Convex backend implementation with 49 functions across 6 files.
+**For AI Development**: Complete Convex backend implementation with 42 functions across 15 files.
 
 ## 🚀 **FULLY IMPLEMENTED BACKEND**
 
-All APIs are now fully implemented and integrated with the frontend. TypeScript compilation is complete with proper system field validation.
+All APIs are now fully implemented and integrated with the frontend. TypeScript compilation is complete with proper system field validation. Schema migration from boards→projects completed successfully.
 
-### **Projects API (convex/projects.ts)** ✅ **7 Functions**
+### **Projects API (convex/projects.ts)** ✅ **3 Functions**
 
 ```typescript
 // Get all projects for user with enriched data
@@ -81,31 +81,31 @@ export const archiveProject = mutation({
 });
 ```
 
-### **Tasks API (convex/tasks.ts)** ✅ **6 Functions**
+### **Tasks API (convex/tasks.ts)** ✅ **10 Functions**
 
 ```typescript
-// Get all boards for user
+// Get all projects for user (unified with boards)
 export const getBoards = query({
   args: {},
-  returns: v.array(BoardWithSystemFields),
+  returns: v.array(ProjectWithSystemFields),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
     return await ctx.db
-      .query("boards")
+      .query("projects")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
   },
 });
 
-// Get columns for a board
+// Get columns for a project
 export const getColumns = query({
-  args: { boardId: v.id("boards") },
+  args: { boardId: v.id("projects") },
   returns: v.array(ColumnWithSystemFields),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("columns")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_project", (q) => q.eq("projectId", args.boardId))
       .order("asc")
       .collect();
   },
@@ -124,19 +124,19 @@ export const getTasks = query({
   },
 });
 
-// Create new board with default columns
+// Create new project with default columns
 export const createBoard = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
     projectId: v.optional(v.id("projects")),
   },
-  returns: v.id("boards"),
+  returns: v.id("projects"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const boardId = await ctx.db.insert("boards", {
+    const projectId = await ctx.db.insert("projects", {
       ...args,
       userId,
       createdAt: Date.now(),
@@ -153,14 +153,14 @@ export const createBoard = mutation({
     for (let i = 0; i < defaultColumns.length; i++) {
       await ctx.db.insert("columns", {
         name: defaultColumns[i].name,
-        boardId,
+        projectId,
         position: i,
         color: defaultColumns[i].color,
         createdAt: Date.now(),
       });
     }
 
-    return boardId;
+    return projectId;
   },
 });
 
@@ -221,7 +221,7 @@ export const updateTaskPosition = mutation({
 });
 ```
 
-### **Calendar API (convex/calendar.ts)** ✅ **6 Functions**
+### **Calendar API (convex/calendar.ts)** ✅ **8 Functions**
 
 ```typescript
 // Get events for date range with enriched data
@@ -287,7 +287,7 @@ export const getUpcomingEvents = query({
 });
 ```
 
-### **Notes API (convex/notes.ts)** ✅ **10 Functions**
+### **Users API (convex/users.ts)** ✅ **2 Functions**
 
 ```typescript
 // NOTEBOOKS
@@ -474,7 +474,7 @@ export const deleteRoutine = mutation({
 });
 ```
 
-### **Universal Linking API (convex/links.ts)** ✅ **9 Functions**
+### **Universal Linking API (convex/links.ts)** ✅ **8 Functions**
 
 ```typescript
 // Core linking functions
@@ -667,9 +667,9 @@ await Promise.all(relatedItems.map((item) => ctx.db.delete(item._id)));
 await ctx.db.delete(args.parentId);
 ```
 
-## 🗃️ **DATABASE SCHEMA (13 Tables)**
+## 🗃️ **DATABASE SCHEMA (11 Tables + Auth Tables)**
 
-Complete schema with proper indexing and relationships:
+Complete schema with proper indexing and relationships (boards unified with projects):
 
 ```typescript
 export default defineSchema({
@@ -688,24 +688,13 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_user_and_status", ["userId", "status"]),
 
-  boards: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"]),
-
   columns: defineTable({
     name: v.string(),
-    boardId: v.id("boards"),
+    projectId: v.id("projects"),
     position: v.number(),
     color: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_board", ["boardId"]),
+  }).index("by_project", ["projectId"]),
 
   tasks: defineTable({
     title: v.string(),
@@ -714,7 +703,7 @@ export default defineSchema({
     priority: v.optional(v.string()),
     dueDate: v.optional(v.number()),
     projectId: v.optional(v.id("projects")),
-    boardId: v.optional(v.id("boards")),
+
     columnId: v.optional(v.id("columns")),
     routineId: v.optional(v.id("routines")),
     position: v.number(),
@@ -725,7 +714,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_project", ["projectId"])
-    .index("by_board", ["boardId"])
+
     .index("by_column", ["columnId"])
     .index("by_routine", ["routineId"])
     .index("by_status", ["status"])
@@ -793,6 +782,7 @@ export default defineSchema({
     .index("by_routine", ["routineId"]),
 
   // Additional tables: routineTemplates, routineBlocks, routineCompletions, routines, links
+  // Note: boards table removed - functionality unified with projects table
 });
 ```
 
