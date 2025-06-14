@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
+    <ConvexAuthNextjsServerProvider apiRoute="/api/auth" storage="localStorage">
       <html lang="en">
         <body className="antialiased font-sans" suppressHydrationWarning>
           <ConvexClientProvider>

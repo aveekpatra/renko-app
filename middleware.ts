@@ -15,8 +15,13 @@ const protectedRoutes = ["/", "/calendar", "/boards", "/habits"];
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   // Block any default Convex Auth signin/signup pages and redirect to custom ones
+  if (request.nextUrl.pathname === "/auth" || request.nextUrl.pathname.startsWith("/auth/")) {
+    return nextjsMiddlewareRedirect(request, "/signin");
+  }
+
+  // Block any default Convex Auth signin/signup pages and redirect to custom ones
   if (isAuthApiRoute(request)) {
-    const pathname = request.pathname.toLowerCase();
+    const pathname = request.nextUrl.pathname.toLowerCase();
     if (pathname.includes("signin") || pathname.includes("login")) {
       return nextjsMiddlewareRedirect(request, "/signin");
     }
@@ -41,7 +46,7 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   }
 
   // If user is on protected route and not authenticated, redirect to signin
-  if (protectedRoutes.includes(request.pathname) && !isAuthenticated) {
+  if (protectedRoutes.includes(request.nextUrl.pathname) && !isAuthenticated) {
     return nextjsMiddlewareRedirect(request, "/signin");
   }
 });
