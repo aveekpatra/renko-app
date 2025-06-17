@@ -1,32 +1,17 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Plus,
-  CheckCircle2,
-  Circle,
   MoreHorizontal,
   Folder,
   Clock,
-  Target,
-  Edit,
-  Edit2,
-  Trash2,
-  AlertCircle,
-  Calendar,
-  Tag,
-  X,
-  Search,
   Edit3,
+  Trash2,
+  Calendar,
+  X,
   Flag,
-  Users,
   Filter,
-  SortAsc,
-  Grid3X3,
-  List,
-  Settings,
-  Archive,
-  ChevronDown,
   Sparkles,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
@@ -42,7 +27,6 @@ import {
   useSensor,
   useSensors,
   useDroppable,
-  useDraggable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -51,8 +35,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import TaskModal from "@/components/TaskModal";
-import CreateBoardModal from "@/components/CreateBoardModal";
-import EditProjectModal from "@/components/EditProjectModal";
 import ColumnModal from "@/components/ColumnModal";
 
 // Separate ProjectSidebar component to prevent unnecessary re-renders
@@ -64,7 +46,6 @@ const ProjectSidebar = React.memo(
     handleCreateBoard,
     handleEditProject,
     handleDeleteProject,
-    setSelectedBoardId,
     filteredBoards,
     searchQuery,
     setSearchQuery,
@@ -75,11 +56,14 @@ const ProjectSidebar = React.memo(
     handleCreateBoard: () => void;
     handleEditProject: (boardId: Id<"projects">) => void;
     handleDeleteProject: (boardId: Id<"projects">) => void;
-    setSelectedBoardId: (boardId: Id<"projects">) => void;
-    filteredBoards: any[] | undefined;
+    filteredBoards:
+      | Array<{ _id: Id<"projects">; name: string; description?: string }>
+      | undefined;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
   }) => {
+    const [showMenu, setShowMenu] = useState<Id<"projects"> | null>(null);
+
     const themeClasses = {
       projectSidebar: isDarkMode
         ? "bg-gray-900/80 backdrop-blur-xl border-r border-gray-700/60 shadow-2xl shadow-black/30"
@@ -138,107 +122,105 @@ const ProjectSidebar = React.memo(
 
             {filteredBoards && filteredBoards.length > 0 ? (
               <div className="space-y-2">
-                {filteredBoards.map((board) => {
-                  const [showMenu, setShowMenu] = React.useState(false);
-
-                  return (
-                    <div
-                      key={board._id}
-                      onClick={() => handleBoardSelect(board._id)}
-                      className={`group relative p-3 rounded-lg border backdrop-blur-md cursor-pointer transition-all duration-200 hover:shadow-md ${
-                        selectedBoardId === board._id
-                          ? isDarkMode
-                            ? "bg-gradient-to-br from-purple-500/20 to-purple-600/15 text-purple-300 border-purple-400/40 shadow-lg shadow-purple-900/30"
-                            : "bg-gradient-to-br from-purple-50/95 to-purple-100/80 text-purple-800 border-purple-200/70 shadow-lg shadow-purple-200/40"
-                          : isDarkMode
-                            ? "bg-gray-800/30 border-gray-700/40 hover:bg-gray-800/50 text-gray-300"
-                            : "bg-white/70 border-gray-200/50 hover:bg-white/90 text-gray-800"
-                      }`}
-                      onMouseLeave={() => setShowMenu(false)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1 min-w-0 pr-8">
-                          <div
-                            className={`w-3 h-3 rounded-full flex-shrink-0 shadow-sm ${
-                              selectedBoardId === board._id
-                                ? "bg-purple-500"
-                                : "bg-gray-400"
-                            }`}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-semibold leading-tight truncate">
-                              {board.name}
-                            </h3>
-                            {board.description && (
-                              <p className="text-xs opacity-75 leading-tight mt-0.5 truncate">
-                                {board.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Three-dot menu - only visible on hover */}
-                        <div className="absolute top-2 right-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowMenu(!showMenu);
-                            }}
-                            className={`p-1.5 rounded-lg transition-all duration-200 ${
-                              isDarkMode
-                                ? "hover:bg-gray-600/50 text-gray-400 hover:text-gray-200"
-                                : "hover:bg-gray-200/50 text-gray-500 hover:text-gray-700"
-                            } opacity-0 group-hover:opacity-100`}
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Dropdown Menu */}
-                          {showMenu && (
-                            <div
-                              className={`absolute right-0 top-full mt-1 w-40 rounded-lg shadow-lg border z-50 ${
-                                isDarkMode
-                                  ? "bg-gray-800 border-gray-700"
-                                  : "bg-white border-gray-200"
-                              }`}
-                            >
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditProject(board._id);
-                                  setShowMenu(false);
-                                }}
-                                className={`w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors rounded-t-lg ${
-                                  isDarkMode
-                                    ? "hover:bg-gray-700 text-gray-300"
-                                    : "hover:bg-gray-50 text-gray-700"
-                                }`}
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                                <span>Edit Project</span>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteProject(board._id);
-                                  setShowMenu(false);
-                                }}
-                                className={`w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors rounded-b-lg ${
-                                  isDarkMode
-                                    ? "hover:bg-red-900/20 text-red-400"
-                                    : "hover:bg-red-50 text-red-600"
-                                }`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete Project</span>
-                              </button>
-                            </div>
+                {filteredBoards.map((board) => (
+                  <div
+                    key={board._id}
+                    onClick={() => handleBoardSelect(board._id)}
+                    className={`group relative p-3 rounded-lg border backdrop-blur-md cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      selectedBoardId === board._id
+                        ? isDarkMode
+                          ? "bg-gradient-to-br from-purple-500/20 to-purple-600/15 text-purple-300 border-purple-400/40 shadow-lg shadow-purple-900/30"
+                          : "bg-gradient-to-br from-purple-50/95 to-purple-100/80 text-purple-800 border-purple-200/70 shadow-lg shadow-purple-200/40"
+                        : isDarkMode
+                          ? "bg-gray-800/30 border-gray-700/40 hover:bg-gray-800/50 text-gray-300"
+                          : "bg-white/70 border-gray-200/50 hover:bg-white/90 text-gray-800"
+                    }`}
+                    onMouseLeave={() => setShowMenu(null)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0 pr-8">
+                        <div
+                          className={`w-3 h-3 rounded-full flex-shrink-0 shadow-sm ${
+                            selectedBoardId === board._id
+                              ? "bg-purple-500"
+                              : "bg-gray-400"
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-semibold leading-tight truncate">
+                            {board.name}
+                          </h3>
+                          {board.description && (
+                            <p className="text-xs opacity-75 leading-tight mt-0.5 truncate">
+                              {board.description}
+                            </p>
                           )}
                         </div>
                       </div>
+
+                      {/* Three-dot menu - only visible on hover */}
+                      <div className="absolute top-2 right-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(
+                              showMenu === board._id ? null : board._id,
+                            );
+                          }}
+                          className={`p-1.5 rounded-lg transition-all duration-200 ${
+                            isDarkMode
+                              ? "hover:bg-gray-600/50 text-gray-400 hover:text-gray-200"
+                              : "hover:bg-gray-200/50 text-gray-500 hover:text-gray-700"
+                          } opacity-0 group-hover:opacity-100`}
+                        >
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showMenu === board._id && (
+                          <div
+                            className={`absolute right-0 top-full mt-1 w-40 rounded-lg shadow-lg border z-50 ${
+                              isDarkMode
+                                ? "bg-gray-800 border-gray-700"
+                                : "bg-white border-gray-200"
+                            }`}
+                          >
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditProject(board._id);
+                                setShowMenu(null);
+                              }}
+                              className={`w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors rounded-t-lg ${
+                                isDarkMode
+                                  ? "hover:bg-gray-700 text-gray-300"
+                                  : "hover:bg-gray-50 text-gray-700"
+                              }`}
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit Project</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(board._id);
+                                setShowMenu(null);
+                              }}
+                              className={`w-full flex items-center space-x-2 px-3 py-2 text-sm transition-colors rounded-b-lg ${
+                                isDarkMode
+                                  ? "hover:bg-red-900/20 text-red-400"
+                                  : "hover:bg-red-50 text-red-600"
+                              }`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete Project</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">
