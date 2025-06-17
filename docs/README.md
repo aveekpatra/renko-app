@@ -7,8 +7,8 @@
 ### ✅ **FULLY IMPLEMENTED BACKEND + TYPESCRIPT MIGRATION COMPLETE**
 
 - **Auth**: Password + Google OAuth (Convex Auth) ✅
-- **Database**: 12 interconnected tables with proper indexing ✅
-- **API**: 42 functions across 15 backend files ✅
+- **Database**: 10 interconnected tables with proper indexing ✅
+- **API**: 35 functions across 8 backend files ✅
 - **Frontend**: 5 pages with real Convex data integration ✅
 - **Components**: 7 reusable components with dynamic data ✅
 - **TypeScript**: All compilation errors resolved ✅
@@ -24,7 +24,6 @@ app/
 ├── boards/page.tsx    # Kanban management
 ├── calendar/page.tsx  # Calendar with events API
 ├── habits/page.tsx    # Routines with templates & insights
-├── projects/page.tsx  # Project management
 └── signin/page.tsx    # Multi-provider auth
 
 components/
@@ -37,26 +36,20 @@ components/
 └── ConvexClientProvider.tsx # Convex integration
 
 convex/
-├── schema.ts       # 11 tables with relationships (boards unified with projects)
+├── schema.ts       # 10 tables + auth with relationships
 ├── projects.ts     # 3 functions - project management
-├── tasks.ts        # 10 functions - task/project management (boards→projects)
+├── tasks.ts        # 14 functions - task/kanban management
 ├── calendar.ts     # 8 functions - event management
 ├── routines.ts     # 8 functions - routine templates & tracking
 ├── links.ts        # 8 functions - universal entity linking
 ├── search.ts       # 2 functions - full-text search
 ├── users.ts        # 2 functions - user management
-├── sampleData.ts   # 1 function - demo data generation
-├── auth.ts         # 1 function - multi-provider auth setup
-├── types.ts        # Type definitions and constants
-├── utils.ts        # Utility functions
-├── dataLoaders.ts  # Data loading helpers
-├── http.ts         # HTTP endpoints
-└── auth.config.ts  # Auth configuration
+└── sampleData.ts   # 1 function - demo data generation
 ```
 
 ## 🔌 **COMPLETE API COVERAGE**
 
-### ✅ **PROJECTS API** (convex/projects.ts)
+### ✅ **PROJECTS API** (convex/projects.ts) - 3 Functions
 
 ```typescript
 getProjects(): Project[]
@@ -64,22 +57,31 @@ createProject(name, description?, color?, status?): projectId
 updateProject(projectId, updates): null
 ```
 
-### ✅ **TASKS API** (convex/tasks.ts)
+### ✅ **TASKS API** (convex/tasks.ts) - 14 Functions
 
 ```typescript
-getBoards(): Project[] // Returns projects (boards unified)
-getColumns(boardId: Id<"projects">): Column[] // Expects project ID
-getTasks(columnId): Task[]
-createBoard(name, description?, projectId?): Id<"projects"> // Creates projects
-createTask(title, description?, columnId, priority?, dueDate?): taskId
-getTask(taskId): Task | null
-updateTask(taskId, updates): null
-updateTaskPosition(taskId, newColumnId, newPosition): null
+// Project/Board Management
+getBoards(): Project[] // Returns projects (unified with boards)
+createBoard(name, description?): Id<"projects">
 updateProject(projectId, updates): null
 deleteProject(projectId): null
+
+// Column Management
+getColumns(boardId: Id<"projects">): Column[]
+createColumn(name, projectId, position, color?): columnId
+updateColumn(columnId, updates): null
+deleteColumn(columnId): null
+updateColumnPositions(positions): null
+
+// Task Management
+getTasks(columnId): Task[]
+getTask(taskId): Task | null
+createTask(title, description?, columnId, priority?, dueDate?): taskId
+updateTask(taskId, updates): null
+updateTaskPosition(taskId, newColumnId, newPosition): null
 ```
 
-### ✅ **CALENDAR API** (convex/calendar.ts)
+### ✅ **CALENDAR API** (convex/calendar.ts) - 8 Functions
 
 ```typescript
 getEvents(startDate, endDate, projectId?): Event[]
@@ -88,18 +90,11 @@ updateEvent(eventId, updates): null
 deleteEvent(eventId): null
 getTodayEvents(): Event[]
 getUpcomingEvents(days?): Event[]
-fixBrokenEvents(): null
-fixAllBrokenEventsTemp(): null
+fixBrokenEvents(): null // Data repair utility
+fixAllBrokenEventsTemp(): null // Comprehensive data repair
 ```
 
-### ✅ **USERS API** (convex/users.ts)
-
-```typescript
-getUsers(): User[]
-getCurrentUser(): User | null
-```
-
-### ✅ **ROUTINES API** (convex/routines.ts)
+### ✅ **ROUTINES API** (convex/routines.ts) - 8 Functions
 
 ```typescript
 getTemplates(category?, difficulty?): RoutineTemplate[]
@@ -112,7 +107,7 @@ updateRoutine(routineId, updates): null
 deleteRoutine(routineId): null
 ```
 
-### ✅ **UNIVERSAL LINKING API** (convex/links.ts)
+### ✅ **UNIVERSAL LINKING API** (convex/links.ts) - 8 Functions
 
 ```typescript
 createLink(fromTable, fromId, toTable, toId, linkType, metadata?): linkId
@@ -125,23 +120,24 @@ linkTaskToRoutine(taskId, routineId, description?): linkId
 getConnectionGraph(entityTable, entityId, depth?): {nodes: Node[], edges: Edge[]}
 ```
 
-### ✅ **SEARCH API** (convex/search.ts)
+### ✅ **SEARCH API** (convex/search.ts) - 2 Functions
 
 ```typescript
 search(query, types?, projectId?, limit?): SearchResults
 getSearchSuggestions(query): string[]
 ```
 
-### ✅ **SAMPLE DATA API** (convex/sampleData.ts)
+### ✅ **USERS API** (convex/users.ts) - 2 Functions
+
+```typescript
+getUsers(): User[]
+getCurrentUser(): User | null
+```
+
+### ✅ **SAMPLE DATA API** (convex/sampleData.ts) - 1 Function
 
 ```typescript
 createSampleData(): null
-```
-
-### ✅ **AUTH API** (convex/auth.ts)
-
-```typescript
-auth, signIn, signOut, store, isAuthenticated; // Convex Auth exports
 ```
 
 ## 🛠️ **DEVELOPMENT GUIDE**
@@ -185,7 +181,6 @@ export const functionName = query({
 
 ```typescript
 const projects = useQuery(api.projects.getProjects);
-const notes = useQuery(api.notes.getRecentNotes);
 const events = useQuery(api.calendar.getUpcomingEvents);
 
 <UnifiedKanbanWidget
@@ -198,35 +193,19 @@ const events = useQuery(api.calendar.getUpcomingEvents);
 />
 ```
 
-**3. System Field Validation**
+## 🎯 **CURRENT PHASE STATUS**
 
-```typescript
-// Always include system fields in return validators
-returns: v.array(
-  v.object({
-    _id: v.id("tableName"),
-    _creationTime: v.number(), // Required system field
-    // ... other fields
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }),
-);
-```
-
-## 🎯 **UPDATED PHASE STATUS**
-
-### **Phase 2: Dashboard & Design System** ✅ **COMPLETE + CALENDAR FIXES**
+### **Phase 2: Dashboard & Design System** ✅ **COMPLETE**
 
 - ✅ Professional glassmorphic design system
-- ✅ Comprehensive Convex backend (49 functions)
+- ✅ Comprehensive Convex backend (35 functions)
 - ✅ Real-time data integration across all widgets
 - ✅ TypeScript compilation fully resolved
 - ✅ Sample data system for demos
 - ✅ Universal linking between entities
 - ✅ Full-text search functionality
-- ✅ **Calendar drag & drop functionality fully working**
-- ✅ **Data integrity issues identified and resolved**
+- ✅ Calendar drag & drop functionality working
+- ✅ Data integrity issues resolved
 
 ### **Phase 3A: Google Calendar Integration** (Next Priority)
 
@@ -240,160 +219,32 @@ returns: v.array(
 - [ ] Modal dialogs for all entity creation
 - [ ] Inline editing for quick updates
 - [ ] Bulk operations and power user features
-- [ ] Template systems for rapid creation
 
-### **Phase 3C: UI/UX Polish & Refinement**
-
-- [ ] Smooth animations and transitions
-- [ ] Mobile-optimized responsive design
-- [ ] Performance optimization
-- [ ] Accessibility improvements
-
-### **Phase 4: Unified Quick Add with NLP**
-
-- [ ] Global command palette (Cmd/Ctrl + K)
-- [ ] Natural language entity creation
-- [ ] Smart date/time parsing
-- [ ] Voice integration support
-
-### **Phase 5: AI Agent Integration**
+### **Phase 4: AI Agent Integration**
 
 - [ ] Smart task prioritization
 - [ ] Proactive productivity insights
 - [ ] Natural language AI interface
 - [ ] Pattern learning and optimization
 
-## 🎉 **RECENT MAJOR ACCOMPLISHMENTS**
-
-### **Calendar Widget Drag & Drop - FULLY FIXED**
-
-**Issue Resolved**: Events were disappearing during drag operations
-**Root Cause**: Corrupted event timestamps (NaN/null values) in database
-**Solution**: Complete data repair and enhanced drag handler validation
-
-**Technical Fixes:**
-
-- Created `fixAllBrokenEventsTemp` mutation for data repair
-- Enhanced drag handler with comprehensive validation
-- Improved date calculations preserving time while changing dates
-- Added robust error logging and user feedback
-- Implemented optimistic update patterns
-
-### **Enhanced Development Tools**
-
-- ✅ MCP Convex tools integration for live database debugging
-- ✅ Comprehensive error handling and validation patterns
-- ✅ Data integrity monitoring and repair utilities
-- ✅ Real-time debugging capabilities
-
-### **Backend Excellence**
-
-- ✅ Complete API coverage for all major features
-- ✅ Proper TypeScript validation with system fields
-- ✅ Universal linking system between all entities
-- ✅ Full-text search across tasks, notes, projects, events
-- ✅ Sample data generation for demos
-- ✅ Data repair utilities for maintenance
-
-### **Frontend Integration**
-
-- ✅ Dashboard transformed from dummy to real data
-- ✅ Real-time updates across all components
-- ✅ Proper loading states and error handling
-- ✅ Professional glassmorphic design system
-- ✅ Calendar widget with working drag & drop
-
-### **Developer Experience**
-
-- ✅ Comprehensive API documentation
-- ✅ Consistent patterns across all functions
-- ✅ Proper error handling and validation
-- ✅ Complete TypeScript coverage
-- ✅ MCP tools for advanced debugging
-
-## 🛠️ **NEXT PHASE PRIORITIES**
-
-### **1. Google Calendar Integration** (Priority 1)
-
-**Timeline**: 1-2 weeks
-
-- Google Calendar API OAuth setup
-- Two-way sync implementation
-- Conflict resolution strategies
-- Professional sync management UI
-
-### **2. Complete UI CRUD Operations** (Priority 2)
-
-**Timeline**: 1-2 weeks
-
-- Modal dialogs for all entity creation
-- Inline editing capabilities
-- Bulk operations for power users
-- Template systems for rapid creation
-
-### **3. UI/UX Polish** (Priority 3)
-
-**Timeline**: 1 week
-
-- Smooth animations and transitions
-- Mobile responsiveness improvements
-- Performance optimization
-- Accessibility enhancements
-
-### **4. Unified Quick Add with NLP** (Priority 4)
-
-**Timeline**: 2-3 weeks
-
-- Global command palette interface
-- Natural language processing for entity creation
-- Smart parsing and suggestions
-- Voice integration support
-
-### **5. AI Agent Integration** (Priority 5)
-
-**Timeline**: 3-4 weeks
-
-- AI-powered task prioritization and scheduling
-- Proactive productivity insights
-- Conversational AI interface
-- Pattern learning and optimization
-
 ## 📊 **COMPREHENSIVE STATISTICS**
 
-- **Backend Functions**: 42 implemented across 15 files
-- **Database Tables**: 11 interconnected with proper indexing (+ authTables)
-- **API Coverage**: 100% of core functionality + data repair utilities
+- **Backend Functions**: 35 implemented across 8 files
+- **Database Tables**: 10 interconnected + auth tables
+- **API Coverage**: 100% of core functionality
 - **Frontend Pages**: 5 with real data integration
 - **Components**: 7 reusable with dynamic data
 - **Authentication**: Multi-provider (Password + Google OAuth)
 - **Real-time**: Full Convex real-time synchronization
-- **Search**: Full-text search across all entities
+- **Search**: Full-text search across tasks and projects
 - **Linking**: Universal cross-entity linking system
-- **Data Integrity**: Automated repair and validation systems
-
-## 🔧 **DEVELOPMENT INSIGHTS**
-
-### **What's Working Exceptionally Well:**
-
-- **MCP Convex Tools**: Game-changing for database debugging and data repair
-- **Real-time Data Integration**: Seamless updates across all components
-- **Comprehensive Backend**: 49 functions provide solid foundation
-- **Design System**: Consistent glassmorphic patterns enable rapid development
-
-### **Key Success Factors:**
-
-- **Data-First Approach**: Fixing data integrity first resolved UI issues
-- **Comprehensive Logging**: Detailed error logging accelerated debugging
-- **Modular Architecture**: Easy to isolate and fix specific issues
-- **Real-time Debugging**: MCP tools enabled live database inspection
 
 ## 🔧 **TROUBLESHOOTING**
 
-- **Auth errors**: See `AUTH_TROUBLESHOOTING.md`
+- **Auth errors**: See `docs/AUTH_TROUBLESHOOTING.md`
 - **TypeScript errors**: All system fields included in validators
 - **Real data**: All pages now use live Convex data
-- **Design patterns**: Follow established glassmorphic patterns
+- **Design patterns**: Follow established glassmorphic patterns in `docs/DESIGN_GUIDELINES.md`
 - **Calendar issues**: Drag & drop functionality fully working
-- **Data integrity**: Automated repair utilities available
 
-**Status**: Production-ready backend with battle-tested functionality. Calendar issues resolved. Ready for Google Calendar integration and advanced feature development.
+**Status**: Production-ready backend with battle-tested functionality. Ready for Google Calendar integration and advanced feature development.

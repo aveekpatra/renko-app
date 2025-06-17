@@ -1,6 +1,6 @@
 # 🔌 API Reference
 
-**For AI Development**: Complete Convex backend implementation with 42 functions across 15 files.
+**For AI Development**: Complete Convex backend implementation with 35 functions across 8 files.
 
 ## 🚀 **FULLY IMPLEMENTED BACKEND**
 
@@ -14,16 +14,7 @@ export const getProjects = query({
   args: { status: v.optional(v.string()) },
   returns: v.array(ProjectWithStats),
   handler: async (ctx, args) => {
-    // Returns projects with task counts, progress, note counts, etc.
-  },
-});
-
-// Get single project with all related data
-export const getProject = query({
-  args: { projectId: v.id("projects") },
-  returns: v.union(ProjectWithDetails, v.null()),
-  handler: async (ctx, args) => {
-    // Returns project with tasks, notes, events, notebooks
+    // Returns projects with task counts, progress, etc.
   },
 });
 
@@ -49,39 +40,9 @@ export const updateProject = mutation({
   },
   returns: v.null(),
 });
-
-// Delete project and all related data
-export const deleteProject = mutation({
-  args: { projectId: v.id("projects") },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    // Cascades delete to tasks, notes, events, notebooks, boards
-  },
-});
-
-// Get project analytics and insights
-export const getProjectStats = query({
-  args: {
-    projectId: v.optional(v.id("projects")),
-    timeRange: v.optional(v.string()),
-  },
-  returns: ProjectStatsObject,
-  handler: async (ctx, args) => {
-    // Returns comprehensive project analytics
-  },
-});
-
-// Archive/unarchive project
-export const archiveProject = mutation({
-  args: {
-    projectId: v.id("projects"),
-    archive: v.boolean(),
-  },
-  returns: v.null(),
-});
 ```
 
-### **Tasks API (convex/tasks.ts)** ✅ **10 Functions**
+### **Tasks API (convex/tasks.ts)** ✅ **14 Functions**
 
 ```typescript
 // Get all projects for user (unified with boards)
@@ -189,7 +150,6 @@ export const createTask = mutation({
     return await ctx.db.insert("tasks", {
       ...args,
       status: "todo",
-      boardId: column.boardId,
       position: tasksInColumn.length,
       userId,
       createdAt: Date.now(),
@@ -198,27 +158,8 @@ export const createTask = mutation({
   },
 });
 
-// Update task position (drag & drop)
-export const updateTaskPosition = mutation({
-  args: {
-    taskId: v.id("tasks"),
-    newColumnId: v.id("columns"),
-    newPosition: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task) throw new Error("Task not found");
-
-    await ctx.db.patch(args.taskId, {
-      columnId: args.newColumnId,
-      position: args.newPosition,
-      updatedAt: Date.now(),
-    });
-
-    return null;
-  },
-});
+// Additional task functions: getTask, updateTask, updateTaskPosition, updateProject, deleteProject
+// Additional column functions: createColumn, updateColumn, deleteColumn, updateColumnPositions
 ```
 
 ### **Calendar API (convex/calendar.ts)** ✅ **8 Functions**
@@ -285,109 +226,47 @@ export const getUpcomingEvents = query({
   args: { days: v.optional(v.number()) },
   returns: v.array(EventWithSystemFields),
 });
+
+// Data repair utilities
+export const fixBrokenEvents = mutation({
+  args: {},
+  returns: v.null(),
+});
+
+export const fixAllBrokenEventsTemp = mutation({
+  args: {},
+  returns: v.null(),
+});
 ```
 
 ### **Users API (convex/users.ts)** ✅ **2 Functions**
 
 ```typescript
-// NOTEBOOKS
-export const getNotebooks = query({
-  args: { projectId: v.optional(v.id("projects")) },
-  returns: v.array(NotebookWithDetails),
-});
-
-export const createNotebook = mutation({
-  args: {
-    name: v.string(),
-    description: v.optional(v.string()),
-    color: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-  },
-  returns: v.id("notebooks"),
-});
-
-export const updateNotebook = mutation({
-  args: {
-    notebookId: v.id("notebooks"),
-    name: v.optional(v.string()),
-    description: v.optional(v.string()),
-    color: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-  },
-  returns: v.null(),
-});
-
-export const deleteNotebook = mutation({
-  args: { notebookId: v.id("notebooks") },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    // Cascades delete to all notes in notebook
-  },
-});
-
-// NOTES
-export const getNotes = query({
-  args: {
-    notebookId: v.optional(v.id("notebooks")),
-    projectId: v.optional(v.id("projects")),
-    taskId: v.optional(v.id("tasks")),
-    routineId: v.optional(v.id("routines")),
-    tags: v.optional(v.array(v.string())),
-    searchTerm: v.optional(v.string()),
-  },
-  returns: v.array(NoteWithDetails),
-  handler: async (ctx, args) => {
-    // Advanced filtering and enriched with related data
-  },
-});
-
-export const createNote = mutation({
-  args: {
-    title: v.string(),
-    content: v.string(),
-    tags: v.optional(v.array(v.string())),
-    projectId: v.optional(v.id("projects")),
-    taskId: v.optional(v.id("tasks")),
-    routineId: v.optional(v.id("routines")),
-    notebookId: v.optional(v.id("notebooks")),
-  },
-  returns: v.id("notes"),
-});
-
-export const updateNote = mutation({
-  args: {
-    noteId: v.id("notes"),
-    title: v.optional(v.string()),
-    content: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
-    projectId: v.optional(v.id("projects")),
-    taskId: v.optional(v.id("tasks")),
-    routineId: v.optional(v.id("routines")),
-    notebookId: v.optional(v.id("notebooks")),
-  },
-  returns: v.null(),
-});
-
-export const deleteNote = mutation({
-  args: { noteId: v.id("notes") },
-  returns: v.null(),
-});
-
-export const getAllTags = query({
+// Get all users for task assignment
+export const getUsers = query({
   args: {},
-  returns: v.array(v.string()),
+  returns: v.array(UserWithSystemFields),
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
 });
 
-export const getRecentNotes = query({
+// Get current authenticated user
+export const getCurrentUser = query({
   args: {},
-  returns: v.array(NoteWithSystemFields),
+  returns: v.union(UserWithSystemFields, v.null()),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.get(userId);
+  },
 });
 ```
 
 ### **Routines API (convex/routines.ts)** ✅ **8 Functions**
 
 ```typescript
-// ROUTINE TEMPLATES
+// Get routine templates (public and user's private)
 export const getTemplates = query({
   args: {
     category: v.optional(v.string()),
@@ -399,6 +278,7 @@ export const getTemplates = query({
   },
 });
 
+// Create routine template
 export const createTemplate = mutation({
   args: {
     name: v.string(),
@@ -412,7 +292,7 @@ export const createTemplate = mutation({
   returns: v.id("routineTemplates"),
 });
 
-// USER ROUTINES
+// Get user's personal routines
 export const getRoutines = query({
   args: {
     timeOfDay: v.optional(v.string()),
@@ -424,6 +304,7 @@ export const getRoutines = query({
   },
 });
 
+// Create routine from template or scratch
 export const createRoutine = mutation({
   args: {
     name: v.string(),
@@ -435,6 +316,7 @@ export const createRoutine = mutation({
   returns: v.id("routines"),
 });
 
+// Complete routine block
 export const completeBlock = mutation({
   args: {
     routineId: v.id("routines"),
@@ -446,6 +328,7 @@ export const completeBlock = mutation({
   returns: v.null(),
 });
 
+// Get routine insights and analytics
 export const getInsights = query({
   args: { timeRange: v.optional(v.string()) },
   returns: RoutineInsightsObject,
@@ -454,6 +337,7 @@ export const getInsights = query({
   },
 });
 
+// Update routine details
 export const updateRoutine = mutation({
   args: {
     routineId: v.id("routines"),
@@ -465,6 +349,7 @@ export const updateRoutine = mutation({
   returns: v.null(),
 });
 
+// Delete routine and related data
 export const deleteRoutine = mutation({
   args: { routineId: v.id("routines") },
   returns: v.null(),
@@ -543,16 +428,6 @@ export const linkTaskToRoutine = mutation({
   returns: v.id("links"),
 });
 
-export const linkNoteToEntity = mutation({
-  args: {
-    noteId: v.id("notes"),
-    entityTable: v.string(),
-    entityId: v.string(),
-    linkType: v.optional(v.string()),
-  },
-  returns: v.id("links"),
-});
-
 // Advanced graph analysis
 export const getConnectionGraph = query({
   args: {
@@ -580,7 +455,6 @@ export const search = query({
   },
   returns: v.object({
     tasks: v.array(TaskSearchResult),
-    notes: v.array(NoteSearchResult),
     projects: v.array(ProjectSearchResult),
     events: v.array(EventSearchResult),
     totalResults: v.number(),
@@ -602,8 +476,7 @@ export const createSampleData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Creates 5 projects, 5 notes, 2 notebooks, 4 events
-    // Includes realistic content and proper relationships
+    // Creates 5 projects, 5 events, realistic content and relationships
   },
 });
 ```
@@ -667,9 +540,9 @@ await Promise.all(relatedItems.map((item) => ctx.db.delete(item._id)));
 await ctx.db.delete(args.parentId);
 ```
 
-## 🗃️ **DATABASE SCHEMA (11 Tables + Auth Tables)**
+## 🗃️ **DATABASE SCHEMA (10 Tables + Auth Tables)**
 
-Complete schema with proper indexing and relationships (boards unified with projects):
+Complete schema with proper indexing and relationships:
 
 ```typescript
 export default defineSchema({
@@ -702,9 +575,7 @@ export default defineSchema({
     status: v.string(),
     priority: v.optional(v.string()),
     dueDate: v.optional(v.number()),
-    projectId: v.optional(v.id("projects")),
-
-    columnId: v.optional(v.id("columns")),
+    columnId: v.id("columns"),
     routineId: v.optional(v.id("routines")),
     position: v.number(),
     userId: v.id("users"),
@@ -713,53 +584,13 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_project", ["projectId"])
-
     .index("by_column", ["columnId"])
     .index("by_routine", ["routineId"])
     .index("by_status", ["status"])
     .index("by_due_date", ["dueDate"])
     .searchIndex("search_tasks", {
       searchField: "title",
-      filterFields: ["projectId", "status", "userId"],
-    }),
-
-  notebooks: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    color: v.optional(v.string()),
-    projectId: v.optional(v.id("projects")),
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"]),
-
-  notes: defineTable({
-    title: v.string(),
-    content: v.string(),
-    tags: v.optional(v.array(v.string())),
-    projectId: v.optional(v.id("projects")),
-    taskId: v.optional(v.id("tasks")),
-    routineId: v.optional(v.id("routines")),
-    notebookId: v.optional(v.id("notebooks")),
-    userId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_project", ["projectId"])
-    .index("by_notebook", ["notebookId"])
-    .index("by_task", ["taskId"])
-    .index("by_tags", ["tags"])
-    .searchIndex("search_title", {
-      searchField: "title",
-      filterFields: ["tags", "userId"],
-    })
-    .searchIndex("search_content", {
-      searchField: "content",
-      filterFields: ["projectId", "userId"],
+      filterFields: ["userId", "status"],
     }),
 
   events: defineTable({
@@ -781,8 +612,7 @@ export default defineSchema({
     .index("by_task", ["taskId"])
     .index("by_routine", ["routineId"]),
 
-  // Additional tables: routineTemplates, routineBlocks, routineCompletions, routines, links
-  // Note: boards table removed - functionality unified with projects table
+  // Additional tables: routineTemplates, routineBlocks, routineCompletions, routines, links, userPreferences
 });
 ```
 
@@ -792,7 +622,7 @@ export default defineSchema({
 ✅ **TypeScript**: All validation errors resolved with system fields
 ✅ **Real-time**: Full Convex synchronization working
 ✅ **Relationships**: Universal linking between all entities
-✅ **Search**: Full-text search across all content
+✅ **Search**: Full-text search across tasks and projects
 ✅ **Sample Data**: Comprehensive demo data generation
 
-**Next Phase**: Enhanced features and AI integration
+**Next Phase**: Google Calendar integration and advanced features

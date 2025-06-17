@@ -443,3 +443,184 @@ export const deleteProject = mutation({
     return null;
   },
 });
+
+// Column Management Functions
+
+// Create a new column
+export const createColumn = mutation({
+  args: {
+    name: v.string(),
+    projectId: v.id("projects"),
+    color: v.optional(v.string()),
+  },
+  returns: v.id("columns"),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate the project exists and user has access
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.userId !== userId) {
+      throw new Error("Project not found or not accessible");
+    }
+
+    // Validate column name
+    if (!args.name.trim()) {
+      throw new Error("Column name is required");
+    }
+
+    // Get current columns to determine position
+    const existingColumns = await ctx.db
+      .query("columns")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    const now = Date.now();
+    return await ctx.db.insert("columns", {
+      name: args.name.trim(),
+      projectId: args.projectId,
+      position: existingColumns.length,
+      color: args.color || "#6b7280",
+      createdAt: now,
+    });
+  },
+});
+
+// Update a column
+export const updateColumn = mutation({
+  args: {
+    columnId: v.id("columns"),
+    name: v.optional(v.string()),
+    color: v.optional(v.string()),
+    position: v.optional(v.number()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the column and validate access
+    const column = await ctx.db.get(args.columnId);
+    if (!column) {
+      throw new Error("Column not found");
+    }
+
+    const project = await ctx.db.get(column.projectId);
+    if (!project || project.userId !== userId) {
+      throw new Error("Not authorized to update this column");
+    }
+
+    // Validate name if provided
+    if (args.name !== undefined && !args.name.trim()) {
+      throw new Error("Column name cannot be empty");
+    }
+
+    // Build update object
+    const updates: any = {};
+    if (args.name !== undefined) updates.name = args.name.trim();
+    if (args.color !== undefined) updates.color = args.color;
+    if (args.position !== undefined) updates.position = args.position;
+
+    await ctx.db.patch(args.columnId, updates);
+    return null;
+  },
+});
+
+// Delete a column
+export const deleteColumn = mutation({
+  args: {
+    columnId: v.id("columns"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the column and validate access
+    const column = await ctx.db.get(args.columnId);
+    if (!column) {
+      throw new Error("Column not found");
+    }
+
+    const project = await ctx.db.get(column.projectId);
+    if (!project || project.userId !== userId) {
+      throw new Error("Not authorized to delete this column");
+    }
+
+    // Check if column has tasks
+    const tasksInColumn = await ctx.db
+      .query("tasks")
+      .withIndex("by_column", (q) => q.eq("columnId", args.columnId))
+      .collect();
+
+    if (tasksInColumn.length > 0) {
+      throw new Error(
+        "Cannot delete column with tasks. Please move or delete all tasks first.",
+      );
+    }
+
+    // Delete the column
+    await ctx.db.delete(args.columnId);
+
+    // Reorder remaining columns
+    const remainingColumns = await ctx.db
+      .query("columns")
+      .withIndex("by_project", (q) => q.eq("projectId", column.projectId))
+      .order("asc")
+      .collect();
+
+    // Update positions
+    for (let i = 0; i < remainingColumns.length; i++) {
+      if (remainingColumns[i].position !== i) {
+        await ctx.db.patch(remainingColumns[i]._id, { position: i });
+      }
+    }
+
+    return null;
+  },
+});
+
+// Update column positions (for reordering)
+export const updateColumnPositions = mutation({
+  args: {
+    columnUpdates: v.array(
+      v.object({
+        columnId: v.id("columns"),
+        position: v.number(),
+      }),
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate all columns belong to user's projects
+    for (const update of args.columnUpdates) {
+      const column = await ctx.db.get(update.columnId);
+      if (!column) {
+        throw new Error("Column not found");
+      }
+
+      const project = await ctx.db.get(column.projectId);
+      if (!project || project.userId !== userId) {
+        throw new Error("Not authorized to update column positions");
+      }
+    }
+
+    // Update all positions
+    for (const update of args.columnUpdates) {
+      await ctx.db.patch(update.columnId, { position: update.position });
+    }
+
+    return null;
+  },
+});

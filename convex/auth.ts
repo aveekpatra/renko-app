@@ -5,12 +5,12 @@ import { convexAuth } from "@convex-dev/auth/server";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [Password, Google],
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Redirect to custom pages instead of default auth pages
-      if (url.includes("/signin") || url.includes("/auth")) {
+    async redirect({ redirectTo }) {
+      // Handle redirect after authentication
+      if (redirectTo?.includes("/signin") || redirectTo?.includes("/auth")) {
         return "/signin";
       }
-      if (url.includes("/signup")) {
+      if (redirectTo?.includes("/signup")) {
         return "/signup";
       }
       // Fallback to home after successful authentication

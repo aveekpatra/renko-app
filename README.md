@@ -1,218 +1,150 @@
-# 🎯 Renko - AI-First Productivity Platform
+# 🧠 Renko - AI Task Agent
 
-**"Stop spending time managing productivity tools - let AI do the planning while you focus on doing."**
+**"The smartest AI task agent that actually gets things done"**
 
-Renko is a next-generation productivity platform built with Next.js 15, React 19, TypeScript, Convex backend, and Tailwind CSS. Our mission is to eliminate the cognitive overhead of productivity management through intelligent automation and iOS-inspired design.
+Renko is an AI-first task management platform that doesn't just organize your tasks - it thinks about them, prioritizes intelligently, and helps you execute better. Built with Next.js 15, Convex, and powered by Gemini 2.5 Flash via OpenRouter.
+
+## 🎯 Mission
+
+Build the first AI agent that helps you DO tasks, not just organize them. Start with core AI + tasks, generate revenue quickly, then expand to a full productivity platform.
 
 ## 🚀 Tech Stack
 
 - **Frontend**: Next.js 15 + React 19 + TypeScript
 - **Backend**: Convex (database + server logic)
+- **AI**: OpenRouter + Gemini 2.5 Flash ($0.075 per 1M tokens)
 - **Authentication**: Convex Auth (Password + Google OAuth)
-- **Styling**: Tailwind CSS with iOS-inspired design system
-- **Architecture**: AI-first with minimal cognitive load principles
+- **Styling**: Tailwind CSS with glassmorphic design
+- **Payments**: Stripe with 7-day trial
 
-## 📊 Current State Analysis
+## ✨ Core Features (MVP)
 
-### ✅ **Completed Features (Phase 2)**
+### **🤖 AI Task Agent**
 
-- **Authentication System**: Complete with Convex Auth
-- **Core Database Schema**: All major entities implemented
-- **Dashboard** (`/`): Today's tasks with iOS-inspired design
-- **Calendar** (`/calendar`): Event management and scheduling
-- **Kanban Boards** (`/boards`): Project task management
-- **Habits & Routines** (`/habits`): Habit tracking system
-- **User Authentication** (`/signin`, `/signup`): Custom auth pages
+- **Natural Language Input**: "Add task: finish report by Friday 3pm" → AI extracts all details
+- **Smart Prioritization**: AI reorders tasks based on your patterns, not just due dates
+- **Daily Planning**: AI generates optimal time blocks with reasoning
+- **Progress Insights**: AI analyzes your productivity patterns and suggests improvements
 
-### 📈 **Data Models in Production**
+### **📁 Basic Projects**
 
-- Users, Projects, Boards, Columns, Tasks, Events
-- Routines System (templates, blocks, completions)
-- Notes & Notebooks, User Preferences
-- Links & Relationships between entities
+- Group tasks with AI-generated insights
+- Project progress tracking with AI analysis
+- Smart task suggestions per project
 
-## 🎯 Development Roadmap: Priority Features
+### **📅 Calendar Integration**
 
-### **Priority 1: Essential Missing Pages (Build Next)**
+- Google Calendar sync with AI optimization
+- AI-powered scheduling conflict detection
+- Focus time blocking suggestions
 
-#### 1. **Projects Overview** - `/projects`
+## 💰 Pricing Strategy
 
-**Status**: 🔴 Missing (High Priority)
+```
+🚀 RENKO AI TASK AGENT
 
-```typescript
-Features:
-- Project grid/list view with status indicators
-- Create new project modal with AI suggestions
-- Project cards with progress indicators
-- Filter by status (active, completed, archived)
-- Quick actions (edit, archive, delete)
-- AI-powered project insights
+7-Day Free Trial (no credit card required)
+↓
+$12/month or $120/year (save 17%)
+
+✅ Unlimited AI-powered task management
+✅ Smart prioritization and daily planning
+✅ Google Calendar integration
+✅ Up to 3 projects
+✅ Progress insights and coaching
+
+Heavy usage: 500 AI operations/month
+Additional operations: $0.02 each
 ```
 
-#### 2. **Project Detail Page** - `/projects/[id]`
+## 🎯 Current Development Status
 
-**Status**: 🔴 Missing (High Priority)
+### **✅ Completed Foundation**
 
-```typescript
-Features:
-- Project overview with AI-generated summaries
-- Associated tasks, boards, and calendar events
-- Project-specific notes and knowledge base
-- Timeline and milestone tracking
-- AI-powered progress analysis
-```
+- [x] Authentication system with Convex Auth
+- [x] Basic task management (CRUD operations)
+- [x] Project organization system
+- [x] Calendar page foundation
+- [x] Glassmorphic UI with dark/light themes
+- [x] Database schema (10 tables + auth)
+- [x] 35 backend functions across 8 files
 
-#### 3. **Settings & Preferences** - `/settings`
+### **🔄 In Progress (Week 1-2)**
 
-**Status**: 🔴 Missing (Medium Priority)
+- [ ] OpenRouter + Gemini 2.5 Flash integration
+- [ ] Core AI functions (`createTaskWithAI`, `getAITaskPriorities`, `generateDailyPlan`)
+- [ ] AI usage tracking and cost monitoring
+- [ ] Natural language task parsing
 
-```typescript
-Features:
-- Profile management (name, email, image)
-- Theme preferences (light/dark/auto)
-- Notification settings and working hours
-- AI assistant configuration
-- Data export/import capabilities
-```
+### **📅 Next Priorities (Week 3-4)**
 
-#### 4. **Global Search & Command Palette**
+- [ ] AI-enhanced UI with reasoning display
+- [ ] Natural language input component
+- [ ] Daily plan view with AI explanations
+- [ ] Progress insights dashboard
 
-**Status**: 🔴 Missing (High Priority)
+## 🧠 AI Implementation
 
-```typescript
-Features:
-- Global search across tasks, projects, notes
-- Command palette (Cmd+K) for quick actions
-- AI-powered search suggestions
-- Recent items and smart filters
-```
-
-### **Priority 2: AI-First Features (Competitive Edge)**
-
-#### 5. **AI Assistant Interface** - `/ai`
-
-**Status**: 🔴 Missing (Critical)
+### **Core AI Capabilities**
 
 ```typescript
-Features:
-- Conversational AI for task and project planning
-- Natural language task creation
-- Schedule optimization suggestions
-- Project planning assistance
-- Daily/weekly planning automation
+interface TaskAgent {
+  // Natural language task creation
+  parseTaskInput: (input: string) => {
+    title: string;
+    description?: string;
+    dueDate?: Date;
+    priority: "low" | "medium" | "high" | "critical";
+    projectId?: string;
+    estimatedDuration?: number;
+  };
+
+  // Smart prioritization
+  reprioritizeTasks: (
+    tasks: Task[],
+    context: UserContext,
+  ) => {
+    reorderedTasks: Task[];
+    reasoning: string;
+    suggestedFocus: Task[];
+  };
+
+  // Daily planning
+  generateDailyPlan: (
+    availableTime: number,
+    tasks: Task[],
+  ) => {
+    timeBlocks: TimeBlock[];
+    rationale: string;
+    bufferTime: number;
+  };
+}
 ```
 
-#### 6. **Smart Scheduling** - `/schedule`
+## 📈 Success Metrics
 
-**Status**: 🔴 Missing (Critical)
+### **Technical Targets**
 
-```typescript
-Features:
-- AI-powered daily schedule generation
-- Intelligent time blocking with task estimates
-- Energy level optimization
-- Automatic conflict resolution
-- Calendar integration with buffer times
-```
+- **AI Accuracy**: 90%+ correct task parsing from natural language
+- **Response Time**: <2 seconds for AI operations
+- **Uptime**: 99.5%+ availability
 
-### **Priority 3: Enhanced Functionality**
+### **Business Targets**
 
-#### 7. **Notes & Knowledge Base** - `/notes`
-
-**Status**: 🟡 Schema exists, UI missing
-
-```typescript
-Features:
-- Rich text editor with AI writing assistance
-- Notebook organization and templates
-- Automatic linking to projects/tasks
-- AI-powered content suggestions
-- Search within notes with semantic understanding
-```
-
-#### 8. **Analytics & Insights** - `/insights`
-
-**Status**: 🔴 Missing (Medium Priority)
-
-```typescript
-Features:
-- Productivity metrics and trend analysis
-- AI-generated insights and recommendations
-- Habit completion rates and patterns
-- Project velocity tracking
-- Personalized optimization suggestions
-```
-
-#### 9. **Team Collaboration** - `/team`
-
-**Status**: 🔴 Missing (Future Phase)
-
-```typescript
-Features:
-- Team member management
-- Shared projects and collaborative boards
-- AI-powered task delegation
-- Team calendar and availability
-- Collaboration activity feed
-```
-
-### **Priority 4: Mobile-First Enhancements**
-
-#### 10. **Mobile Optimization**
-
-**Status**: 🟡 Partially implemented
-
-```typescript
-Focus Areas:
-- Touch-friendly interactions across all pages
-- Swipe gestures for quick actions
-- Offline capability for core features
-- Push notifications for AI suggestions
-- Quick capture widgets and voice input
-```
-
-## 🛠️ Implementation Strategy
-
-### **Phase 3: Foundation (Weeks 1-2)**
-
-- [ ] Build `/projects` overview page
-- [ ] Create `/projects/[id]` detail pages
-- [ ] Implement `/settings` with user preferences
-- [ ] Add global search and command palette
-
-### **Phase 4: AI Integration (Weeks 3-4)**
-
-- [ ] Build AI assistant interface (`/ai`)
-- [ ] Implement smart scheduling features
-- [ ] Add natural language task creation
-- [ ] Integrate AI suggestions across existing pages
-
-### **Phase 5: Content & Analytics (Weeks 5-6)**
-
-- [ ] Build notes/knowledge base interface
-- [ ] Create analytics and insights dashboard
-- [ ] Enhance existing pages with AI-powered features
-- [ ] Implement advanced search capabilities
-
-### **Phase 6: Polish & Scale (Weeks 7-8)**
-
-- [ ] Mobile optimization across all pages
-- [ ] Performance improvements and caching
-- [ ] Advanced collaboration features
-- [ ] Beta testing and user feedback integration
-
-## 🎨 Design Principles
-
-- **iOS-Inspired**: Clean, minimal, intuitive interfaces
-- **AI-First**: Every feature enhanced with intelligent automation
-- **Minimal Cognitive Load**: Reduce decision fatigue and mental overhead
-- **Focus on Doing**: Automate planning so users can focus on execution
+- **Trial Conversion**: 25%+ (trial → paid)
+- **Monthly Churn**: <5%
+- **Revenue Target**: $10K MRR within 3 months
+- **User Engagement**: 4+ AI interactions per week
 
 ## 🚀 Getting Started
 
 ```bash
 # Install dependencies
 npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your OpenRouter API key, Convex URL, etc.
 
 # Start development server
 npm run dev
@@ -221,20 +153,86 @@ npm run dev
 npx convex deploy
 ```
 
-## 📚 Key Documentation
+### **Required Environment Variables**
 
-- [Strategic Vision](./docs/STRATEGIC_VISION.md)
-- [Development Roadmap](./docs/DEVELOPMENT_ROADMAP.md)
-- [Technical Implementation Guide](./docs/TECHNICAL_IMPLEMENTATION_GUIDE.md)
+```bash
+# Convex
+CONVEX_DEPLOYMENT=your-deployment-url
+NEXT_PUBLIC_CONVEX_URL=your-convex-url
 
-## 🎯 Immediate Next Steps
+# OpenRouter (for AI)
+OPENROUTER_API_KEY=your-openrouter-key
 
-**Start with `/projects` page** - This is the highest priority missing piece that users expect and connects to existing functionality.
+# Authentication
+JWKS=auto-generated
+JWT_PRIVATE_KEY=auto-generated
+SITE_URL=http://localhost:3000
+
+# Google OAuth (optional)
+AUTH_GOOGLE_ID=your-google-client-id
+AUTH_GOOGLE_SECRET=your-google-client-secret
+```
+
+## 📚 Documentation
+
+- [Strategic Vision](./docs/STRATEGIC_VISION.md) - AI-first MVP strategy
+- [Development Roadmap](./docs/DEVELOPMENT_ROADMAP.md) - 8-week launch plan
+- [Technical Implementation](./docs/TECHNICAL_IMPLEMENTATION_GUIDE.md) - Detailed specs
+- [API Reference](./docs/API_REFERENCE.md) - Backend functions
+- [Auth Troubleshooting](./docs/AUTH_TROUBLESHOOTING.md) - Common fixes
+
+## 🎯 Development Philosophy
+
+### **AI-First Principles**
+
+1. **Every action enhanced by AI** - Not just "chatbot on the side"
+2. **Actually smart prioritization** - Learns patterns, not just due dates
+3. **Zero setup burden** - Natural language from day one
+4. **Execution focused** - Help users DO tasks, not organize them
+
+### **MVP Strategy**
+
+- **Focus**: Build the smartest AI task agent first
+- **Speed**: 6-8 weeks to revenue-generating MVP
+- **Expansion**: Add platform features (notes, teams, etc.) later
+- **Quality**: 90%+ AI accuracy, <2s response times
+
+## 🔮 Future Roadmap (Phase 2)
+
+### **Platform Expansion** _(Months 3-6)_
+
+- 📝 AI Notes with task extraction
+- 🔗 Zapier integration (5,000+ apps)
+- 👥 Team collaboration features
+- 🎤 Voice input and multimodal capture
+- 📱 Native mobile applications
+- 📊 Advanced analytics and insights
+
+### **Long-term Vision** _(Year 1+)_
+
+Transform from AI task agent → World's most intelligent productivity platform:
+
+1. **AI Workplace Assistant**: Emails, meetings, documentation
+2. **Predictive Productivity**: Prevent burnout before it happens
+3. **Team Intelligence**: AI that understands group dynamics
+4. **Integration Hub**: AI layer for all productivity tools
+5. **Enterprise Platform**: Custom AI training on company data
 
 ## 🤝 Contributing
 
-This is a focused productivity platform with a clear vision. All contributions should align with our AI-first, minimal cognitive load principles.
+This project follows a focused AI-first strategy. Contributions should align with:
+
+- **Speed to market** for core AI features
+- **Quality AI interactions** over feature complexity
+- **Revenue generation** through subscription model
+- **Platform expansion** planned for Phase 2
+
+## 📞 Contact & Support
+
+- **Issues**: Use GitHub issues for bugs and feature requests
+- **Discussions**: GitHub Discussions for questions and ideas
+- **Documentation**: Check `/docs` folder for detailed guides
 
 ---
 
-**Built with ❤️ for productivity enthusiasts who want to focus on doing, not planning.**
+**Built for productivity enthusiasts who want AI that actually helps them get things done. 🚀**
