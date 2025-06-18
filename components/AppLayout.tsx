@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from "react";
+import { usePathname } from "next/navigation";
 import { Authenticated, Unauthenticated } from "convex/react";
 import Sidebar from "./Sidebar";
+import Header from "./Header";
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -28,6 +30,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [isResizing, setIsResizing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const pathname = usePathname();
 
   // Prevent hydration mismatch and load saved preferences
   useEffect(() => {
@@ -91,10 +94,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
     fullScreen: isDarkMode ? "h-screen bg-gray-900" : "h-screen bg-gray-50",
   };
 
+  // Function to handle task creation - only available on certain pages
+  const handleCreateTask = () => {
+    // This will be handled by the individual page components
+    // For now, we'll just trigger a custom event that pages can listen to
+    window.dispatchEvent(new CustomEvent("createTask"));
+  };
+
+  // Only show create task button on specific pages
+  const showCreateTaskButton = pathname === "/" || pathname === "/boards";
+
   return (
     <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>
       <Authenticated>
-        {/* Authenticated Layout with Sidebar */}
+        {/* Authenticated Layout with Sidebar and Header */}
         <div className={themeClasses.container}>
           <Sidebar
             sidebarWidth={sidebarWidth}
@@ -102,12 +115,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
             setIsDarkMode={setIsDarkMode}
             handleMouseDown={handleMouseDown}
           />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header
+              onCreateTask={showCreateTaskButton ? handleCreateTask : undefined}
+            />
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </div>
         </div>
       </Authenticated>
 
       <Unauthenticated>
-        {/* Unauthenticated Layout without Sidebar */}
+        {/* Unauthenticated Layout without Sidebar or Header */}
         <div className={themeClasses.fullScreen}>{children}</div>
       </Unauthenticated>
     </ThemeContext.Provider>
