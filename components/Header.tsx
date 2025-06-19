@@ -18,9 +18,10 @@ import { useAuthActions } from "@convex-dev/auth/react";
 
 interface HeaderProps {
   onCreateTask?: () => void;
+  className?: string;
 }
 
-export default function Header({ onCreateTask }: HeaderProps) {
+export default function Header({ onCreateTask, className = "" }: HeaderProps) {
   const { isDarkMode } = useTheme();
   const { signOut } = useAuthActions();
   const pathname = usePathname();
@@ -82,36 +83,34 @@ export default function Header({ onCreateTask }: HeaderProps) {
   };
 
   return (
-    <header className={`sticky top-0 z-50 ${themeClasses.header}`}>
-      <div className="px-6 py-3">
+    <header className={`sticky top-0 z-50 ${themeClasses.header} ${className}`}>
+      <div className="px-4 py-2">
         <div className="flex items-center justify-between">
-          {/* Left Section - Page Title */}
-          <div className="flex items-center space-x-3">
+          {/* Left Section - Minimal Page Title */}
+          <div className="flex items-center space-x-2">
             <div className={`${themeClasses.text.secondary}`}>
               {getPageIcon()}
             </div>
-            <h1
-              className={`text-xl font-semibold tracking-tight ${themeClasses.text.primary}`}
-            >
+            <h1 className={`text-md font-medium ${themeClasses.text.primary}`}>
               {getPageTitle()}
             </h1>
           </div>
 
           {/* Center Section - Search */}
-          <div className="flex-1 max-w-md mx-8">
+          <div className="flex-1 max-w-md mx-6">
             <div className="relative">
               <Search
-                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${themeClasses.text.tertiary}`}
+                className={`absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 ${themeClasses.text.tertiary}`}
               />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 rounded-lg border backdrop-blur-md transition-all duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${themeClasses.search}`}
+                className={`w-full pl-9 pr-3 py-1.5 rounded-md border backdrop-blur-md transition-all duration-200 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/30 ${themeClasses.search}`}
               />
               <kbd
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs rounded border ${
+                className={`absolute right-2.5 top-1/2 transform -translate-y-1/2 px-1.5 py-0.5 text-xs rounded border ${
                   isDarkMode
                     ? "bg-gray-700 border-gray-600 text-gray-400"
                     : "bg-gray-100 border-gray-300 text-gray-500"
@@ -122,43 +121,30 @@ export default function Header({ onCreateTask }: HeaderProps) {
             </div>
           </div>
 
-          {/* Right Section - Actions */}
-          <div className="flex items-center space-x-2">
-            {/* Create Button - only show when callback is provided */}
-            {onCreateTask && (
-              <button
-                onClick={onCreateTask}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 font-medium text-sm"
+          {/* Right Section - Minimal Actions */}
+          <div className="flex items-center space-x-1">
+            {/* Sync Indicator */}
+            <div className="flex items-center space-x-1 px-2 py-1">
+              <div
+                className={`w-2 h-2 rounded-full bg-green-500 animate-pulse`}
+              ></div>
+              <span
+                className={`text-xs font-medium ${themeClasses.text.tertiary}`}
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">New Task</span>
-              </button>
-            )}
+                Synced
+              </span>
+            </div>
 
-            {/* Notifications */}
-            <button
-              className={`p-2 rounded-lg transition-all duration-200 ${themeClasses.button}`}
-            >
-              <Bell className="w-5 h-5" />
-            </button>
-
-            {/* Settings */}
-            <button
-              className={`p-2 rounded-lg transition-all duration-200 ${themeClasses.button}`}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-
-            {/* User Menu */}
+            {/* Options Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`p-2 rounded-lg transition-all duration-200 ${themeClasses.button}`}
+                className={`p-1.5 rounded-md transition-all duration-200 ${themeClasses.button}`}
               >
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4" />
               </button>
 
-              {/* User Dropdown */}
+              {/* Options Dropdown */}
               {showUserMenu && (
                 <>
                   <div
@@ -166,21 +152,61 @@ export default function Header({ onCreateTask }: HeaderProps) {
                     onClick={() => setShowUserMenu(false)}
                   />
                   <div
-                    className={`absolute right-0 mt-2 w-48 rounded-lg border backdrop-blur-xl z-20 ${themeClasses.dropdown}`}
+                    className={`absolute right-0 mt-2 w-52 rounded-lg border backdrop-blur-xl z-20 ${themeClasses.dropdown}`}
                   >
                     <div className="py-2">
+                      {onCreateTask && (
+                        <button
+                          onClick={() => {
+                            onCreateTask();
+                            setShowUserMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 transition-colors ${
+                            isDarkMode
+                              ? "text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>New Task</span>
+                        </button>
+                      )}
                       <button
-                        onClick={async () => {
-                          await signOut();
-                          setShowUserMenu(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 transition-colors ${
                           isDarkMode
                             ? "text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
                             : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                       >
-                        Sign Out
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </button>
+                      <button
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 transition-colors ${
+                          isDarkMode
+                            ? "text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
+                      >
+                        <Bell className="w-4 h-4" />
+                        <span>Notifications</span>
+                      </button>
+                      <div
+                        className={`border-t my-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}
+                      />
+                      <button
+                        onClick={async () => {
+                          await signOut();
+                          setShowUserMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 transition-colors ${
+                          isDarkMode
+                            ? "text-red-400 hover:bg-gray-700/50 hover:text-red-300"
+                            : "text-red-600 hover:bg-gray-50 hover:text-red-700"
+                        }`}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   </div>

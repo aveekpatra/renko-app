@@ -107,19 +107,33 @@ export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>
       <Authenticated>
-        {/* Authenticated Layout with Sidebar and Header */}
-        <div className={themeClasses.container}>
-          <Sidebar
-            sidebarWidth={sidebarWidth}
-            isDarkMode={isDarkMode}
-            setIsDarkMode={setIsDarkMode}
-            handleMouseDown={handleMouseDown}
-          />
-          <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Authenticated Layout with Header, Sidebar, and Main Content with gaps */}
+        <div
+          className={`h-screen p-1 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}
+        >
+          <div className="h-full flex flex-col gap-1 overflow-hidden">
+            {/* Header spans full width at top */}
             <Header
               onCreateTask={showCreateTaskButton ? handleCreateTask : undefined}
+              className="flex-shrink-0 rounded-lg"
             />
-            <main className="flex-1 overflow-y-auto">{children}</main>
+
+            {/* Content area with sidebar and main content */}
+            <div className="flex flex-1 gap-1 overflow-hidden">
+              {/* Sidebar */}
+              <Sidebar
+                sidebarWidth={sidebarWidth}
+                isDarkMode={isDarkMode}
+                setIsDarkMode={setIsDarkMode}
+                handleMouseDown={handleMouseDown}
+                className="flex-shrink-0 rounded-lg"
+              />
+
+              {/* Main content area */}
+              <main className="flex-1 overflow-y-auto rounded-tl-lg">
+                {children}
+              </main>
+            </div>
           </div>
         </div>
       </Authenticated>

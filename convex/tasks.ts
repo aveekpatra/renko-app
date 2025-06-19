@@ -624,3 +624,38 @@ export const updateColumnPositions = mutation({
     return null;
   },
 });
+
+// === GOOGLE CALENDAR INTEGRATION HELPERS ===
+
+/**
+ * Update task with Google Calendar event ID
+ */
+export const updateTaskGoogleEventId = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    googleEventId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.userId !== userId) {
+      throw new Error("Not authorized to update this task");
+    }
+
+    await ctx.db.patch(args.taskId, {
+      googleEventId: args.googleEventId,
+      updatedAt: Date.now(),
+    });
+
+    return null;
+  },
+});

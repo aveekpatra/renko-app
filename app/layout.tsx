@@ -5,8 +5,8 @@ import ConvexClientProvider from "@/components/ConvexClientProvider";
 import AppLayout from "@/components/AppLayout";
 
 export const metadata: Metadata = {
-  title: "Productivity - All-in-One Task Manager",
-  description: "Manage your tasks, projects, calendar, and habits in one place",
+  title: "Renko - Your Personal AI Coach",
+  description: "Your Personal AI Coach",
   icons: {
     icon: "/convex.svg",
   },

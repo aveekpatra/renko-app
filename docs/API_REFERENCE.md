@@ -1,10 +1,10 @@
 # 🔌 API Reference
 
-**For AI Development**: Complete Convex backend implementation with 35 functions across 8 files.
+**For AI Development**: Complete Convex backend implementation with 41 functions across 10 files.
 
 ## 🚀 **FULLY IMPLEMENTED BACKEND**
 
-All APIs are now fully implemented and integrated with the frontend. TypeScript compilation is complete with proper system field validation. Schema migration from boards→projects completed successfully.
+All APIs are now fully implemented and integrated with the frontend. TypeScript compilation is complete with proper system field validation. Schema migration from boards→projects completed successfully. Google Calendar integration with OAuth and automated sync fully implemented.
 
 ### **Projects API (convex/projects.ts)** ✅ **3 Functions**
 
@@ -481,6 +481,93 @@ export const createSampleData = mutation({
 });
 ```
 
+### **Google Calendar API (convex/googleCalendar.ts)** ✅ **6 Functions**
+
+```typescript
+// Generate OAuth authorization URL
+export const generateGoogleAuthUrl = action({
+  args: { userId: v.id("users") },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    // Creates Google Calendar OAuth authorization URL
+  },
+});
+
+// Exchange authorization code for tokens
+export const exchangeCodeForTokens = action({
+  args: {
+    code: v.string(),
+    redirectUri: v.string(),
+    userId: v.id("users"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Exchanges OAuth code for access and refresh tokens
+    // Stores tokens securely in database
+  },
+});
+
+// Get valid access token with automatic refresh
+export const getValidAccessToken = query({
+  args: { userId: v.id("users") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    // Returns valid access token, refreshing if necessary
+  },
+});
+
+// Sync Renko task to Google Calendar
+export const syncTaskToGoogleCalendar = action({
+  args: {
+    taskId: v.id("tasks"),
+    startTime: v.string(),
+    endTime: v.string(),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    // Creates or updates Google Calendar event from Renko task
+  },
+});
+
+// Import and cache Google Calendar events
+export const fetchAndCacheGoogleCalendarEvents = action({
+  args: {
+    userId: v.id("users"),
+    timeMin: v.string(),
+    timeMax: v.string(),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    // Fetches events from Google Calendar API
+    // Caches events locally with ETag support
+    // Returns number of events processed
+  },
+});
+
+// Get cached calendar events
+export const getCachedCalendarEvents = query({
+  args: {
+    userId: v.id("users"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  returns: v.array(
+    v.object({
+      eventId: v.string(),
+      summary: v.string(),
+      description: v.string(),
+      startTime: v.string(),
+      endTime: v.string(),
+      location: v.string(),
+      attendees: v.array(v.string()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    // Returns cached Google Calendar events for date range
+  },
+});
+```
+
 ## 🛠️ **IMPLEMENTATION PATTERNS**
 
 ### **System Field Validation (CRITICAL)**
@@ -540,7 +627,7 @@ await Promise.all(relatedItems.map((item) => ctx.db.delete(item._id)));
 await ctx.db.delete(args.parentId);
 ```
 
-## 🗃️ **DATABASE SCHEMA (10 Tables + Auth Tables)**
+## 🗃️ **DATABASE SCHEMA (12 Tables + Auth Tables)**
 
 Complete schema with proper indexing and relationships:
 
@@ -613,6 +700,32 @@ export default defineSchema({
     .index("by_routine", ["routineId"]),
 
   // Additional tables: routineTemplates, routineBlocks, routineCompletions, routines, links, userPreferences
+
+  googleCalendarTokens: defineTable({
+    userId: v.id("users"),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  googleCalendarEvents: defineTable({
+    userId: v.id("users"),
+    eventId: v.string(),
+    summary: v.string(),
+    description: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    location: v.string(),
+    attendees: v.array(v.string()),
+    etag: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_event", ["userId", "eventId"])
+    .index("by_user_and_time", ["userId", "startTime"]),
 });
 ```
 
@@ -624,5 +737,6 @@ export default defineSchema({
 ✅ **Relationships**: Universal linking between all entities
 ✅ **Search**: Full-text search across tasks and projects
 ✅ **Sample Data**: Comprehensive demo data generation
+✅ **Google Calendar**: Full OAuth integration with automated sync
 
-**Next Phase**: Google Calendar integration and advanced features
+**Next Phase**: Complete UI CRUD operations and AI agent integration

@@ -45,8 +45,8 @@ function AuthenticatedContent() {
             console.log("Event clicked:", event);
           }}
           className="h-full"
-        />
-      </div>
+                  />
+                </div>
 
       {/* Task Modal */}
       {taskModalState.isOpen && (

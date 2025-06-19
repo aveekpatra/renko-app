@@ -15,7 +15,9 @@ import type {
 } from "convex/server";
 import type * as auth from "../auth.js";
 import type * as calendar from "../calendar.js";
+import type * as crons from "../crons.js";
 import type * as dataLoaders from "../dataLoaders.js";
+import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
 import type * as links from "../links.js";
 import type * as projects from "../projects.js";
@@ -38,7 +40,9 @@ import type * as utils from "../utils.js";
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendar: typeof calendar;
+  crons: typeof crons;
   dataLoaders: typeof dataLoaders;
+  googleCalendar: typeof googleCalendar;
   http: typeof http;
   links: typeof links;
   projects: typeof projects;

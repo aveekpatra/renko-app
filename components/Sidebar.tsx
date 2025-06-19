@@ -66,6 +66,7 @@ interface SidebarProps {
   isDarkMode: boolean;
   setIsDarkMode: (darkMode: boolean) => void;
   handleMouseDown: (e: React.MouseEvent) => void;
+  className?: string;
 }
 
 export default function Sidebar({
@@ -73,6 +74,7 @@ export default function Sidebar({
   isDarkMode,
   setIsDarkMode,
   handleMouseDown,
+  className = "",
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -194,7 +196,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={themeClasses.sidebar}
+      className={`${themeClasses.sidebar} ${className}`}
       style={{ width: currentSidebarWidth }}
     >
       {/* Header - Very minimal */}

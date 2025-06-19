@@ -46,6 +46,7 @@ export default defineSchema({
     columnId: v.id("columns"), // Tasks belong to columns, which belong to projects
     routineId: v.optional(v.id("routines")), // Link to routines
     eventId: v.optional(v.id("events")), // Link to calendar events
+    googleEventId: v.optional(v.string()), // Google Calendar event ID
     position: v.number(),
     userId: v.id("users"),
     assignedTo: v.optional(v.id("users")),
@@ -204,4 +205,34 @@ export default defineSchema({
     ),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // === GOOGLE CALENDAR INTEGRATION ===
+
+  // Store Google Calendar OAuth tokens for users
+  googleCalendarTokens: defineTable({
+    userId: v.id("users"),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    expiresAt: v.number(), // Unix timestamp
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Cache Google Calendar events for performance
+  googleCalendarEvents: defineTable({
+    userId: v.id("users"),
+    eventId: v.string(), // Google Calendar event ID
+    summary: v.string(),
+    description: v.string(),
+    startTime: v.string(), // ISO string
+    endTime: v.string(), // ISO string
+    location: v.string(),
+    attendees: v.array(v.string()), // email addresses
+    etag: v.string(), // For change detection
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_event", ["userId", "eventId"])
+    .index("by_start_time", ["startTime"]),
 });

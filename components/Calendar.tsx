@@ -1,22 +1,16 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Filter,
   Clock,
   Users,
-  Video,
   Coffee,
   BookOpen,
-  Briefcase,
   Target,
   GripVertical,
-  CheckCircle2,
-  Circle,
   Search,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
@@ -398,6 +392,16 @@ const weekDays = [
   { name: "Friday", short: "Fri", date: 19 },
 ];
 
+const fullWeekDays = [
+  { name: "Monday", short: "Mon", abbr: "M" },
+  { name: "Tuesday", short: "Tue", abbr: "T" },
+  { name: "Wednesday", short: "Wed", abbr: "W" },
+  { name: "Thursday", short: "Thu", abbr: "T" },
+  { name: "Friday", short: "Fri", abbr: "F" },
+  { name: "Saturday", short: "Sat", abbr: "S" },
+  { name: "Sunday", short: "Sun", abbr: "S" },
+];
+
 export default function Calendar({
   events = defaultScheduledEvents,
   unscheduledTasks = defaultUnscheduledTasks,
@@ -409,9 +413,142 @@ export default function Calendar({
   const [selectedView, setSelectedView] = useState<"week" | "day" | "month">(
     "week",
   );
-  const [currentWeek, setCurrentWeek] = useState("March 15-19, 2024");
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [currentWeek] = useState("March 15-19, 2024");
+  const [selectedFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const calendarScrollRef = useRef<HTMLDivElement>(null);
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Auto-scroll to current time on mount and view change
+  useEffect(() => {
+    if (
+      calendarScrollRef.current &&
+      (selectedView === "week" || selectedView === "day")
+    ) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      // Calculate position based on current time
+      const timePosition = getTimePosition(
+        `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`,
+      );
+
+      // Scroll to show current time in the middle of the viewport
+      const scrollContainer = calendarScrollRef.current;
+      const containerHeight = scrollContainer.clientHeight;
+      const scrollTo = Math.max(0, timePosition - containerHeight / 2);
+
+      // Use setTimeout to ensure the view has rendered
+      setTimeout(() => {
+        scrollContainer.scrollTo({
+          top: scrollTo,
+          behavior: "smooth",
+        });
+      }, 100);
+    }
+  }, [selectedView]); // Also trigger when view changes
+
+  // Function to scroll to current time (for Today button)
+  const scrollToCurrentTime = () => {
+    if (
+      calendarScrollRef.current &&
+      (selectedView === "week" || selectedView === "day")
+    ) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      const timePosition = getTimePosition(
+        `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`,
+      );
+      const scrollContainer = calendarScrollRef.current;
+      const containerHeight = scrollContainer.clientHeight;
+      const scrollTo = Math.max(0, timePosition - containerHeight / 2);
+
+      scrollContainer.scrollTo({
+        top: scrollTo,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Get current time indicator position
+  const getCurrentTimeIndicatorStyle = () => {
+    const now = currentTime;
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const timePosition = getTimePosition(
+      `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`,
+    );
+
+    return {
+      top: `${timePosition}px`,
+      zIndex: 50,
+    };
+  };
+
+  // Check if current time indicator should be shown (only show for today)
+  const shouldShowCurrentTimeIndicator = () => {
+    const today = new Date();
+    const currentDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Convert to our 0-4 weekday format (0 = Monday)
+    const adjustedDay = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+    // Only show if it's a weekday (Monday-Friday, 0-4) and in week/day view
+    return (
+      adjustedDay >= 0 &&
+      adjustedDay <= 4 &&
+      (selectedView === "week" || selectedView === "day")
+    );
+  };
+
+  // Get current date info for month view
+  const getCurrentDateInfo = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const date = today.getDate();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1); // Start from Monday
+
+    return { today, year, month, date, firstDay, lastDay, startDate };
+  };
+
+  // Generate calendar days for month view
+  const getCalendarDays = () => {
+    const { startDate } = getCurrentDateInfo();
+    const days = [];
+
+    for (let i = 0; i < 42; i++) {
+      // 6 weeks * 7 days
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() + i);
+      days.push(day);
+    }
+
+    return days;
+  };
+
+  // Get events for a specific date
+  const getEventsForDate = (date: Date) => {
+    // For demo purposes, randomly assign some events to dates
+    const dayOfMonth = date.getDate();
+    if (dayOfMonth % 3 === 0) {
+      return events.slice(0, Math.floor(Math.random() * 3) + 1);
+    }
+    return [];
+  };
 
   const themeClasses = {
     sidebar: isDarkMode
@@ -739,6 +876,320 @@ export default function Calendar({
     return matchesSearch && matchesFilter;
   });
 
+  // Render Month View
+  const renderMonthView = () => {
+    const calendarDays = getCalendarDays();
+    const { today, month } = getCurrentDateInfo();
+
+    return (
+      <div className="flex-1 overflow-auto max-h-full">
+        {/* Month Header */}
+        <div
+          className={`grid grid-cols-7 border-b ${isDarkMode ? "border-gray-700/40" : "border-gray-200/40"}`}
+        >
+          {fullWeekDays.map((day) => (
+            <div
+              key={day.name}
+              className={`p-3 text-center border-r ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
+            >
+              <div
+                className={`text-sm font-semibold ${themeClasses.text.secondary} uppercase tracking-wide`}
+              >
+                {day.short}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Month Grid */}
+        <div
+          className="grid grid-cols-7 flex-1 min-h-0"
+          style={{ minHeight: "600px" }}
+        >
+          {calendarDays.map((day, index) => {
+            const isToday = day.toDateString() === today.toDateString();
+            const isCurrentMonth = day.getMonth() === month;
+            const dayEvents = getEventsForDate(day);
+
+            return (
+              <div
+                key={index}
+                className={`border-r border-b p-2 transition-all duration-200 hover:bg-opacity-50 cursor-pointer group ${
+                  isDarkMode
+                    ? "border-gray-700/50 hover:bg-gray-800/20"
+                    : "border-gray-200/50 hover:bg-gray-50/30"
+                } ${
+                  !isCurrentMonth
+                    ? isDarkMode
+                      ? "bg-gray-900/20"
+                      : "bg-gray-50/50"
+                    : ""
+                }`}
+              >
+                <div className="h-full flex flex-col">
+                  <div className="flex items-center justify-between mb-1">
+                    <span
+                      className={`text-sm font-medium transition-all duration-200 ${
+                        isToday
+                          ? "bg-purple-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                          : isCurrentMonth
+                            ? themeClasses.text.primary
+                            : themeClasses.text.tertiary
+                      }`}
+                    >
+                      {day.getDate()}
+                    </span>
+                    {dayEvents.length > 0 && (
+                      <div className="flex space-x-1">
+                        {dayEvents.slice(0, 3).map((event, i) => (
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full ${
+                              event.color === "purple"
+                                ? "bg-purple-500"
+                                : event.color === "blue"
+                                  ? "bg-blue-500"
+                                  : event.color === "green"
+                                    ? "bg-green-500"
+                                    : event.color === "orange"
+                                      ? "bg-orange-500"
+                                      : event.color === "pink"
+                                        ? "bg-pink-500"
+                                        : "bg-indigo-500"
+                            }`}
+                          />
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <span
+                            className={`text-xs ${themeClasses.text.tertiary}`}
+                          >
+                            +{dayEvents.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-1 overflow-hidden">
+                    {dayEvents.slice(0, 3).map((event, i) => (
+                      <div
+                        key={i}
+                        className={`text-xs p-1 rounded truncate transition-all duration-200 cursor-pointer ${getTaskColor(event.color, isDarkMode)}`}
+                        onClick={() => onEventClick?.(event)}
+                      >
+                        {event.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Render Day View
+  const renderDayView = () => {
+    const today = new Date();
+    const todayEvents = events.filter((event) => event.day === 0); // Assuming today is Monday for demo
+
+    return (
+      <div className="flex-1 overflow-hidden">
+        {/* Day Header */}
+        <div
+          className={`p-4 border-b ${isDarkMode ? "border-gray-700/40" : "border-gray-200/40"}`}
+        >
+          <div className="text-center">
+            <div className={`text-lg font-bold ${themeClasses.text.primary}`}>
+              {today.toLocaleDateString("en-US", { weekday: "long" })}
+            </div>
+            <div
+              className={`text-3xl font-bold mt-1 ${themeClasses.text.primary}`}
+            >
+              {today.getDate()}
+            </div>
+            <div className={`text-sm ${themeClasses.text.secondary}`}>
+              {today.toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Day Schedule */}
+        <div
+          className="flex-1 overflow-auto max-h-full"
+          ref={calendarScrollRef}
+        >
+          <div className="relative" style={{ height: `${24 * 120}px` }}>
+            {/* Current Time Indicator for day view */}
+            {shouldShowCurrentTimeIndicator() && (
+              <div
+                className="absolute left-0 right-0 pointer-events-none"
+                style={getCurrentTimeIndicatorStyle()}
+              >
+                <div className="flex items-center">
+                  <div className="px-2 py-1 rounded text-xs font-bold shadow-lg z-50 bg-red-500 text-white">
+                    {currentTime.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
+                  </div>
+                  <div className="flex-1 h-0.5 bg-red-500 shadow-lg"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full shadow-lg mr-2"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Time slots for day view */}
+            {timeSlots.map((time, index) => (
+              <div
+                key={time}
+                className={`flex border-b border-dashed transition-colors duration-200 ${
+                  isDarkMode
+                    ? "border-gray-700/50 hover:bg-gray-800/10"
+                    : "border-gray-300/50 hover:bg-gray-50/20"
+                }`}
+                style={{ height: "120px" }}
+              >
+                <div
+                  className={`w-20 p-2 text-center border-r border-dashed ${themeClasses.timeSlot} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
+                >
+                  <span className="text-xs font-medium">{time}</span>
+                </div>
+                <div
+                  className={`flex-1 relative border-dashed transition-all duration-200 group ${
+                    isDarkMode ? "hover:bg-gray-800/5" : "hover:bg-gray-50/10"
+                  }`}
+                  onDrop={(e) => handleDrop(e, 0, time)}
+                  onDragOver={handleDragOver}
+                >
+                  <div
+                    className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded m-0.5 border border-dashed ${isDarkMode ? "border-purple-500/40" : "border-purple-400/50"}`}
+                  ></div>
+
+                  {index === 0 &&
+                    todayEvents
+                      .filter((event) => event.day === 0)
+                      .map((event) => (
+                        <ScheduledEventCard key={event.id} event={event} />
+                      ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Week View (existing implementation)
+  const renderWeekView = () => {
+    return (
+      <div className="flex-1 overflow-auto max-h-full" ref={calendarScrollRef}>
+        <div className="relative" style={{ height: `${24 * 120}px` }}>
+          {/* Day Headers */}
+          <div
+            className="grid grid-cols-6 border-b border-dashed"
+            style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}
+          >
+            <div
+              className={`p-2 border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
+            ></div>
+            {weekDays.map((day) => (
+              <div
+                key={day.name}
+                className={`p-2 text-center border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
+              >
+                <div
+                  className={`text-xs font-medium ${themeClasses.text.secondary} uppercase tracking-wide`}
+                >
+                  {day.short}
+                </div>
+                <div
+                  className={`text-lg font-bold ${themeClasses.text.primary} mt-0.5`}
+                >
+                  {day.date}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Current Time Indicator */}
+          {shouldShowCurrentTimeIndicator() && (
+            <div
+              className="absolute left-0 right-0 pointer-events-none"
+              style={getCurrentTimeIndicatorStyle()}
+            >
+              <div className="flex items-center">
+                <div className="px-2 py-1 rounded text-xs font-bold shadow-lg z-50 bg-red-500 text-white">
+                  {currentTime.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                </div>
+                <div className="flex-1 h-0.5 bg-red-500 shadow-lg"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full shadow-lg mr-2"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Time Grid */}
+          <div className="relative">
+            {timeSlots.map((time, index) => (
+              <div
+                key={time}
+                className={`grid grid-cols-6 border-b border-dashed transition-colors duration-200 ${
+                  isDarkMode
+                    ? "border-gray-700/50 hover:bg-gray-800/10"
+                    : "border-gray-300/50 hover:bg-gray-50/20"
+                }`}
+                style={{
+                  gridTemplateColumns: "80px repeat(5, 1fr)",
+                  height: "120px",
+                }}
+              >
+                <div
+                  className={`p-2 border-r border-dashed text-center ${themeClasses.timeSlot} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
+                >
+                  <span className="text-xs font-medium">{time}</span>
+                </div>
+                {weekDays.map((day, dayIndex) => (
+                  <div
+                    key={`${time}-${day.name}`}
+                    className={`relative border-r border-dashed transition-all duration-200 group ${
+                      isDarkMode
+                        ? "border-gray-700/60 hover:bg-gray-800/5"
+                        : "border-gray-300/60 hover:bg-gray-50/10"
+                    }`}
+                    onDrop={(e) => handleDrop(e, dayIndex, time)}
+                    onDragOver={handleDragOver}
+                  >
+                    <div
+                      className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded m-0.5 border border-dashed ${isDarkMode ? "border-purple-500/40" : "border-purple-400/50"}`}
+                    ></div>
+
+                    {index === 0 &&
+                      events
+                        .filter((event) => event.day === dayIndex)
+                        .map((event) => (
+                          <ScheduledEventCard key={event.id} event={event} />
+                        ))}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`flex h-full overflow-hidden ${className}`}>
       {/* Tasks Sidebar */}
@@ -794,8 +1245,8 @@ export default function Calendar({
       </div>
 
       {/* Main Calendar Area */}
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full flex flex-col">
+      <main className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Calendar Header with Controls */}
           <div
             className={`p-3 border-b ${isDarkMode ? "border-gray-700/40 bg-gray-900/30" : "border-gray-200/40 bg-white/30"}`}
@@ -833,7 +1284,9 @@ export default function Calendar({
                 ].map((view) => (
                   <button
                     key={view.value}
-                    onClick={() => setSelectedView(view.value as any)}
+                    onClick={() =>
+                      setSelectedView(view.value as "week" | "day" | "month")
+                    }
                     className={`px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-medium ${
                       selectedView === view.value
                         ? isDarkMode
@@ -849,6 +1302,7 @@ export default function Calendar({
                 ))}
 
                 <button
+                  onClick={scrollToCurrentTime}
                   className={`px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-medium ${isDarkMode ? "bg-gray-700/60 text-gray-300 hover:bg-gray-700/80" : "bg-gray-100/80 text-gray-700 hover:bg-gray-100/95"}`}
                 >
                   Today
@@ -857,86 +1311,15 @@ export default function Calendar({
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className={`flex-1 overflow-auto ${themeClasses.calendarGrid}`}>
-            <div className="min-h-full">
-              {/* Day Headers */}
-              <div
-                className="grid grid-cols-6 border-b border-dashed"
-                style={{ gridTemplateColumns: "80px repeat(5, 1fr)" }}
-              >
-                <div
-                  className={`p-2 border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
-                ></div>
-                {weekDays.map((day) => (
-                  <div
-                    key={day.name}
-                    className={`p-2 text-center border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
-                  >
-                    <div
-                      className={`text-xs font-medium ${themeClasses.text.secondary} uppercase tracking-wide`}
-                    >
-                      {day.short}
-                    </div>
-                    <div
-                      className={`text-lg font-bold ${themeClasses.text.primary} mt-0.5`}
-                    >
-                      {day.date}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Time Grid */}
-              <div className="relative">
-                {timeSlots.map((time, index) => (
-                  <div
-                    key={time}
-                    className={`grid grid-cols-6 border-b border-dashed transition-colors duration-200 ${
-                      isDarkMode
-                        ? "border-gray-700/50 hover:bg-gray-800/10"
-                        : "border-gray-300/50 hover:bg-gray-50/20"
-                    }`}
-                    style={{
-                      gridTemplateColumns: "80px repeat(5, 1fr)",
-                      height: "120px",
-                    }}
-                  >
-                    <div
-                      className={`p-2 border-r border-dashed text-center ${themeClasses.timeSlot} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
-                    >
-                      <span className="text-xs font-medium">{time}</span>
-                    </div>
-                    {weekDays.map((day, dayIndex) => (
-                      <div
-                        key={`${time}-${day.name}`}
-                        className={`relative border-r border-dashed transition-all duration-200 group ${
-                          isDarkMode
-                            ? "border-gray-700/60 hover:bg-gray-800/5"
-                            : "border-gray-300/60 hover:bg-gray-50/10"
-                        }`}
-                        onDrop={(e) => handleDrop(e, dayIndex, time)}
-                        onDragOver={handleDragOver}
-                      >
-                        <div
-                          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded m-0.5 border border-dashed ${isDarkMode ? "border-purple-500/40" : "border-purple-400/50"}`}
-                        ></div>
-
-                        {index === 0 &&
-                          events
-                            .filter((event) => event.day === dayIndex)
-                            .map((event) => (
-                              <ScheduledEventCard
-                                key={event.id}
-                                event={event}
-                              />
-                            ))}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Dynamic Calendar View */}
+          <div
+            className={`flex-1 overflow-hidden ${themeClasses.calendarGrid}`}
+          >
+            {selectedView === "month"
+              ? renderMonthView()
+              : selectedView === "day"
+                ? renderDayView()
+                : renderWeekView()}
           </div>
         </div>
       </main>
