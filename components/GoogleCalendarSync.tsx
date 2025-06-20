@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useTheme } from "./AppLayout";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -219,10 +220,12 @@ export default function GoogleCalendarSync() {
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
                   {connection.googleAccountPicture ? (
-                    <img
+                    <Image
                       src={connection.googleAccountPicture}
                       alt={connection.googleAccountName}
-                      className="w-8 h-8 rounded-full"
+                      width={32}
+                      height={32}
+                      className="rounded-full"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">

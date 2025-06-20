@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
 
 // Get events for a date range
 export const getEvents = query({
@@ -202,7 +203,17 @@ export const updateEvent = mutation({
       throw new Error("Event not found");
     }
 
-    const updates: any = { updatedAt: Date.now() };
+    const updates: Partial<{
+      title: string;
+      description: string | undefined;
+      startDate: number;
+      endDate: number;
+      allDay: boolean;
+      projectId: Id<"projects"> | undefined;
+      taskId: Id<"tasks"> | undefined;
+      routineId: Id<"routines"> | undefined;
+      updatedAt: number;
+    }> = { updatedAt: Date.now() };
 
     if (args.title !== undefined) {
       if (!args.title.trim()) throw new Error("Event title is required");
@@ -269,7 +280,7 @@ export const getTodayEvents = query({
       updatedAt: v.number(),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
@@ -332,7 +343,7 @@ export const getUpcomingEvents = query({
 export const fixBrokenEvents = mutation({
   args: {},
   returns: v.null(),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
@@ -391,7 +402,7 @@ export const fixBrokenEvents = mutation({
 export const fixAllBrokenEventsTemp = mutation({
   args: {},
   returns: v.null(),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const events = await ctx.db.query("events").collect();
 
     const now = Date.now();
@@ -616,7 +627,7 @@ export const getAllCalendarEvents = query({
     if (!userId) return { appEvents: [], googleEvents: [] };
 
     // Get app events
-    let appEventsQuery = ctx.db
+    const appEventsQuery = ctx.db
       .query("events")
       .withIndex("by_date", (q) =>
         q.gte("startDate", args.startDate).lte("startDate", args.endDate),

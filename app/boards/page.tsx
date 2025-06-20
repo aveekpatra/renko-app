@@ -325,7 +325,7 @@ export default function BoardsPage() {
   const updateTaskPosition = useMutation(api.tasks.updateTaskPosition);
   const updateProjectMutation = useMutation(api.tasks.updateProject);
   const deleteProject = useMutation(api.tasks.deleteProject);
-  const deleteColumn = useMutation(api.tasks.deleteColumn);
+  // const deleteColumn = useMutation(api.tasks.deleteColumn); // Commented out for future use
 
   // Wrapper function to match EditProjectModal interface
   const updateProject = async (updates: {
@@ -394,23 +394,24 @@ export default function BoardsPage() {
     });
   }, []);
 
-  const handleDeleteColumn = React.useCallback(
-    async (columnId: Id<"columns">) => {
-      if (
-        window.confirm(
-          "Are you sure you want to delete this column? This action cannot be undone.",
-        )
-      ) {
-        try {
-          await deleteColumn({ columnId });
-        } catch (error) {
-          console.error("Failed to delete column:", error);
-          alert("Failed to delete column. Please make sure it's empty first.");
-        }
-      }
-    },
-    [deleteColumn],
-  );
+  // Commented out for future use
+  // const handleDeleteColumn = React.useCallback(
+  //   async (columnId: Id<"columns">) => {
+  //     if (
+  //       window.confirm(
+  //         "Are you sure you want to delete this column? This action cannot be undone.",
+  //       )
+  //     ) {
+  //       try {
+  //         await deleteColumn({ columnId });
+  //       } catch (error) {
+  //         console.error("Failed to delete column:", error);
+  //         alert("Failed to delete column. Please make sure it's empty first.");
+  //       }
+  //     }
+  //   },
+  //   [deleteColumn],
+  // );
 
   const closeColumnModal = React.useCallback(() => {
     setColumnModalState({
@@ -792,8 +793,13 @@ export default function BoardsPage() {
         onClose={() => setShowEditProjectModal(false)}
         isDarkMode={isDarkMode}
         project={
-          selectedBoardId
-            ? boards?.find((b) => b._id === selectedBoardId)
+          selectedBoardId && boards
+            ? (() => {
+                const board = boards.find((b) => b._id === selectedBoardId);
+                return board
+                  ? { name: board.name, description: board.description }
+                  : null;
+              })()
             : null
         }
         onUpdate={updateProject}

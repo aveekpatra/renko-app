@@ -40,13 +40,8 @@ function AuthenticatedContent() {
     <>
       <div className="h-full bg-white">
         {/* Calendar - Full Width */}
-        <WeeklyCalendar
-          onEventClick={(event) => {
-            console.log("Event clicked:", event);
-          }}
-          className="h-full"
-                  />
-                </div>
+        <WeeklyCalendar className="h-full" />
+      </div>
 
       {/* Task Modal */}
       {taskModalState.isOpen && (

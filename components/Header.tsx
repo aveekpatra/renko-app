@@ -8,18 +8,14 @@ import {
   Bell,
   Settings,
   User,
-  Command,
   Calendar,
   BarChart3,
   Zap,
-  Link,
   CheckCircle,
-  AlertCircle,
-  Loader2,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 interface HeaderProps {
@@ -98,8 +94,7 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
         return "Projects";
       case "/calendar":
         return "Calendar";
-      case "/habits":
-        return "Habits";
+
       default:
         if (pathname.startsWith("/boards/")) {
           return "Project Board";
@@ -116,8 +111,7 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
         return <BarChart3 className="w-5 h-5" />;
       case "/calendar":
         return <Calendar className="w-5 h-5" />;
-      case "/habits":
-        return <Command className="w-5 h-5" />;
+
       default:
         return <Zap className="w-5 h-5" />;
     }

@@ -8,9 +8,6 @@ import {
   Clock,
   Users,
   MapPin,
-  Globe,
-  Video,
-  CheckCircle2,
   CheckSquare,
   GripVertical,
   Search,
@@ -152,7 +149,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
   const [selectedView, setSelectedView] = useState<"week" | "day" | "month">(
     "week",
   );
-  const [currentWeek, setCurrentWeek] = useState(() => {
+  const [currentWeek] = useState(() => {
     const now = new Date();
     const start = new Date(now);
     start.setDate(now.getDate() - now.getDay() + 1); // Monday
@@ -164,7 +161,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarScrollRef = useRef<HTMLDivElement>(null);
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+  const [currentWeekStart] = useState(() => {
     const now = new Date();
     const start = new Date(now);
     start.setDate(now.getDate() - now.getDay() + 1); // Monday
@@ -189,8 +186,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
 
   // Mutations
   const scheduleTask = useMutation(api.calendar.scheduleTask);
-  const updateEvent = useMutation(api.calendar.updateEvent);
-  const deleteEvent = useMutation(api.calendar.deleteEvent);
 
   // Convert unscheduled tasks to our format
   const unscheduledTasks: Task[] =
@@ -1007,7 +1002,11 @@ export default function Calendar({ className = "" }: CalendarProps) {
 
   // Render Week View
   const renderWeekView = () => {
-    const weekDates = [];
+    const weekDates: Array<{
+      name: string;
+      short: string;
+      date: number;
+    }> = [];
     for (let i = 0; i < 5; i++) {
       const date = new Date(currentWeekStart);
       date.setDate(currentWeekStart.getDate() + i);

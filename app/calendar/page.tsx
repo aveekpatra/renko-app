@@ -2,21 +2,15 @@
 
 import React, { useState } from "react";
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Filter,
   Clock,
   Users,
-  Video,
   Coffee,
   BookOpen,
-  Briefcase,
   Target,
   GripVertical,
-  CheckCircle2,
-  Circle,
   Search,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
@@ -400,8 +394,8 @@ export default function CalendarPage() {
   const [selectedView, setSelectedView] = useState<"week" | "day" | "month">(
     "week",
   );
-  const [currentWeek, setCurrentWeek] = useState("March 15-19, 2024");
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [currentWeek] = useState("March 15-19, 2024");
+  const [selectedFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const themeClasses = {
@@ -850,7 +844,9 @@ export default function CalendarPage() {
                 ].map((view) => (
                   <button
                     key={view.value}
-                    onClick={() => setSelectedView(view.value as any)}
+                    onClick={() =>
+                      setSelectedView(view.value as "week" | "day" | "month")
+                    }
                     className={`px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-medium ${
                       selectedView === view.value
                         ? isDarkMode

@@ -73,6 +73,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isResizing]);
 
   if (!isHydrated) {

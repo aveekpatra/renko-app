@@ -1,29 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createPortal } from "react-dom";
-import { useAuthActions } from "@convex-dev/auth/react";
+import { usePathname } from "next/navigation";
 import {
-  Plus,
   Calendar,
-  FolderKanban,
-  FileText,
   Settings,
-  Home as HomeIcon,
-  BarChart3,
   Sparkles,
   GripVertical,
   Moon,
   Sun,
   ChevronLeft,
   ChevronRight,
-  Target,
-  LogOut,
-  ChevronUp,
-  Layout,
-  Kanban,
   Inbox,
   List,
   Tag,
@@ -55,11 +43,12 @@ const primaryNavItems = [
   { icon: Tag, label: "All tasks", href: "/boards" },
 ];
 
-const secondaryNavItems = [
-  { icon: FolderKanban, label: "Projects", href: "/boards" },
-  { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: Target, label: "Habits", href: "/habits" },
-];
+// Commented out for now
+// const secondaryNavItems = [
+//   { icon: FolderKanban, label: "Projects", href: "/boards" },
+//   { icon: Calendar, label: "Calendar", href: "/calendar" },
+//   { icon: Target, label: "Habits", href: "/habits" },
+// ];
 
 interface SidebarProps {
   sidebarWidth: number;
@@ -77,21 +66,10 @@ export default function Sidebar({
   className = "",
 }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { signOut } = useAuthActions();
 
   // Manage sidebar collapsed state internally with localStorage persistence
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-
-  // User dropdown state
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-  });
 
   // Handle hydration and localStorage loading
   useEffect(() => {
@@ -110,36 +88,6 @@ export default function Sidebar({
     }
   }, [isCollapsed, isHydrated]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        userDropdownRef.current &&
-        !userDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsUserDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // Calculate dropdown position when opened
-  useEffect(() => {
-    if (isUserDropdownOpen && userDropdownRef.current && isHydrated) {
-      const rect = userDropdownRef.current.getBoundingClientRect();
-      const effectiveIsCollapsed = isHydrated && isCollapsed;
-      setDropdownPosition({
-        top: rect.top - (effectiveIsCollapsed ? 100 : 120),
-        left: effectiveIsCollapsed ? rect.right + 8 : rect.left,
-        width: effectiveIsCollapsed ? 192 : rect.width - 32,
-      });
-    }
-  }, [isUserDropdownOpen, isCollapsed, isHydrated]);
-
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
@@ -148,36 +96,14 @@ export default function Sidebar({
     setIsCollapsed(!isCollapsed);
   };
 
-  const toggleUserDropdown = () => {
-    setIsUserDropdownOpen(!isUserDropdownOpen);
-  };
+  // These are commented out but kept for future use
+  // const toggleUserDropdown = () => {
+  //   setIsUserDropdownOpen(!isUserDropdownOpen);
+  // };
 
-  const handleSettings = () => {
-    setIsUserDropdownOpen(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      setIsUserDropdownOpen(false);
-      await signOut();
-      localStorage.clear();
-      sessionStorage.clear();
-      document.cookie.split(";").forEach((c) => {
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie =
-          name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-        document.cookie =
-          name +
-          "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" +
-          window.location.hostname;
-      });
-      router.refresh();
-      router.push("/signin");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+  // const handleSettings = () => {
+  //   setIsUserDropdownOpen(false);
+  // };
 
   // Use the hydrated collapsed state, defaulting to expanded for SSR
   const currentSidebarWidth = isHydrated && isCollapsed ? 80 : sidebarWidth;
