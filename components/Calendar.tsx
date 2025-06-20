@@ -7,356 +7,101 @@ import {
   Plus,
   Clock,
   Users,
-  Coffee,
-  BookOpen,
-  Target,
+  MapPin,
+  Globe,
+  Video,
+  CheckCircle2,
+  CheckSquare,
   GripVertical,
   Search,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface Task {
   id: string;
   title: string;
   description?: string;
-  priority: "urgent" | "normal" | "low";
-  color: "purple" | "blue" | "green" | "orange" | "pink" | "indigo";
-  type: "meeting" | "task" | "break" | "focus" | "review";
-  icon?: React.ComponentType<{ className?: string }>;
+  priority: "urgent" | "high" | "normal" | "low";
+  projectColor?: string;
+  projectName?: string;
+  taskId?: Id<"tasks">;
 }
 
-interface ScheduledEvent extends Task {
+interface ScheduledEvent {
+  id: string;
+  title: string;
+  description?: string;
   startTime: string;
   endTime: string;
   day: number; // 0-4 for weekdays
+  priority?: "urgent" | "high" | "normal" | "low";
+  color: string;
+  type: "app" | "google" | "task";
+  location?: string;
+  attendees?: string[];
+  taskId?: Id<"tasks">;
+  eventId?: Id<"events">;
+  googleEventId?: string;
 }
 
 interface CalendarProps {
-  events?: ScheduledEvent[];
-  unscheduledTasks?: Task[];
-  onEventClick?: (event: ScheduledEvent) => void;
-  onTaskDrop?: (task: Task, day: number, timeSlot: string) => void;
   className?: string;
 }
 
-// Default unscheduled tasks
-const defaultUnscheduledTasks: Task[] = [
-  {
-    id: "task-1",
-    title: "Review design mockups",
-    description: "Check the new dashboard designs",
-    priority: "urgent",
-    color: "purple",
-    type: "review",
-    icon: Target,
-  },
-  {
-    id: "task-2",
-    title: "Update documentation",
-    description: "Add API examples and usage guides",
-    priority: "normal",
-    color: "blue",
-    type: "task",
-    icon: BookOpen,
-  },
-  {
-    id: "task-3",
-    title: "Client presentation prep",
-    description: "Prepare slides for quarterly review",
-    priority: "urgent",
-    color: "green",
-    type: "meeting",
-    icon: Users,
-  },
-  {
-    id: "task-4",
-    title: "Code refactoring",
-    description: "Clean up authentication module",
-    priority: "normal",
-    color: "indigo",
-    type: "task",
-    icon: Target,
-  },
-  {
-    id: "task-5",
-    title: "Team 1:1 planning",
-    description: "Prepare talking points for team meetings",
-    priority: "low",
-    color: "pink",
-    type: "meeting",
-    icon: Users,
-  },
-  {
-    id: "task-6",
-    title: "Database optimization",
-    description: "Improve query performance",
-    priority: "normal",
-    color: "orange",
-    type: "task",
-    icon: Target,
-  },
-];
+const getIconForEventType = (type: string) => {
+  switch (type) {
+    case "google":
+      return CalendarIcon;
+    case "task":
+      return CheckSquare;
+    default:
+      return Clock;
+  }
+};
 
-// Default scheduled events
-const defaultScheduledEvents: ScheduledEvent[] = [
-  // Monday (day 0)
-  {
-    id: "event-1",
-    title: "Morning Planning",
-    description: "Plan the week ahead and set priorities",
-    startTime: "08:30",
-    endTime: "09:30",
-    day: 0,
-    color: "purple",
-    type: "meeting",
-    icon: Target,
-    priority: "normal",
-  },
-  {
-    id: "event-2",
-    title: "Client Call",
-    description: "Weekly check-in with key client",
-    startTime: "10:00",
-    endTime: "11:00",
-    day: 0,
-    color: "blue",
-    type: "meeting",
-    icon: Users,
-    priority: "urgent",
-  },
-  {
-    id: "event-3",
-    title: "Code Review",
-    description: "Review pull requests from the team",
-    startTime: "14:00",
-    endTime: "15:30",
-    day: 0,
-    color: "green",
-    type: "review",
-    icon: Target,
-    priority: "normal",
-  },
-  {
-    id: "event-4",
-    title: "Lunch Break",
-    startTime: "12:00",
-    endTime: "13:00",
-    day: 0,
-    color: "orange",
-    type: "break",
-    icon: Coffee,
-    priority: "low",
-  },
-  // Tuesday (day 1)
-  {
-    id: "event-5",
-    title: "Team Standup",
-    description: "Daily team sync and updates",
-    startTime: "09:30",
-    endTime: "10:00",
-    day: 1,
-    color: "purple",
-    type: "meeting",
-    icon: Users,
-    priority: "normal",
-  },
-  {
-    id: "event-6",
-    title: "Deep Work Session",
-    description: "Focus time for complex development tasks",
-    startTime: "10:30",
-    endTime: "12:00",
-    day: 1,
-    color: "indigo",
-    type: "focus",
-    icon: BookOpen,
-    priority: "urgent",
-  },
-  {
-    id: "event-7",
-    title: "Lunch Meeting",
-    description: "Lunch with potential new hire",
-    startTime: "12:00",
-    endTime: "13:30",
-    day: 1,
-    color: "pink",
-    type: "meeting",
-    icon: Users,
-    priority: "normal",
-  },
-  {
-    id: "event-8",
-    title: "Product Demo",
-    description: "Demo latest features to stakeholders",
-    startTime: "15:30",
-    endTime: "16:30",
-    day: 1,
-    color: "blue",
-    type: "meeting",
-    icon: Target,
-    priority: "urgent",
-  },
-  // Wednesday (day 2)
-  {
-    id: "event-9",
-    title: "Focus Time",
-    description: "Uninterrupted development time",
-    startTime: "09:00",
-    endTime: "11:00",
-    day: 2,
-    color: "indigo",
-    type: "focus",
-    icon: BookOpen,
-    priority: "normal",
-  },
-  {
-    id: "event-10",
-    title: "Architecture Review",
-    description: "Technical design discussion",
-    startTime: "11:30",
-    endTime: "12:30",
-    day: 2,
-    color: "green",
-    type: "review",
-    icon: Target,
-    priority: "normal",
-  },
-  {
-    id: "event-11",
-    title: "Sprint Review",
-    description: "Review completed work with team",
-    startTime: "15:00",
-    endTime: "16:00",
-    day: 2,
-    color: "blue",
-    type: "review",
-    icon: Target,
-    priority: "normal",
-  },
-  {
-    id: "event-12",
-    title: "Coffee Chat",
-    description: "Informal catch-up with mentor",
-    startTime: "16:30",
-    endTime: "17:00",
-    day: 2,
-    color: "orange",
-    type: "break",
-    icon: Coffee,
-    priority: "low",
-  },
-  // Thursday (day 3)
-  {
-    id: "event-13",
-    title: "Team Meeting",
-    description: "Weekly team planning and retrospective",
-    startTime: "08:00",
-    endTime: "09:00",
-    day: 3,
-    color: "purple",
-    type: "meeting",
-    icon: Users,
-    priority: "normal",
-  },
-  {
-    id: "event-14",
-    title: "Bug Fixes",
-    description: "Address critical production issues",
-    startTime: "10:00",
-    endTime: "12:00",
-    day: 3,
-    color: "green",
-    type: "task",
-    icon: Target,
-    priority: "urgent",
-  },
-  {
-    id: "event-15",
-    title: "Lunch & Learn",
-    description: "Tech talk on new frameworks",
-    startTime: "12:30",
-    endTime: "13:30",
-    day: 3,
-    color: "pink",
-    type: "meeting",
-    icon: BookOpen,
-    priority: "low",
-  },
-  {
-    id: "event-16",
-    title: "1:1 with Manager",
-    description: "Weekly one-on-one check-in",
-    startTime: "14:00",
-    endTime: "14:30",
-    day: 3,
-    color: "blue",
-    type: "meeting",
-    icon: Users,
-    priority: "normal",
-  },
-  {
-    id: "event-17",
-    title: "Documentation",
-    description: "Update project documentation",
-    startTime: "15:00",
-    endTime: "17:00",
-    day: 3,
-    color: "indigo",
-    type: "task",
-    icon: BookOpen,
-    priority: "normal",
-  },
-  // Friday (day 4)
-  {
-    id: "event-18",
-    title: "Code Deploy",
-    description: "Deploy weekly release to production",
-    startTime: "08:30",
-    endTime: "09:30",
-    day: 4,
-    color: "green",
-    type: "task",
-    icon: Target,
-    priority: "urgent",
-  },
-  {
-    id: "event-19",
-    title: "All Hands Meeting",
-    description: "Company-wide monthly update",
-    startTime: "10:00",
-    endTime: "11:00",
-    day: 4,
-    color: "purple",
-    type: "meeting",
-    icon: Users,
-    priority: "normal",
-  },
-  {
-    id: "event-20",
-    title: "Team Retrospective",
-    description: "Weekly team reflection and planning",
-    startTime: "13:00",
-    endTime: "14:00",
-    day: 4,
-    color: "blue",
-    type: "review",
-    icon: Target,
-    priority: "normal",
-  },
-  {
-    id: "event-21",
-    title: "Friday Social",
-    description: "Team bonding and casual conversations",
-    startTime: "17:00",
-    endTime: "18:00",
-    day: 4,
-    color: "pink",
-    type: "break",
-    icon: Coffee,
-    priority: "low",
-  },
-];
+const getColorFromProjectColor = (color?: string): string => {
+  if (!color) return "blue";
 
+  // Map hex colors to our color names
+  const colorMap: { [key: string]: string } = {
+    "#8b5cf6": "purple",
+    "#3b82f6": "blue",
+    "#10b981": "green",
+    "#f59e0b": "orange",
+    "#ec4899": "pink",
+    "#6366f1": "indigo",
+    "#ef4444": "red",
+    "#f97316": "orange",
+    "#14b8a6": "teal",
+  };
+
+  return colorMap[color.toLowerCase()] || "blue";
+};
+
+const getPriorityFromTask = (
+  priority?: string,
+): "urgent" | "high" | "normal" | "low" => {
+  switch (priority?.toLowerCase()) {
+    case "critical":
+    case "urgent":
+      return "urgent";
+    case "high":
+      return "high";
+    case "normal":
+    case "medium":
+      return "normal";
+    case "low":
+      return "low";
+    default:
+      return "normal";
+  }
+};
+
+// Time slots remain the same
 const timeSlots = [
   "00:00",
   "01:00",
@@ -402,22 +147,134 @@ const fullWeekDays = [
   { name: "Sunday", short: "Sun", abbr: "S" },
 ];
 
-export default function Calendar({
-  events = defaultScheduledEvents,
-  unscheduledTasks = defaultUnscheduledTasks,
-  onEventClick,
-  onTaskDrop,
-  className = "",
-}: CalendarProps) {
+export default function Calendar({ className = "" }: CalendarProps) {
   const { isDarkMode } = useTheme();
   const [selectedView, setSelectedView] = useState<"week" | "day" | "month">(
     "week",
   );
-  const [currentWeek] = useState("March 15-19, 2024");
-  const [selectedFilter] = useState<string | null>(null);
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay() + 1); // Monday
+    const end = new Date(start);
+    end.setDate(start.getDate() + 4); // Friday
+
+    return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { day: "numeric", year: "numeric" })}`;
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarScrollRef = useRef<HTMLDivElement>(null);
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay() + 1); // Monday
+    start.setHours(0, 0, 0, 0);
+    return start;
+  });
+
+  // Fetch unscheduled tasks
+  const unscheduledTasksData = useQuery(api.tasks.getUnscheduledTasks);
+
+  // Calculate date range for fetching events
+  const startDate = currentWeekStart.getTime();
+  const endDate =
+    new Date(currentWeekStart).setDate(currentWeekStart.getDate() + 6) +
+    24 * 60 * 60 * 1000;
+
+  // Fetch calendar events
+  const eventsData = useQuery(api.calendar.getAllCalendarEvents, {
+    startDate,
+    endDate,
+  });
+
+  // Mutations
+  const scheduleTask = useMutation(api.calendar.scheduleTask);
+  const updateEvent = useMutation(api.calendar.updateEvent);
+  const deleteEvent = useMutation(api.calendar.deleteEvent);
+
+  // Convert unscheduled tasks to our format
+  const unscheduledTasks: Task[] =
+    unscheduledTasksData?.map((task) => ({
+      id: task._id,
+      title: task.title,
+      description: task.description,
+      priority: getPriorityFromTask(task.priority),
+      projectColor: task.projectColor,
+      projectName: task.projectName,
+      taskId: task._id,
+    })) || [];
+
+  // Convert events to our calendar format
+  const events: ScheduledEvent[] = [];
+
+  if (eventsData) {
+    // Add app events
+    eventsData.appEvents.forEach((event) => {
+      const eventDate = new Date(event.startDate);
+      const dayOfWeek = eventDate.getDay();
+      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday=0 to 6, Monday=1 to 0
+
+      if (adjustedDay >= 0 && adjustedDay <= 4) {
+        // Only weekdays for week view
+        events.push({
+          id: event._id,
+          title: event.title,
+          description: event.description,
+          startTime: eventDate.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          endTime: new Date(event.endDate).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          day: adjustedDay,
+          priority: event.task?.priority
+            ? getPriorityFromTask(event.task.priority)
+            : "normal",
+          color: event.project?.color
+            ? getColorFromProjectColor(event.project.color)
+            : "blue",
+          type: "app",
+          taskId: event.taskId,
+          eventId: event._id,
+        });
+      }
+    });
+
+    // Add Google Calendar events
+    eventsData.googleEvents.forEach((event) => {
+      const eventDate = new Date(event.startDate);
+      const dayOfWeek = eventDate.getDay();
+      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      if (adjustedDay >= 0 && adjustedDay <= 4) {
+        events.push({
+          id: event._id,
+          title: event.title,
+          description: event.description,
+          startTime: eventDate.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          endTime: new Date(event.endDate).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          day: adjustedDay,
+          color: "purple", // Google events in purple
+          type: "google",
+          location: event.location,
+          attendees: event.attendees,
+          googleEventId: event.eventId,
+        });
+      }
+    });
+  }
 
   // Update current time every minute
   useEffect(() => {
@@ -456,7 +313,7 @@ export default function Calendar({
         });
       }, 100);
     }
-  }, [selectedView]); // Also trigger when view changes
+  }, [selectedView]);
 
   // Function to scroll to current time (for Today button)
   const scrollToCurrentTime = () => {
@@ -500,16 +357,67 @@ export default function Calendar({
   // Check if current time indicator should be shown (only show for today)
   const shouldShowCurrentTimeIndicator = () => {
     const today = new Date();
-    const currentDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    // Convert to our 0-4 weekday format (0 = Monday)
+    const currentDayOfWeek = today.getDay();
     const adjustedDay = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
-    // Only show if it's a weekday (Monday-Friday, 0-4) and in week/day view
     return (
       adjustedDay >= 0 &&
       adjustedDay <= 4 &&
       (selectedView === "week" || selectedView === "day")
     );
   };
+
+  // Handle task drop
+  const handleDrop = async (
+    e: React.DragEvent,
+    day: number,
+    timeSlot: string,
+  ) => {
+    e.preventDefault();
+    const taskData = e.dataTransfer.getData("text/plain");
+    if (taskData) {
+      const task = JSON.parse(taskData);
+
+      // Calculate start and end times
+      const [hour] = timeSlot.split(":").map(Number);
+      const eventDate = new Date(currentWeekStart);
+      eventDate.setDate(currentWeekStart.getDate() + day);
+      eventDate.setHours(hour, 0, 0, 0);
+
+      const startDate = eventDate.getTime();
+      const endDate = startDate + 60 * 60 * 1000; // 1 hour duration
+
+      if (task.taskId) {
+        const result = await scheduleTask({
+          taskId: task.taskId,
+          startDate,
+          endDate,
+        });
+
+        if (!result.success) {
+          console.error("Failed to schedule task:", result.error);
+        }
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleEventClick = async (event: ScheduledEvent) => {
+    if (event.type === "app" && event.eventId) {
+      // For now, just log - you can implement a modal or detailed view
+      console.log("Event clicked:", event);
+    }
+  };
+
+  const filteredTasks = unscheduledTasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+        false);
+    return matchesSearch;
+  });
 
   // Get current date info for month view
   const getCurrentDateInfo = () => {
@@ -542,12 +450,11 @@ export default function Calendar({
 
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
-    // For demo purposes, randomly assign some events to dates
-    const dayOfMonth = date.getDate();
-    if (dayOfMonth % 3 === 0) {
-      return events.slice(0, Math.floor(Math.random() * 3) + 1);
-    }
-    return [];
+    return events.filter((event) => {
+      const eventDate = new Date(currentWeekStart);
+      eventDate.setDate(currentWeekStart.getDate() + event.day);
+      return eventDate.toDateString() === date.toDateString();
+    });
   };
 
   const themeClasses = {
@@ -601,6 +508,10 @@ export default function Calendar({
         return isDark
           ? "bg-red-500/25 text-red-300 border-red-400/50 shadow-sm shadow-red-900/20"
           : "bg-red-100/80 text-red-700 border-red-300/70 shadow-sm shadow-red-200/30";
+      case "high":
+        return isDark
+          ? "bg-orange-500/25 text-orange-300 border-orange-400/50 shadow-sm shadow-orange-900/20"
+          : "bg-orange-100/80 text-orange-700 border-orange-300/70 shadow-sm shadow-orange-200/30";
       case "normal":
         return isDark
           ? "bg-blue-500/25 text-blue-300 border-blue-400/50 shadow-sm shadow-blue-900/20"
@@ -623,11 +534,11 @@ export default function Calendar({
     task: Task;
     draggable?: boolean;
   }) => {
-    const Icon = task.icon || Clock;
+    const color = getColorFromProjectColor(task.projectColor);
 
     return (
       <div
-        className={`p-2.5 rounded-lg border backdrop-blur-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer group ${getTaskColor(task.color, isDarkMode)} ${
+        className={`p-2.5 rounded-lg border backdrop-blur-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer group ${getTaskColor(color, isDarkMode)} ${
           draggable ? "cursor-grab hover:cursor-grabbing transform-gpu" : ""
         }`}
         draggable={draggable}
@@ -641,7 +552,7 @@ export default function Calendar({
           {draggable && (
             <GripVertical className="w-3 h-3 mt-0.5 opacity-40 group-hover:opacity-70 transition-opacity flex-shrink-0" />
           )}
-          <Icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-80" />
+          <CheckSquare className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-80" />
           <div className="min-w-0 flex-1">
             <h4 className="text-xs font-semibold leading-tight truncate">
               {task.title}
@@ -659,28 +570,18 @@ export default function Calendar({
           >
             {task.priority}
           </span>
-          <div
-            className={`w-2.5 h-2.5 rounded-full shadow-sm ${
-              task.color === "purple"
-                ? "bg-purple-500"
-                : task.color === "blue"
-                  ? "bg-blue-500"
-                  : task.color === "green"
-                    ? "bg-green-500"
-                    : task.color === "orange"
-                      ? "bg-orange-500"
-                      : task.color === "pink"
-                        ? "bg-pink-500"
-                        : "bg-indigo-500"
-            }`}
-          />
+          {task.projectName && (
+            <span className="text-xs opacity-60 truncate max-w-[100px]">
+              {task.projectName}
+            </span>
+          )}
         </div>
       </div>
     );
   };
 
   const ScheduledEventCard = ({ event }: { event: ScheduledEvent }) => {
-    const Icon = event.icon || Clock;
+    const Icon = getIconForEventType(event.type);
     const eventHeight = getEventHeight(event.startTime, event.endTime);
 
     const isVeryShort = eventHeight < 50;
@@ -714,7 +615,7 @@ export default function Calendar({
           zIndex: 10,
           maxWidth: "calc(100% - 8px)",
         }}
-        onClick={() => onEventClick?.(event)}
+        onClick={() => handleEventClick(event)}
       >
         {isVeryShort ? (
           <div className="p-1.5 flex items-center w-full overflow-hidden">
@@ -771,12 +672,24 @@ export default function Calendar({
                 {event.startTime} - {event.endTime}
               </span>
             </div>
+            {event.type === "google" && event.location && (
+              <div className="flex items-center space-x-1 mb-1 flex-shrink-0 min-h-0">
+                <MapPin className="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
+                <span
+                  className={`text-xs opacity-60 truncate ${themeClasses.text.tertiary}`}
+                >
+                  {event.location}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between mt-auto flex-shrink-0 min-h-0 overflow-hidden">
-              <span
-                className={`text-xs px-1.5 py-0.5 rounded font-medium backdrop-blur-sm border truncate max-w-[60%] ${getPriorityColor(event.priority, isDarkMode)}`}
-              >
-                {event.priority}
-              </span>
+              {event.priority && (
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded font-medium backdrop-blur-sm border truncate max-w-[60%] ${getPriorityColor(event.priority, isDarkMode)}`}
+                >
+                  {event.priority}
+                </span>
+              )}
               <span
                 className={`text-xs opacity-60 truncate ml-1 max-w-[35%] ${themeClasses.text.tertiary}`}
               >
@@ -815,19 +728,46 @@ export default function Calendar({
                   </p>
                 </div>
               )}
+              {event.type === "google" && (
+                <>
+                  {event.location && (
+                    <div className="flex items-center space-x-1 mb-1">
+                      <MapPin className="w-3 h-3 flex-shrink-0 opacity-60" />
+                      <span
+                        className={`text-xs opacity-60 ${themeClasses.text.tertiary}`}
+                      >
+                        {event.location}
+                      </span>
+                    </div>
+                  )}
+                  {event.attendees && event.attendees.length > 0 && (
+                    <div className="flex items-center space-x-1 mb-1">
+                      <Users className="w-3 h-3 flex-shrink-0 opacity-60" />
+                      <span
+                        className={`text-xs opacity-60 ${themeClasses.text.tertiary}`}
+                      >
+                        {event.attendees.length} attendee
+                        {event.attendees.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <div className="flex items-center justify-between flex-shrink-0 mt-2 min-h-0 overflow-hidden">
-              <span
-                className={`text-xs px-2 py-0.5 rounded-md font-medium backdrop-blur-sm border truncate max-w-[60%] ${getPriorityColor(event.priority, isDarkMode)}`}
-              >
-                {event.priority}
-              </span>
-              <span
-                className={`text-xs opacity-60 truncate max-w-[35%] ${themeClasses.text.tertiary}`}
-              >
-                {event.type}
-              </span>
-            </div>
+            {event.priority && (
+              <div className="flex items-center justify-between flex-shrink-0 mt-2 min-h-0 overflow-hidden">
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-md font-medium backdrop-blur-sm border truncate max-w-[60%] ${getPriorityColor(event.priority, isDarkMode)}`}
+                >
+                  {event.priority}
+                </span>
+                <span
+                  className={`text-xs opacity-60 truncate max-w-[35%] ${themeClasses.text.tertiary}`}
+                >
+                  {event.type}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -847,34 +787,6 @@ export default function Calendar({
       endHour * 60 + endMinute - (startHour * 60 + startMinute);
     return Math.max((durationMinutes * 120) / 60, 30);
   };
-
-  const handleDrop = (e: React.DragEvent, day: number, timeSlot: string) => {
-    e.preventDefault();
-    const taskData = e.dataTransfer.getData("text/plain");
-    if (taskData) {
-      const task = JSON.parse(taskData);
-      if (onTaskDrop) {
-        onTaskDrop(task, day, timeSlot);
-      } else {
-        console.log(
-          `Dropped task "${task.title}" on ${weekDays[day].name} at ${timeSlot}`,
-        );
-      }
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const filteredTasks = unscheduledTasks.filter((task) => {
-    const matchesSearch =
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-        false);
-    const matchesFilter = selectedFilter ? task.type === selectedFilter : true;
-    return matchesSearch && matchesFilter;
-  });
 
   // Render Month View
   const renderMonthView = () => {
@@ -975,7 +887,7 @@ export default function Calendar({
                       <div
                         key={i}
                         className={`text-xs p-1 rounded truncate transition-all duration-200 cursor-pointer ${getTaskColor(event.color, isDarkMode)}`}
-                        onClick={() => onEventClick?.(event)}
+                        onClick={() => handleEventClick(event)}
                       >
                         {event.title}
                       </div>
@@ -993,7 +905,11 @@ export default function Calendar({
   // Render Day View
   const renderDayView = () => {
     const today = new Date();
-    const todayEvents = events.filter((event) => event.day === 0); // Assuming today is Monday for demo
+    const todayEvents = events.filter((event) => {
+      const currentDay = today.getDay();
+      const adjustedDay = currentDay === 0 ? 6 : currentDay - 1;
+      return event.day === adjustedDay;
+    });
 
     return (
       <div className="flex-1 overflow-hidden">
@@ -1065,7 +981,11 @@ export default function Calendar({
                   className={`flex-1 relative border-dashed transition-all duration-200 group ${
                     isDarkMode ? "hover:bg-gray-800/5" : "hover:bg-gray-50/10"
                   }`}
-                  onDrop={(e) => handleDrop(e, 0, time)}
+                  onDrop={(e) => {
+                    const currentDay = today.getDay();
+                    const adjustedDay = currentDay === 0 ? 6 : currentDay - 1;
+                    handleDrop(e, adjustedDay, time);
+                  }}
                   onDragOver={handleDragOver}
                 >
                   <div
@@ -1073,11 +993,9 @@ export default function Calendar({
                   ></div>
 
                   {index === 0 &&
-                    todayEvents
-                      .filter((event) => event.day === 0)
-                      .map((event) => (
-                        <ScheduledEventCard key={event.id} event={event} />
-                      ))}
+                    todayEvents.map((event) => (
+                      <ScheduledEventCard key={event.id} event={event} />
+                    ))}
                 </div>
               </div>
             ))}
@@ -1087,8 +1005,19 @@ export default function Calendar({
     );
   };
 
-  // Render Week View (existing implementation)
+  // Render Week View
   const renderWeekView = () => {
+    const weekDates = [];
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(currentWeekStart);
+      date.setDate(currentWeekStart.getDate() + i);
+      weekDates.push({
+        name: weekDays[i].name,
+        short: weekDays[i].short,
+        date: date.getDate(),
+      });
+    }
+
     return (
       <div className="flex-1 overflow-auto max-h-full" ref={calendarScrollRef}>
         <div className="relative" style={{ height: `${24 * 120}px` }}>
@@ -1100,7 +1029,7 @@ export default function Calendar({
             <div
               className={`p-2 border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
             ></div>
-            {weekDays.map((day) => (
+            {weekDates.map((day) => (
               <div
                 key={day.name}
                 className={`p-2 text-center border-r border-dashed ${themeClasses.dayHeader} ${isDarkMode ? "border-gray-700/60" : "border-gray-300/60"}`}
@@ -1159,7 +1088,7 @@ export default function Calendar({
                 >
                   <span className="text-xs font-medium">{time}</span>
                 </div>
-                {weekDays.map((day, dayIndex) => (
+                {weekDates.map((day, dayIndex) => (
                   <div
                     key={`${time}-${day.name}`}
                     className={`relative border-r border-dashed transition-all duration-200 group ${

@@ -208,31 +208,44 @@ export default defineSchema({
 
   // === GOOGLE CALENDAR INTEGRATION ===
 
-  // Store Google Calendar OAuth tokens for users
-  googleCalendarTokens: defineTable({
+  // Google Calendar Integration - Support multiple calendar connections
+  googleCalendarConnections: defineTable({
     userId: v.id("users"),
+    googleAccountId: v.string(),
+    googleAccountEmail: v.string(),
+    googleAccountName: v.string(),
+    googleAccountPicture: v.optional(v.string()),
     accessToken: v.string(),
-    refreshToken: v.string(),
-    expiresAt: v.number(), // Unix timestamp
+    refreshToken: v.optional(v.string()),
+    expiresAt: v.number(),
+    isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+    lastSyncAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_google_account", ["userId", "googleAccountId"])
+    .index("by_google_account", ["googleAccountId"]),
 
-  // Cache Google Calendar events for performance
   googleCalendarEvents: defineTable({
     userId: v.id("users"),
-    eventId: v.string(), // Google Calendar event ID
+    connectionId: v.id("googleCalendarConnections"),
+    eventId: v.string(),
     summary: v.string(),
-    description: v.string(),
-    startTime: v.string(), // ISO string
-    endTime: v.string(), // ISO string
-    location: v.string(),
-    attendees: v.array(v.string()), // email addresses
-    etag: v.string(), // For change detection
+    description: v.optional(v.string()),
+    startTime: v.string(),
+    endTime: v.string(),
+    location: v.optional(v.string()),
+    attendees: v.array(v.string()),
+    etag: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
+    .index("by_connection", ["connectionId"])
     .index("by_user_and_event", ["userId", "eventId"])
-    .index("by_start_time", ["startTime"]),
+    .index("by_connection_and_event", ["connectionId", "eventId"]),
+
+  // Remove old single calendar tables
+  // googleCalendarTokens and old googleCalendarEvents will be replaced
 });

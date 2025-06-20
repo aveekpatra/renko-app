@@ -12,13 +12,74 @@ import {
   Calendar,
   BarChart3,
   Zap,
+  Link,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface HeaderProps {
   onCreateTask?: () => void;
   className?: string;
+}
+
+// Simple Calendar Status Component for Header
+function CalendarStatusIndicator() {
+  const { isDarkMode } = useTheme();
+  const calendarStatus = useQuery(api.googleCalendar.getCalendarStatus);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure this only runs on client side
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const themeClasses = {
+    text: {
+      tertiary: isDarkMode ? "text-gray-400" : "text-gray-600",
+    },
+  };
+
+  // Show loading state during SSR and initial hydration
+  if (!isClient || calendarStatus === undefined) {
+    return (
+      <div className="flex items-center space-x-2 px-3 py-1.5">
+        <div className="w-3 h-3 rounded-full bg-gray-400 animate-pulse"></div>
+        <span className={`text-xs font-medium ${themeClasses.text.tertiary}`}>
+          Loading...
+        </span>
+      </div>
+    );
+  }
+
+  // Show connection status
+  if (calendarStatus.hasConnections) {
+    return (
+      <div className="flex items-center space-x-2 px-3 py-1.5">
+        <CheckCircle className="w-3 h-3 text-green-500" />
+        <span
+          className={`text-xs font-medium text-green-${isDarkMode ? "400" : "600"}`}
+        >
+          {calendarStatus.activeConnections} Calendar
+          {calendarStatus.activeConnections !== 1 ? "s" : ""}
+        </span>
+      </div>
+    );
+  }
+
+  // No connections
+  return (
+    <div className="flex items-center space-x-2 px-3 py-1.5">
+      <Calendar className="w-3 h-3 text-gray-400" />
+      <span className={`text-xs font-medium ${themeClasses.text.tertiary}`}>
+        No Calendars
+      </span>
+    </div>
+  );
 }
 
 export default function Header({ onCreateTask, className = "" }: HeaderProps) {
@@ -123,17 +184,8 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
 
           {/* Right Section - Minimal Actions */}
           <div className="flex items-center space-x-1">
-            {/* Sync Indicator */}
-            <div className="flex items-center space-x-1 px-2 py-1">
-              <div
-                className={`w-2 h-2 rounded-full bg-green-500 animate-pulse`}
-              ></div>
-              <span
-                className={`text-xs font-medium ${themeClasses.text.tertiary}`}
-              >
-                Synced
-              </span>
-            </div>
+            {/* Google Account + Calendar Status */}
+            <CalendarStatusIndicator />
 
             {/* Options Dropdown */}
             <div className="relative">

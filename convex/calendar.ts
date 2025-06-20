@@ -439,4 +439,276 @@ export const fixAllBrokenEventsTemp = mutation({
     return null;
   },
 });
- 
+
+// Schedule a task by creating an event for it
+export const scheduleTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+    eventId: v.optional(v.id("events")),
+    error: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    try {
+      // Get the task
+      const task = await ctx.db.get(args.taskId);
+      if (!task || task.userId !== userId) {
+        return { success: false, error: "Task not found" };
+      }
+
+      // Check if task already has an event
+      if (task.eventId) {
+        return { success: false, error: "Task is already scheduled" };
+      }
+
+      // Create the event
+      const eventId = await ctx.db.insert("events", {
+        title: task.title,
+        description: task.description,
+        startDate: args.startDate,
+        endDate: args.endDate,
+        allDay: false,
+        taskId: args.taskId,
+        projectId: undefined, // Will be set from column->project if needed
+        routineId: task.routineId,
+        userId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      // Update the task with the event reference
+      await ctx.db.patch(args.taskId, {
+        eventId,
+        updatedAt: Date.now(),
+      });
+
+      return { success: true, eventId };
+    } catch (error) {
+      console.error("Error scheduling task:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to schedule task",
+      };
+    }
+  },
+});
+
+// Unschedule a task by removing its event
+export const unscheduleTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  returns: v.object({
+    success: v.boolean(),
+    error: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    try {
+      // Get the task
+      const task = await ctx.db.get(args.taskId);
+      if (!task || task.userId !== userId) {
+        return { success: false, error: "Task not found" };
+      }
+
+      // Check if task has an event
+      if (!task.eventId) {
+        return { success: false, error: "Task is not scheduled" };
+      }
+
+      // Delete the event
+      await ctx.db.delete(task.eventId);
+
+      // Update the task to remove the event reference
+      await ctx.db.patch(args.taskId, {
+        eventId: undefined,
+        updatedAt: Date.now(),
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error unscheduling task:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to unschedule task",
+      };
+    }
+  },
+});
+
+// Get all calendar events including Google Calendar events
+export const getAllCalendarEvents = query({
+  args: {
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  returns: v.object({
+    appEvents: v.array(
+      v.object({
+        _id: v.id("events"),
+        _creationTime: v.number(),
+        title: v.string(),
+        description: v.optional(v.string()),
+        startDate: v.number(),
+        endDate: v.number(),
+        allDay: v.boolean(),
+        projectId: v.optional(v.id("projects")),
+        taskId: v.optional(v.id("tasks")),
+        routineId: v.optional(v.id("routines")),
+        userId: v.id("users"),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+        project: v.union(
+          v.object({
+            _id: v.id("projects"),
+            name: v.string(),
+            color: v.optional(v.string()),
+          }),
+          v.null(),
+        ),
+        task: v.union(
+          v.object({
+            _id: v.id("tasks"),
+            title: v.string(),
+            status: v.string(),
+            priority: v.optional(v.string()),
+          }),
+          v.null(),
+        ),
+        routine: v.union(
+          v.object({
+            _id: v.id("routines"),
+            name: v.string(),
+            timeOfDay: v.string(),
+          }),
+          v.null(),
+        ),
+        type: v.literal("app"),
+      }),
+    ),
+    googleEvents: v.array(
+      v.object({
+        _id: v.id("googleCalendarEvents"),
+        eventId: v.string(),
+        title: v.string(),
+        description: v.optional(v.string()),
+        startDate: v.number(), // Converted from ISO string
+        endDate: v.number(), // Converted from ISO string
+        location: v.optional(v.string()),
+        attendees: v.array(v.string()),
+        type: v.literal("google"),
+      }),
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { appEvents: [], googleEvents: [] };
+
+    // Get app events
+    let appEventsQuery = ctx.db
+      .query("events")
+      .withIndex("by_date", (q) =>
+        q.gte("startDate", args.startDate).lte("startDate", args.endDate),
+      )
+      .filter((q) => q.eq(q.field("userId"), userId));
+
+    const appEvents = await appEventsQuery.collect();
+
+    // Enrich app events with related data
+    const enrichedAppEvents = await Promise.all(
+      appEvents.map(async (event) => {
+        let project = null;
+        let task = null;
+        let routine = null;
+
+        if (event.projectId) {
+          const projectData = await ctx.db.get(event.projectId);
+          if (projectData) {
+            project = {
+              _id: projectData._id,
+              name: projectData.name,
+              color: projectData.color,
+            };
+          }
+        }
+
+        if (event.taskId) {
+          const taskData = await ctx.db.get(event.taskId);
+          if (taskData) {
+            task = {
+              _id: taskData._id,
+              title: taskData.title,
+              status: taskData.status,
+              priority: taskData.priority,
+            };
+          }
+        }
+
+        if (event.routineId) {
+          const routineData = await ctx.db.get(event.routineId);
+          if (routineData) {
+            routine = {
+              _id: routineData._id,
+              name: routineData.name,
+              timeOfDay: routineData.timeOfDay,
+            };
+          }
+        }
+
+        return {
+          ...event,
+          project,
+          task,
+          routine,
+          type: "app" as const,
+        };
+      }),
+    );
+
+    // Get Google Calendar events
+    const startDateISO = new Date(args.startDate).toISOString();
+    const endDateISO = new Date(args.endDate).toISOString();
+
+    const googleEvents = await ctx.db
+      .query("googleCalendarEvents")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("startTime"), startDateISO),
+          q.lte(q.field("startTime"), endDateISO),
+        ),
+      )
+      .collect();
+
+    // Convert Google events to match our format
+    const formattedGoogleEvents = googleEvents.map((event) => ({
+      _id: event._id,
+      eventId: event.eventId,
+      title: event.summary,
+      description: event.description,
+      startDate: new Date(event.startTime).getTime(),
+      endDate: new Date(event.endTime).getTime(),
+      location: event.location,
+      attendees: event.attendees,
+      type: "google" as const,
+    }));
+
+    return {
+      appEvents: enrichedAppEvents.sort((a, b) => a.startDate - b.startDate),
+      googleEvents: formattedGoogleEvents.sort(
+        (a, b) => a.startDate - b.startDate,
+      ),
+    };
+  },
+});

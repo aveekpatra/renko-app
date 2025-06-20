@@ -659,3 +659,75 @@ export const updateTaskGoogleEventId = mutation({
     return null;
   },
 });
+
+// Get unscheduled tasks for calendar view
+export const getUnscheduledTasks = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("tasks"),
+      _creationTime: v.number(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(),
+      priority: v.optional(v.string()),
+      dueDate: v.optional(v.number()),
+      columnId: v.id("columns"),
+      routineId: v.optional(v.id("routines")),
+      eventId: v.optional(v.id("events")),
+      googleEventId: v.optional(v.string()),
+      position: v.number(),
+      userId: v.id("users"),
+      assignedTo: v.optional(v.id("users")),
+      tags: v.optional(v.array(v.string())),
+      timeEstimate: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      // Additional fields for calendar display
+      projectName: v.optional(v.string()),
+      projectColor: v.optional(v.string()),
+    }),
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    // Get all tasks for the user that are not completed and don't have an event
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("status"), "done"),
+          q.eq(q.field("eventId"), undefined),
+        ),
+      )
+      .collect();
+
+    // Enrich tasks with project information
+    const enrichedTasks = await Promise.all(
+      tasks.map(async (task) => {
+        // Get the column to find the project
+        const column = await ctx.db.get(task.columnId);
+        if (!column)
+          return { ...task, projectName: undefined, projectColor: undefined };
+
+        // Get the project
+        const project = await ctx.db.get(column.projectId);
+        if (!project)
+          return { ...task, projectName: undefined, projectColor: undefined };
+
+        return {
+          ...task,
+          projectName: project.name,
+          projectColor: project.color,
+        };
+      }),
+    );
+
+    return enrichedTasks;
+  },
+});

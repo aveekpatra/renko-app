@@ -1,4 +1,6 @@
 import { httpRouter } from "convex/server";
+import { httpAction } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { auth } from "./auth";
 
 const http = httpRouter();
@@ -6,9 +8,47 @@ const http = httpRouter();
 // Add auth HTTP routes for authentication flow
 auth.addHttpRoutes(http);
 
-// Google Calendar OAuth callback
+// Independent Google Calendar OAuth
 http.route({
-  path: "/auth/google/callback",
+  path: "/calendar/auth",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    const returnUrl = url.searchParams.get("returnUrl") || "/calendar";
+
+    if (!userId) {
+      return new Response("Missing userId parameter", { status: 400 });
+    }
+
+    // Google Calendar OAuth URL
+    const googleAuthUrl = new URL(
+      "https://accounts.google.com/o/oauth2/v2/auth",
+    );
+    googleAuthUrl.searchParams.set("client_id", process.env.AUTH_GOOGLE_ID!);
+    googleAuthUrl.searchParams.set(
+      "redirect_uri",
+      `${url.origin}/calendar/callback`,
+    );
+    googleAuthUrl.searchParams.set("response_type", "code");
+    googleAuthUrl.searchParams.set(
+      "scope",
+      "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
+    );
+    googleAuthUrl.searchParams.set("access_type", "offline");
+    googleAuthUrl.searchParams.set("prompt", "consent");
+    googleAuthUrl.searchParams.set(
+      "state",
+      JSON.stringify({ userId, returnUrl }),
+    );
+
+    return Response.redirect(googleAuthUrl.toString());
+  }),
+});
+
+// Calendar OAuth callback
+http.route({
+  path: "/calendar/callback",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
@@ -17,106 +57,113 @@ http.route({
     const error = url.searchParams.get("error");
 
     if (error) {
-      return new Response(
-        JSON.stringify({ error: "OAuth authorization failed", details: error }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      console.error("Calendar OAuth error:", error);
+      return Response.redirect(`${url.origin}/calendar?error=access_denied`);
     }
 
     if (!code || !state) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization code or state" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return new Response("Missing code or state parameter", { status: 400 });
     }
 
     try {
-      const result = await ctx.runAction(
-        api.googleCalendar.exchangeCodeForTokens,
-        {
+      const { userId, returnUrl } = JSON.parse(state);
+
+      // Exchange code for tokens
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: process.env.AUTH_GOOGLE_ID!,
+          client_secret: process.env.AUTH_GOOGLE_SECRET!,
           code,
-          state,
+          grant_type: "authorization_code",
+          redirect_uri: `${url.origin}/calendar/callback`,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
+      }
+
+      const tokens = await tokenResponse.json();
+
+      // Get user's Google account info
+      const profileResponse = await fetch(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
         },
       );
 
-      if (result.success) {
-        // Redirect to success page or close popup
-        return new Response(
-          `
-          <html>
-            <head>
-              <title>Google Calendar Connected</title>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1">
-              <style>
-                body { 
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  height: 100vh;
-                  margin: 0;
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  color: white;
-                }
-                .container {
-                  text-align: center;
-                  background: rgba(255, 255, 255, 0.1);
-                  padding: 2rem;
-                  border-radius: 12px;
-                  backdrop-filter: blur(10px);
-                }
-                .success {
-                  font-size: 3rem;
-                  margin-bottom: 1rem;
-                }
-                h1 { margin: 0 0 1rem 0; }
-                p { margin: 0; opacity: 0.9; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="success">✅</div>
-                <h1>Google Calendar Connected!</h1>
-                <p>You can now sync your tasks with Google Calendar.</p>
-                <p>This window will close automatically...</p>
-              </div>
-              <script>
-                setTimeout(() => {
-                  if (window.opener) {
-                    window.opener.postMessage({ success: true, userId: '${result.userId}' }, '*');
-                    window.close();
-                  } else {
-                    window.location.href = '/calendar';
-                  }
-                }, 2000);
-              </script>
-            </body>
-          </html>
-          `,
-          {
-            status: 200,
-            headers: { "Content-Type": "text/html" },
-          },
-        );
-      } else {
-        return new Response(JSON.stringify({ error: result.error }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+      if (!profileResponse.ok) {
+        throw new Error(`Profile fetch failed: ${profileResponse.statusText}`);
       }
+
+      const profile = await profileResponse.json();
+
+      // Store calendar connection
+      await ctx.runMutation(internal.googleCalendar.storeCalendarConnection, {
+        userId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresIn: tokens.expires_in,
+        googleAccountId: profile.id,
+        googleAccountEmail: profile.email,
+        googleAccountName: profile.name,
+        googleAccountPicture: profile.picture,
+      });
+
+      // Trigger initial calendar sync
+      await ctx.runAction(internal.googleCalendar.syncUserCalendars, {
+        userId,
+      });
+
+      return Response.redirect(`${url.origin}${returnUrl}?connected=true`);
     } catch (error) {
-      console.error("OAuth callback error:", error);
-      return new Response(JSON.stringify({ error: "Internal server error" }), {
-        status: 500,
+      console.error("Calendar callback error:", error);
+      return Response.redirect(
+        `${url.origin}/calendar?error=connection_failed`,
+      );
+    }
+  }),
+});
+
+// Calendar disconnect endpoint
+http.route({
+  path: "/calendar/disconnect",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const { userId, connectionId } = await request.json();
+
+      if (!userId || !connectionId) {
+        return new Response("Missing userId or connectionId", { status: 400 });
+      }
+
+      await ctx.runMutation(internal.googleCalendar.removeCalendarConnection, {
+        userId,
+        connectionId,
+      });
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { "Content-Type": "application/json" },
       });
+    } catch (error) {
+      console.error("Calendar disconnect error:", error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
   }),
 });
