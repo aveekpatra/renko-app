@@ -41,6 +41,7 @@ const primaryNavItems = [
   { icon: Calendar, label: "Today", href: "/today", badge: "17" },
   { icon: List, label: "Upcoming", href: "/upcoming" },
   { icon: Tag, label: "All tasks", href: "/boards" },
+  { icon: Calendar, label: "Google Calendar", href: "/google-calendar" },
 ];
 
 // Commented out for now

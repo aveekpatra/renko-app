@@ -44,6 +44,9 @@ A modern productivity app that combines project management, task tracking, and i
    # Copy .env.example to .env.local and configure:
    AUTH_GOOGLE_ID=your_google_oauth_client_id
    AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
+
+   # For Google Calendar integration (optional):
+   GOOGLE_API_KEY=your_google_api_key
    ```
 
 4. **Start Development**
