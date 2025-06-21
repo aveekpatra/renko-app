@@ -14,7 +14,7 @@ import {
   Search,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
-import GoogleCalendarSync from "@/components/GoogleCalendarSync";
+import { GoogleCalendarSync } from "@/components/GoogleCalendarSync";
 
 interface Task {
   id: string;

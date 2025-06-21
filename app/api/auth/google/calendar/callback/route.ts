@@ -1,95 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+/**
+ * Google Calendar OAuth Callback Handler
+ *
+ * This endpoint handles the OAuth callback from Google and exchanges the
+ * authorization code for access and refresh tokens, then posts the result
+ * back to the parent window via postMessage.
+ */
 
 export async function GET(request: NextRequest) {
-  console.log("📅 Calendar OAuth callback received");
-
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
-  const error = searchParams.get("error");
-  const state = searchParams.get("state");
-  const scope = searchParams.get("scope");
-
-  // Debug logging - log all parameters
-  console.log("OAuth callback params:", {
-    code: code ? `${code.substring(0, 10)}...` : null,
-    error,
-    state: state ? `${state.substring(0, 20)}...` : null,
-    scope,
-    fullUrl: request.url,
-    allParams: Object.fromEntries(searchParams.entries()),
-  });
-
-  // Handle OAuth errors
-  if (error) {
-    console.error("❌ OAuth error:", error);
-    const errorDescriptions: Record<string, string> = {
-      access_denied: "User denied access to Google Calendar",
-      invalid_request: "Invalid OAuth request",
-      unauthorized_client: "Unauthorized OAuth client",
-      unsupported_response_type: "Unsupported response type",
-      invalid_scope: "Invalid OAuth scope",
-      server_error: "Google server error",
-      temporarily_unavailable: "Google service temporarily unavailable",
-    };
-
-    const errorMessage = errorDescriptions[error] || `OAuth error: ${error}`;
-    return NextResponse.redirect(
-      new URL(
-        `/?calendar_error=${encodeURIComponent(errorMessage)}`,
-        request.url,
-      ),
-    );
-  }
-
-  if (!code) {
-    console.error("❌ No authorization code received");
-    console.log("This usually means:");
-    console.log("1. Google OAuth app is not properly configured");
-    console.log("2. Redirect URI mismatch in Google Cloud Console");
-    console.log("3. OAuth consent screen needs configuration");
-    console.log("4. Calendar API is not enabled");
-
-    return NextResponse.redirect(
-      new URL("/?calendar_error=no_authorization_code", request.url),
-    );
-  }
-
-  if (!state) {
-    console.error("❌ No state parameter received");
-    return NextResponse.redirect(
-      new URL("/?calendar_error=missing_state", request.url),
-    );
-  }
-
   try {
-    // Parse state to get user info
-    const { userId, type } = JSON.parse(state);
+    const searchParams = request.nextUrl.searchParams;
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
 
-    if (type !== "calendar") {
-      console.error("❌ Invalid state type:", type);
-      return NextResponse.redirect(
-        new URL("/?calendar_error=invalid_state_type", request.url),
+    // Handle OAuth errors
+    if (error) {
+      console.error("OAuth error:", error);
+      return new NextResponse(
+        `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Calendar Authentication</title>
+        </head>
+        <body>
+          <script>
+            window.opener?.postMessage({
+              type: 'CALENDAR_AUTH_ERROR',
+              error: '${error}'
+            }, window.location.origin);
+            window.close();
+          </script>
+        </body>
+        </html>
+        `,
+        { headers: { "Content-Type": "text/html" } },
       );
     }
 
-    console.log("🔄 Exchanging code for tokens...");
+    // Validate authorization code
+    if (!code) {
+      return new NextResponse(
+        `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Calendar Authentication</title>
+        </head>
+        <body>
+          <script>
+            window.opener?.postMessage({
+              type: 'CALENDAR_AUTH_ERROR',
+              error: 'No authorization code received'
+            }, window.location.origin);
+            window.close();
+          </script>
+        </body>
+        </html>
+        `,
+        { headers: { "Content-Type": "text/html" } },
+      );
+    }
 
-    // Construct the exact redirect URI used in the authorization request
-    const redirectUri = `${new URL(request.url).origin}/api/auth/google/calendar/callback`;
+    console.log("📧 [CALENDAR AUTH] Exchanging code for tokens...");
 
-    console.log("🔗 Token exchange parameters:", {
-      client_id:
-        process.env.GOOGLE_CALENDAR_CLIENT_ID?.substring(0, 20) + "...",
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-      code: code.substring(0, 10) + "...",
-    });
-
-    // Exchange authorization code for tokens using calendar-specific credentials
+    // Exchange authorization code for tokens
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
@@ -98,103 +74,148 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET!,
-        code,
+        code: code,
         grant_type: "authorization_code",
-        redirect_uri: redirectUri,
+        redirect_uri: `${process.env.CONVEX_SITE_URL}/api/auth/google/calendar/callback`,
       }),
     });
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error(
-        "❌ Token exchange failed:",
-        tokenResponse.status,
-        tokenResponse.statusText,
-        errorText,
-      );
+      console.error("Token exchange failed:", errorText);
 
-      // Parse error details if available
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error("Token exchange error details:", errorData);
-      } catch (e) {
-        console.error("Could not parse error response as JSON");
-      }
-
-      throw new Error(
-        `Token exchange failed: ${tokenResponse.status} ${tokenResponse.statusText}`,
+      return new NextResponse(
+        `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Calendar Authentication</title>
+        </head>
+        <body>
+          <script>
+            window.opener?.postMessage({
+              type: 'CALENDAR_AUTH_ERROR',
+              error: 'Failed to exchange authorization code for tokens'
+            }, window.location.origin);
+            window.close();
+          </script>
+        </body>
+        </html>
+        `,
+        { headers: { "Content-Type": "text/html" } },
       );
     }
 
-    const tokens = await tokenResponse.json();
-    console.log("✅ Tokens received successfully");
-    console.log("Token info:", {
-      access_token: tokens.access_token ? "present" : "missing",
-      refresh_token: tokens.refresh_token ? "present" : "missing",
-      expires_in: tokens.expires_in,
-      scope: tokens.scope,
-      token_type: tokens.token_type,
-    });
+    const tokenData = await tokenResponse.json();
+    console.log("✅ [CALENDAR AUTH] Tokens received successfully");
 
-    // Get user profile from Google using the correct endpoint
+    // Get user profile information
     const profileResponse = await fetch(
-      "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+      "https://www.googleapis.com/oauth2/v2/userinfo",
       {
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
+          Authorization: `Bearer ${tokenData.access_token}`,
         },
       },
     );
 
-    if (!profileResponse.ok) {
-      console.error(
-        "❌ Profile fetch failed:",
-        profileResponse.status,
-        profileResponse.statusText,
-      );
-      throw new Error(
-        `Profile fetch failed: ${profileResponse.status} ${profileResponse.statusText}`,
-      );
+    let email = "unknown@example.com";
+    if (profileResponse.ok) {
+      const profileData = await profileResponse.json();
+      email = profileData.email || email;
+      console.log("✅ [CALENDAR AUTH] User profile retrieved:", email);
     }
 
-    const profile = await profileResponse.json();
-    console.log("✅ User profile retrieved:", {
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      picture: profile.picture ? "present" : "missing",
-    });
+    // Calculate token expiration time
+    const expiresAt = Date.now() + tokenData.expires_in * 1000;
 
-    // Store calendar connection in Convex
-    const connectionId = await convex.mutation(
-      api.googleCalendar.storeCalendarConnection,
-      {
-        userId,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || undefined,
-        expiresIn: tokens.expires_in || 3600,
-        googleAccountId: profile.id,
-        googleAccountEmail: profile.email,
-        googleAccountName: profile.name || profile.email,
-        googleAccountPicture: profile.picture,
-      },
-    );
-
-    console.log("✅ Calendar connection stored:", connectionId);
-
-    // Redirect back to app with success
-    return NextResponse.redirect(
-      new URL("/?calendar_connected=true", request.url),
+    // Return success page that posts tokens to parent window
+    return new NextResponse(
+      `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Calendar Authentication Successful</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+          }
+          .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+          }
+          .success-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+          }
+          .message {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+          }
+          .submessage {
+            font-size: 0.9rem;
+            opacity: 0.8;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success-icon">✅</div>
+          <div class="message">Calendar Connected Successfully!</div>
+          <div class="submessage">You can close this window and return to the app.</div>
+        </div>
+        <script>
+          // Post success message to parent window
+          window.opener?.postMessage({
+            type: 'CALENDAR_AUTH_SUCCESS',
+            accessToken: '${tokenData.access_token}',
+            refreshToken: '${tokenData.refresh_token || ""}',
+            expiresAt: ${expiresAt},
+            email: '${email}'
+          }, window.location.origin);
+          
+          // Auto-close after a brief delay
+          setTimeout(() => {
+            window.close();
+          }, 2000);
+        </script>
+      </body>
+      </html>
+      `,
+      { headers: { "Content-Type": "text/html" } },
     );
   } catch (error) {
-    console.error("❌ Calendar callback error:", error);
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack trace",
-    );
+    console.error("Calendar auth callback error:", error);
 
-    return NextResponse.redirect(
-      new URL("/?calendar_error=connection_failed", request.url),
+    return new NextResponse(
+      `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Calendar Authentication Error</title>
+      </head>
+      <body>
+        <script>
+          window.opener?.postMessage({
+            type: 'CALENDAR_AUTH_ERROR',
+            error: 'Internal server error during authentication'
+          }, window.location.origin);
+          window.close();
+        </script>
+      </body>
+      </html>
+      `,
+      { headers: { "Content-Type": "text/html" } },
     );
   }
 }

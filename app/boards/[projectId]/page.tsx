@@ -17,13 +17,7 @@ import { useTheme } from "@/components/AppLayout";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
-
-interface ProjectDetailsPageProps {
-  params: {
-    projectId: string;
-  };
-}
+import { useRouter, useParams } from "next/navigation";
 
 interface Task {
   _id: Id<"tasks">;
@@ -42,18 +36,18 @@ interface Task {
   updatedAt: number;
 }
 
-export default function ProjectDetailsPage({
-  params,
-}: ProjectDetailsPageProps) {
+export default function ProjectDetailsPage() {
+  const params = useParams();
+  const projectId = params.projectId as string;
   const { isDarkMode } = useTheme();
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
 
-  const projectId = params.projectId as Id<"projects">;
+  const projectIdTyped = projectId as Id<"projects">;
 
   // Fetch project data - using getProjects and filtering for the specific project
   const projects = useQuery(api.projects.getProjects, {});
-  const project = projects?.find((p) => p._id === projectId);
+  const project = projects?.find((p) => p._id === projectIdTyped);
 
   const boards = useQuery(api.tasks.getBoards);
   const projectBoards = boards || [];
@@ -106,7 +100,7 @@ export default function ProjectDetailsPage({
 
   const handleArchiveProject = async () => {
     try {
-      await updateProject({ projectId, status: "archived" });
+      await updateProject({ projectId: projectIdTyped, status: "archived" });
       router.push("/boards");
     } catch (error) {
       console.error("Failed to archive project:", error);
@@ -120,7 +114,7 @@ export default function ProjectDetailsPage({
       )
     ) {
       try {
-        await deleteProjectMutation({ projectId });
+        await deleteProjectMutation({ projectId: projectIdTyped });
         router.push("/boards");
       } catch (error) {
         console.error("Failed to delete project:", error);

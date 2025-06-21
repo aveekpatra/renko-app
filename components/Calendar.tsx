@@ -126,13 +126,21 @@ const timeSlots = [
   "23:00",
 ];
 
-const weekDays = [
-  { name: "Monday", short: "Mon", date: 15 },
-  { name: "Tuesday", short: "Tue", date: 16 },
-  { name: "Wednesday", short: "Wed", date: 17 },
-  { name: "Thursday", short: "Thu", date: 18 },
-  { name: "Friday", short: "Fri", date: 19 },
-];
+const getDynamicWeekDays = (weekStart: Date) => {
+  const days = [];
+  for (let i = 0; i < 5; i++) {
+    // Monday to Friday
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + i);
+    days.push({
+      name: date.toLocaleDateString("en-US", { weekday: "long" }),
+      short: date.toLocaleDateString("en-US", { weekday: "short" }),
+      date: date.getDate(),
+      fullDate: date,
+    });
+  }
+  return days;
+};
 
 const fullWeekDays = [
   { name: "Monday", short: "Mon", abbr: "M" },
@@ -169,14 +177,17 @@ export default function Calendar({ className = "" }: CalendarProps) {
     return start;
   });
 
+  // Get dynamic week days
+  const weekDays = getDynamicWeekDays(currentWeekStart);
+
   // Fetch unscheduled tasks
   const unscheduledTasksData = useQuery(api.tasks.getUnscheduledTasks);
 
-  // Calculate date range for fetching events
+  // Calculate date range for fetching events (extended to include weekends for full week data)
   const startDate = currentWeekStart.getTime();
-  const endDate =
-    new Date(currentWeekStart).setDate(currentWeekStart.getDate() + 6) +
-    24 * 60 * 60 * 1000;
+  const endDate = new Date(
+    currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000,
+  ).getTime();
 
   // Fetch calendar events
   const eventsData = useQuery(api.calendar.getAllCalendarEvents, {
@@ -239,7 +250,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
       }
     });
 
-    // Add Google Calendar events
+    // Add Google Calendar events with enhanced styling
     eventsData.googleEvents.forEach((event) => {
       const eventDate = new Date(event.startDate);
       const dayOfWeek = eventDate.getDay();
@@ -247,7 +258,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
 
       if (adjustedDay >= 0 && adjustedDay <= 4) {
         events.push({
-          id: event._id,
+          id: `google-${event._id}`,
           title: event.title,
           description: event.description,
           startTime: eventDate.toLocaleTimeString("en-US", {
@@ -261,7 +272,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
             hour12: false,
           }),
           day: adjustedDay,
-          color: "purple", // Google events in purple
+          color: "indigo", // Google events in indigo for better distinction
           type: "google",
           location: event.location,
           attendees: event.attendees,
@@ -270,6 +281,9 @@ export default function Calendar({ className = "" }: CalendarProps) {
       }
     });
   }
+
+  // Debug logging removed to prevent console spam during development
+  // Use React DevTools or add back temporarily for debugging specific issues
 
   // Update current time every minute
   useEffect(() => {
@@ -591,9 +605,25 @@ export default function Calendar({ className = "" }: CalendarProps) {
         orange: "#f59e0b",
         pink: "#ec4899",
         indigo: "#6366f1",
+        red: "#ef4444",
+        teal: "#14b8a6",
       };
       return colorMap[color as keyof typeof colorMap] || colorMap.blue;
     };
+
+    // Special styling for Google Calendar events
+    const isGoogleEvent = event.type === "google";
+    const googleEventStyle = isGoogleEvent
+      ? {
+          background: isDarkMode
+            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.25) 100%)"
+            : "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.2) 100%)",
+          borderLeft: `4px solid ${getColorValue(event.color)}`,
+          borderColor: isDarkMode
+            ? "rgba(99, 102, 241, 0.4)"
+            : "rgba(99, 102, 241, 0.3)",
+        }
+      : {};
 
     return (
       <div
@@ -601,7 +631,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
           isDarkMode
             ? "bg-gray-800/90 border-gray-700/50 hover:bg-gray-700/60 hover:border-gray-600/60 shadow-black/20"
             : "bg-white/95 border-gray-200/60 hover:bg-white hover:border-gray-300/60 shadow-gray-900/10"
-        }`}
+        } ${isGoogleEvent ? "ring-1 ring-indigo-500/20" : ""}`}
         style={{
           top: `${getTimePosition(event.startTime)}px`,
           height: `${Math.max(eventHeight - 2, 30)}px`,
@@ -609,15 +639,21 @@ export default function Calendar({ className = "" }: CalendarProps) {
           right: "4px",
           zIndex: 10,
           maxWidth: "calc(100% - 8px)",
+          ...googleEventStyle,
         }}
         onClick={() => handleEventClick(event)}
       >
         {isVeryShort ? (
           <div className="p-1.5 flex items-center w-full overflow-hidden">
-            <div
-              className="w-2 h-2 rounded-full flex-shrink-0 mr-1.5"
-              style={{ backgroundColor: getColorValue(event.color) }}
-            />
+            <div className="flex items-center flex-shrink-0 mr-1.5">
+              {isGoogleEvent && (
+                <CalendarIcon className="w-2 h-2 text-indigo-500 mr-1" />
+              )}
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: getColorValue(event.color) }}
+              />
+            </div>
             <span
               className={`text-xs font-semibold truncate flex-1 ${themeClasses.text.primary}`}
             >
@@ -632,10 +668,15 @@ export default function Calendar({ className = "" }: CalendarProps) {
               >
                 {event.title}
               </h4>
-              <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: getColorValue(event.color) }}
-              />
+              <div className="flex items-center flex-shrink-0">
+                {isGoogleEvent && (
+                  <CalendarIcon className="w-2.5 h-2.5 text-indigo-500 mr-1" />
+                )}
+                <div
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: getColorValue(event.color) }}
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-1 min-h-0 overflow-hidden">
               <Icon className="w-2.5 h-2.5 flex-shrink-0 opacity-75" />
@@ -654,10 +695,15 @@ export default function Calendar({ className = "" }: CalendarProps) {
               >
                 {event.title}
               </h4>
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: getColorValue(event.color) }}
-              />
+              <div className="flex items-center flex-shrink-0">
+                {isGoogleEvent && (
+                  <CalendarIcon className="w-3 h-3 text-indigo-500 mr-1" />
+                )}
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: getColorValue(event.color) }}
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-1.5 mb-1.5 flex-shrink-0 min-h-0 overflow-hidden">
               <Icon className="w-3 h-3 flex-shrink-0 opacity-75" />
@@ -667,11 +713,11 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 {event.startTime} - {event.endTime}
               </span>
             </div>
-            {event.type === "google" && event.location && (
+            {isGoogleEvent && event.location && (
               <div className="flex items-center space-x-1 mb-1 flex-shrink-0 min-h-0">
-                <MapPin className="w-2.5 h-2.5 flex-shrink-0 opacity-60" />
+                <MapPin className="w-2.5 h-2.5 flex-shrink-0 text-indigo-400" />
                 <span
-                  className={`text-xs opacity-60 truncate ${themeClasses.text.tertiary}`}
+                  className={`text-xs text-indigo-600 dark:text-indigo-400 truncate font-medium`}
                 >
                   {event.location}
                 </span>
@@ -686,9 +732,13 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 </span>
               )}
               <span
-                className={`text-xs opacity-60 truncate ml-1 max-w-[35%] ${themeClasses.text.tertiary}`}
+                className={`text-xs font-medium truncate ml-1 max-w-[35%] ${
+                  isGoogleEvent
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : themeClasses.text.tertiary
+                }`}
               >
-                {event.type}
+                {isGoogleEvent ? "Google Calendar" : event.type}
               </span>
             </div>
           </div>
@@ -700,10 +750,15 @@ export default function Calendar({ className = "" }: CalendarProps) {
               >
                 {event.title}
               </h4>
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: getColorValue(event.color) }}
-              />
+              <div className="flex items-center flex-shrink-0">
+                {isGoogleEvent && (
+                  <CalendarIcon className="w-3 h-3 text-indigo-500 mr-1" />
+                )}
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: getColorValue(event.color) }}
+                />
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden">
               <div className="flex items-center space-x-2 mb-2">
@@ -723,13 +778,13 @@ export default function Calendar({ className = "" }: CalendarProps) {
                   </p>
                 </div>
               )}
-              {event.type === "google" && (
+              {isGoogleEvent && (
                 <>
                   {event.location && (
                     <div className="flex items-center space-x-1 mb-1">
-                      <MapPin className="w-3 h-3 flex-shrink-0 opacity-60" />
+                      <MapPin className="w-3 h-3 flex-shrink-0 text-indigo-400" />
                       <span
-                        className={`text-xs opacity-60 ${themeClasses.text.tertiary}`}
+                        className={`text-xs text-indigo-600 dark:text-indigo-400 font-medium`}
                       >
                         {event.location}
                       </span>
@@ -737,9 +792,9 @@ export default function Calendar({ className = "" }: CalendarProps) {
                   )}
                   {event.attendees && event.attendees.length > 0 && (
                     <div className="flex items-center space-x-1 mb-1">
-                      <Users className="w-3 h-3 flex-shrink-0 opacity-60" />
+                      <Users className="w-3 h-3 flex-shrink-0 text-indigo-400" />
                       <span
-                        className={`text-xs opacity-60 ${themeClasses.text.tertiary}`}
+                        className={`text-xs text-indigo-600 dark:text-indigo-400 font-medium`}
                       >
                         {event.attendees.length} attendee
                         {event.attendees.length > 1 ? "s" : ""}
@@ -749,20 +804,24 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 </>
               )}
             </div>
-            {event.priority && (
-              <div className="flex items-center justify-between flex-shrink-0 mt-2 min-h-0 overflow-hidden">
+            <div className="flex items-center justify-between flex-shrink-0 mt-2 min-h-0 overflow-hidden">
+              {event.priority && (
                 <span
                   className={`text-xs px-2 py-0.5 rounded-md font-medium backdrop-blur-sm border truncate max-w-[60%] ${getPriorityColor(event.priority, isDarkMode)}`}
                 >
                   {event.priority}
                 </span>
-                <span
-                  className={`text-xs opacity-60 truncate max-w-[35%] ${themeClasses.text.tertiary}`}
-                >
-                  {event.type}
-                </span>
-              </div>
-            )}
+              )}
+              <span
+                className={`text-xs font-medium truncate max-w-[35%] ${
+                  isGoogleEvent
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : themeClasses.text.tertiary
+                }`}
+              >
+                {isGoogleEvent ? "Google Calendar" : event.type}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -1202,6 +1261,28 @@ export default function Calendar({ className = "" }: CalendarProps) {
                     />
                   </button>
                 </div>
+
+                {/* Google Calendar Status Indicator */}
+                {eventsData && (
+                  <div className="flex items-center space-x-2">
+                    {eventsData.googleEvents.length > 0 ? (
+                      <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/50">
+                        <CalendarIcon className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                          {eventsData.googleEvents.length} Google event
+                          {eventsData.googleEvents.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50">
+                        <CalendarIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                          No Google events
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">

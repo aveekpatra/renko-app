@@ -11,9 +11,7 @@ import {
   Calendar,
   BarChart3,
   Zap,
-  CheckCircle,
   CalendarDays,
-  LogOut,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -37,7 +35,7 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
     type: "success" | "error";
     message: string;
   } | null>(null);
-  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  // Removed showDiagnostic state - no longer needed
 
   // Get page title based on current route
   const getPageTitle = () => {
@@ -91,36 +89,21 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
       : "bg-white border-gray-200/60 shadow-2xl shadow-gray-900/10",
   };
 
-  // Get calendar status
+  // UNIFIED OAUTH APPROACH - Get calendar status from unified system
   const calendarStatus = useQuery(
-    api.googleCalendar.getCalendarStatus,
+    api.googleCalendarMutations.getCalendarStatus,
     isAuthenticated ? {} : "skip",
   );
 
-  // Debug OAuth configuration
-  const oauthConfig = useQuery(
-    api.googleCalendar.debugOAuthConfig,
-    isAuthenticated ? {} : "skip",
-  );
+  // Calendar diagnostic removed - no longer needed with new implementation
 
-  // Google Cloud Console diagnostic
-  const googleCloudDiagnostic = useQuery(
-    api.googleCalendar.diagnoseGoogleCloudSetup,
-    isAuthenticated ? {} : "skip",
-  );
-
-  // Generate calendar OAuth URL
-  const generateCalendarUrl = useMutation(
-    api.googleCalendar.generateCalendarOAuthUrl,
-  );
-
-  // Sync calendar events
+  // Calendar management functions
   const syncCalendar = useAction(api.googleCalendar.syncCalendarEvents);
+  const disconnectCalendar = useMutation(
+    api.googleCalendarMutations.disconnectCalendar,
+  );
 
-  // Disconnect calendar
-  const disconnectCalendar = useMutation(api.googleCalendar.disconnectCalendar);
-
-  // Check for calendar connection status in URL
+  // Check for calendar connection status in URL (for unified approach)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -160,100 +143,63 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
     }
   }, []);
 
-  const handleCalendarConnect = async () => {
+  const handleCalendarConnect = () => {
     if (!isAuthenticated) return;
 
-    // Check OAuth configuration first
-    if (!oauthConfig?.hasClientId || !oauthConfig?.hasClientSecret) {
-      console.error("❌ OAuth not properly configured");
-      console.log("OAuth Config:", oauthConfig);
-      setCalendarMessage({
-        type: "error",
-        message:
-          "Google Calendar OAuth is not configured. Please check environment variables.",
-      });
-      setShowDiagnostic(true);
-      return;
-    }
-
-    try {
-      console.log("🔄 Generating calendar OAuth URL...");
-      console.log("OAuth Config:", oauthConfig);
-
-      const oauthUrl = await generateCalendarUrl();
-      console.log("📍 Generated OAuth URL:", oauthUrl);
-
-      // Extract and log the redirect URI for debugging
-      const urlObj = new URL(oauthUrl);
-      const redirectUri = urlObj.searchParams.get("redirect_uri");
-      const clientId = urlObj.searchParams.get("client_id");
-      const scopes = urlObj.searchParams.get("scope");
-
-      console.log("🔧 OAuth URL Details:");
-      console.log("   Client ID:", clientId);
-      console.log("   Redirect URI:", redirectUri);
-      console.log("   Scopes:", scopes);
-      console.log("   Full URL:", oauthUrl);
-
-      // Validate redirect URI
-      const expectedRedirectUri = oauthConfig.redirectUri;
-      if (redirectUri !== expectedRedirectUri) {
-        console.error("❌ REDIRECT URI MISMATCH!");
-        console.error("   Expected:", expectedRedirectUri);
-        console.error("   Got:", redirectUri);
-        setCalendarMessage({
-          type: "error",
-          message: `Redirect URI mismatch. Expected: ${expectedRedirectUri}, Got: ${redirectUri}`,
-        });
-        return;
-      }
-
-      console.log("✅ OAuth configuration validated. Redirecting to Google...");
-
-      // Redirect to Google OAuth
-      window.location.href = oauthUrl;
-    } catch (error) {
-      console.error("❌ Error generating OAuth URL:", error);
-      setCalendarMessage({
-        type: "error",
-        message: `Failed to generate OAuth URL: ${error instanceof Error ? error.message : "Unknown error"}`,
-      });
-    }
+    // Redirect to calendar settings page for connection
+    window.location.href = "/debug-oauth";
   };
 
   const handleCalendarSync = async () => {
-    if (!calendarStatus?.hasConnection) return;
+    if (!isAuthenticated) return;
 
     try {
-      const result = await syncCalendar();
+      console.log("🔄 Syncing calendar events...");
+      console.log("📊 Calendar status before sync:", calendarStatus);
+      console.log("🔐 Is authenticated:", isAuthenticated);
+
+      const result = await syncCalendar({});
+      console.log("✅ Calendar sync result:", result);
+
       setCalendarMessage({
         type: result.success ? "success" : "error",
         message: result.message,
       });
 
-      // Auto-dismiss success messages
-      if (result.success) {
-        setTimeout(() => setCalendarMessage(null), 3000);
-      }
-    } catch {
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setCalendarMessage(null), 5000);
+    } catch (error) {
+      console.error("❌ Calendar sync error:", error);
+      console.error("❌ Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       setCalendarMessage({
         type: "error",
-        message: "Failed to sync calendar. Please try again.",
+        message: "Failed to sync calendar events. Please try again.",
       });
     }
   };
 
   const handleCalendarDisconnect = async () => {
-    if (!calendarStatus?.hasConnection) return;
+    if (!isAuthenticated) return;
 
     try {
-      await disconnectCalendar();
+      console.log("🔄 Disconnecting calendar...");
+
+      const result = await disconnectCalendar();
+      console.log("✅ Calendar disconnect result:", result);
+
       setCalendarMessage({
-        type: "success",
-        message: "Calendar disconnected successfully.",
+        type: result.success ? "success" : "error",
+        message: result.message,
       });
-      setTimeout(() => setCalendarMessage(null), 3000);
-    } catch {
+
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setCalendarMessage(null), 5000);
+    } catch (error) {
+      console.error("❌ Calendar disconnect error:", error);
       setCalendarMessage({
         type: "error",
         message: "Failed to disconnect calendar. Please try again.",
@@ -263,68 +209,57 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
 
   return (
     <>
+      {/* Calendar Status Message */}
+      {calendarMessage && (
+        <div
+          className={`px-4 py-2 text-sm text-center ${
+            calendarMessage.type === "success"
+              ? "bg-green-50 text-green-700 border-b border-green-200"
+              : "bg-red-50 text-red-700 border-b border-red-200"
+          }`}
+        >
+          {calendarMessage.message}
+          <button
+            onClick={() => setCalendarMessage(null)}
+            className="ml-2 text-xs underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <header
         className={`sticky top-0 z-50 ${themeClasses.header} ${className}`}
       >
-        {/* Calendar connection message */}
-        {calendarMessage && (
-          <div
-            className={`w-full px-4 py-2 text-sm text-center ${
-              calendarMessage.type === "success"
-                ? "bg-green-100 text-green-800 border-b border-green-200"
-                : "bg-red-100 text-red-800 border-b border-red-200"
-            }`}
-          >
-            {calendarMessage.message}
-            <button
-              onClick={() => setCalendarMessage(null)}
-              className="ml-2 text-xs underline hover:no-underline"
-            >
-              Dismiss
-            </button>
-            {calendarMessage.type === "error" && (
-              <button
-                onClick={() => setShowDiagnostic(!showDiagnostic)}
-                className="ml-2 text-xs underline hover:no-underline"
-              >
-                {showDiagnostic ? "Hide Setup Guide" : "Show Setup Guide"}
-              </button>
-            )}
-          </div>
-        )}
-        <div className="px-4 py-2">
-          <div className="flex items-center justify-between">
-            {/* Left Section - Minimal Page Title */}
-            <div className="flex items-center space-x-2">
-              <div className={`${themeClasses.text.secondary}`}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-14 items-center justify-between">
+            {/* Left Section - Page Title */}
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {getPageIcon()}
+                <h1
+                  className={`text-lg font-semibold ${themeClasses.text.primary}`}
+                >
+                  {getPageTitle()}
+                </h1>
               </div>
-              <h1
-                className={`text-md font-medium ${themeClasses.text.primary}`}
-              >
-                {getPageTitle()}
-              </h1>
             </div>
 
             {/* Center Section - Search */}
-            <div className="flex-1 max-w-md mx-6">
+            <div className="flex-1 max-w-lg mx-4">
               <div className="relative">
                 <Search
-                  className={`absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 ${themeClasses.text.tertiary}`}
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${themeClasses.text.tertiary}`}
                 />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search tasks, projects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-9 pr-3 py-1.5 rounded-md border backdrop-blur-md transition-all duration-200 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/30 ${themeClasses.search}`}
+                  className={`w-full pl-10 pr-4 py-2 text-sm rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${themeClasses.search}`}
                 />
                 <kbd
-                  className={`absolute right-2.5 top-1/2 transform -translate-y-1/2 px-1.5 py-0.5 text-xs rounded border ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-gray-400"
-                      : "bg-gray-100 border-gray-300 text-gray-500"
-                  }`}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 px-1.5 py-0.5 text-xs rounded border ${isDarkMode ? "bg-gray-700 border-gray-600 text-gray-400" : "bg-gray-100 border-gray-300 text-gray-500"}`}
                 >
                   ⌘K
                 </kbd>
@@ -335,7 +270,7 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
             <div className="flex items-center space-x-1">
               {/* Google Calendar Connect Button */}
               <div className="flex items-center space-x-2">
-                {calendarStatus?.hasConnection ? (
+                {calendarStatus?.connected ? (
                   <div className="flex items-center space-x-1">
                     <button
                       onClick={handleCalendarSync}
@@ -447,89 +382,7 @@ export default function Header({ onCreateTask, className = "" }: HeaderProps) {
         </div>
       </header>
 
-      {/* Diagnostic Panel */}
-      {showDiagnostic && googleCloudDiagnostic && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-red-800">
-              🚨 Google Cloud Console Configuration Required
-            </h3>
-            <button
-              onClick={() => setShowDiagnostic(false)}
-              className="text-red-600 hover:text-red-800"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Critical Issues */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-red-700 mb-2">
-              Critical Issues:
-            </h4>
-            <ul className="list-disc list-inside space-y-1">
-              {googleCloudDiagnostic.criticalIssues.map((issue, index) => (
-                <li key={index} className="text-red-600 text-sm">
-                  {issue}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Immediate Actions */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-red-700 mb-2">
-              Immediate Actions:
-            </h4>
-            <ol className="list-decimal list-inside space-y-1">
-              {googleCloudDiagnostic.immediateActions.map((action, index) => (
-                <li key={index} className="text-red-600 text-sm">
-                  {action}
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* Redirect URI */}
-          <div className="bg-white p-3 rounded border border-red-200">
-            <p className="text-sm font-semibold text-red-800 mb-1">
-              Your exact redirect URI:
-            </p>
-            <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-800 break-all">
-              {googleCloudDiagnostic.redirectUri}
-            </code>
-            <p className="text-xs text-red-600 mt-1">
-              Copy this EXACTLY into Google Cloud Console
-            </p>
-          </div>
-
-          <div className="mt-4 flex space-x-3">
-            <a
-              href="https://console.cloud.google.com/apis/credentials"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-            >
-              Open Google Cloud Console
-            </a>
-            <a
-              href="/debug-oauth"
-              className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-            >
-              Full Debug Guide
-            </a>
-          </div>
-        </div>
-      )}
+      {/* Calendar diagnostic panel removed - using new implementation */}
     </>
-  );
-}
-
-function SignOutButton() {
-  return (
-    <button className="flex w-full items-center space-x-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
-      <LogOut className="h-4 w-4" />
-      <span>Sign Out</span>
-    </button>
   );
 }

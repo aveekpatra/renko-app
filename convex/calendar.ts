@@ -610,7 +610,7 @@ export const getAllCalendarEvents = query({
     ),
     googleEvents: v.array(
       v.object({
-        _id: v.id("googleCalendarEvents"),
+        _id: v.id("unifiedGoogleCalendarEvents"),
         eventId: v.string(),
         title: v.string(),
         description: v.optional(v.string()),
@@ -692,7 +692,7 @@ export const getAllCalendarEvents = query({
     const endDateISO = new Date(args.endDate).toISOString();
 
     const googleEvents = await ctx.db
-      .query("googleCalendarEvents")
+      .query("unifiedGoogleCalendarEvents")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) =>
         q.and(

@@ -208,7 +208,37 @@ export default defineSchema({
 
   // === GOOGLE CALENDAR INTEGRATION ===
 
-  // Google Calendar Integration - Support multiple calendar connections
+  // Unified Calendar Connection (single OAuth client approach)
+  calendarConnections: defineTable({
+    userId: v.id("users"),
+    hasCalendarScope: v.boolean(),
+    email: v.string(),
+    connectedAt: v.number(),
+    lastSync: v.optional(v.number()),
+    error: v.optional(v.string()),
+    // OAuth token storage for API access
+    accessToken: v.optional(v.string()),
+    refreshToken: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  // Unified Google Calendar Events (for the new unified approach)
+  unifiedGoogleCalendarEvents: defineTable({
+    userId: v.id("users"),
+    eventId: v.string(), // Google Calendar event ID
+    summary: v.string(),
+    description: v.optional(v.string()),
+    startTime: v.string(), // ISO string from Google
+    endTime: v.string(), // ISO string from Google
+    location: v.optional(v.string()),
+    attendees: v.array(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_event", ["userId", "eventId"]),
+
+  // Google Calendar Integration - Support multiple calendar connections (LEGACY)
   googleCalendarConnections: defineTable({
     userId: v.id("users"),
     googleAccountId: v.string(),

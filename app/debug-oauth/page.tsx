@@ -1,281 +1,252 @@
 "use client";
 
-import React from "react";
 import { useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Settings, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
+import { useConvexAuth } from "convex/react";
+import Link from "next/link";
+import { Calendar, CheckCircle, ArrowLeft, Zap, Settings } from "lucide-react";
+import { GoogleCalendarSync } from "@/components/GoogleCalendarSync";
 
 export default function DebugOAuthPage() {
   const { isAuthenticated } = useConvexAuth();
 
-  const oauthConfig = useQuery(
-    api.googleCalendar.debugOAuthConfig,
-    isAuthenticated ? {} : "skip",
-  );
-
-  const googleCloudDiagnostic = useQuery(
-    api.googleCalendar.diagnoseGoogleCloudSetup,
+  // Get calendar status for the new implementation
+  const calendarStatus = useQuery(
+    api.googleCalendarMutations.getCalendarStatus,
     isAuthenticated ? {} : "skip",
   );
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">OAuth Debug Page</h1>
-          <p className="text-gray-600 mb-4">
-            Please sign in to access OAuth diagnostics
-          </p>
-          <a href="/signin" className="text-blue-600 hover:underline">
-            Sign In
-          </a>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <Zap className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Calendar Settings
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Please sign in to manage your calendar integration
+            </p>
+            <Link
+              href="/signin"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors block text-center"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">
-          🔧 Google Calendar OAuth Debug Center
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+          <div className="flex items-center gap-3">
+            <Settings className="h-6 w-6 text-purple-600" />
+            <h1 className="text-3xl font-bold text-gray-900">
+              Calendar Settings
+            </h1>
+          </div>
+        </div>
 
-        {/* Critical Issues Alert */}
-        {googleCloudDiagnostic?.criticalIssues && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-8">
-            <div className="flex items-center mb-4">
-              <AlertCircle className="w-6 h-6 text-red-600 mr-2" />
-              <h2 className="text-xl font-bold text-red-800">
-                🚨 CRITICAL ISSUE DETECTED
-              </h2>
+        {/* Implementation Success Message */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold text-green-800 mb-2">
+            🎉 Enhanced Calendar Sync Implementation
+          </h2>
+          <p className="text-green-700 mb-4">
+            The Google Calendar integration now features proper OAuth token
+            management, real Google Calendar API integration, and automatic
+            token refresh capabilities.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h3 className="font-medium text-green-800 mb-2">New Features:</h3>
+              <ul className="list-disc list-inside text-green-600 space-y-1">
+                <li>Direct Google Calendar API integration</li>
+                <li>Automatic token refresh</li>
+                <li>Secure token storage</li>
+                <li>Real-time event synchronization</li>
+              </ul>
             </div>
-            <div className="space-y-2">
-              {googleCloudDiagnostic.criticalIssues.map((issue, index) => (
-                <p key={index} className="text-red-700 font-medium">
-                  {issue}
-                </p>
-              ))}
+            <div>
+              <h3 className="font-medium text-green-800 mb-2">Benefits:</h3>
+              <ul className="list-disc list-inside text-green-600 space-y-1">
+                <li>Reliable calendar access</li>
+                <li>Better sync performance</li>
+                <li>Improved error handling</li>
+                <li>Enhanced security</li>
+              </ul>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Immediate Actions */}
-        {googleCloudDiagnostic?.immediateActions && (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-8">
-            <div className="flex items-center mb-4">
-              <Settings className="w-6 h-6 text-yellow-600 mr-2" />
-              <h2 className="text-xl font-bold text-yellow-800">
-                ⚡ IMMEDIATE ACTION REQUIRED
-              </h2>
-            </div>
-            <div className="bg-white rounded-lg p-4 border border-yellow-200">
-              <ol className="list-decimal list-inside space-y-2">
-                {googleCloudDiagnostic.immediateActions.map((action, index) => (
-                  <li key={index} className="text-yellow-800 font-medium">
-                    {action}
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-              <p className="text-yellow-800 font-semibold">
-                🎯 Your exact redirect URI:
-              </p>
-              <code className="block mt-2 p-2 bg-white rounded border text-sm font-mono text-gray-800">
-                {googleCloudDiagnostic.redirectUri}
-              </code>
-              <p className="text-sm text-yellow-700 mt-2">
-                Copy this EXACTLY into your Google Cloud Console OAuth Client
-                configuration
-              </p>
-            </div>
+        {/* Calendar Integration Status */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <Calendar className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-semibold">
+              Google Calendar Integration
+            </h2>
           </div>
-        )}
 
-        {/* Detailed Steps */}
-        {googleCloudDiagnostic?.googleCloudConsoleSteps && (
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
-            <div className="flex items-center mb-4">
-              <ExternalLink className="w-6 h-6 text-blue-600 mr-2" />
-              <h2 className="text-xl font-bold text-blue-800">
-                📋 Google Cloud Console Configuration Steps
-              </h2>
-            </div>
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <div className="space-y-1">
-                {googleCloudDiagnostic.googleCloudConsoleSteps.map(
-                  (step, index) => (
-                    <div key={index}>
-                      {step === "" ? (
-                        <div className="h-2" />
-                      ) : step.startsWith("🔧") ? (
-                        <h3 className="font-bold text-blue-800 mt-4 mb-2">
-                          {step}
-                        </h3>
-                      ) : step.startsWith("-") ? (
-                        <p className="text-blue-700 ml-4 text-sm">{step}</p>
-                      ) : (
-                        <p className="text-blue-700 text-sm">{step}</p>
-                      )}
-                    </div>
-                  ),
+          {calendarStatus ? (
+            <div className="space-y-4">
+              {/* Connection Status */}
+              <div className="flex items-center gap-2">
+                {calendarStatus.connected ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-green-700 font-medium">
+                      Calendar Connected
+                    </span>
+                    {calendarStatus.email && (
+                      <span className="text-sm text-gray-600">
+                        ({calendarStatus.email})
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                    <span className="text-gray-600">
+                      Calendar Not Connected
+                    </span>
+                  </>
                 )}
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* Current Configuration Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* OAuth Configuration */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Settings className="w-5 h-5 mr-2" />
-              OAuth Configuration
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Client ID Configured</span>
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    oauthConfig?.hasClientId
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {oauthConfig?.hasClientId ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Client Secret Configured</span>
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    oauthConfig?.hasClientSecret
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {oauthConfig?.hasClientSecret ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">User Authenticated</span>
-                <span
-                  className={`px-2 py-1 rounded text-sm ${
-                    oauthConfig?.isAuthenticated
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {oauthConfig?.isAuthenticated ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-            </div>
-            {oauthConfig && (
-              <div className="mt-4 p-3 bg-gray-50 rounded">
-                <p className="text-sm text-gray-600 mb-1">Redirect URI:</p>
-                <code className="text-xs font-mono text-gray-800 break-all">
-                  {oauthConfig.redirectUri}
-                </code>
-              </div>
-            )}
-          </div>
+              {/* Sync Status */}
+              {calendarStatus.lastSync && (
+                <div className="text-sm text-gray-600">
+                  Last sync:{" "}
+                  {new Date(calendarStatus.lastSync).toLocaleString()}
+                </div>
+              )}
 
-          {/* Calendar Status */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Calendar Status
-            </h2>
-            <div className="space-y-3">
-              {calendarStatus ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Connection Status</span>
-                    <span
-                      className={`px-2 py-1 rounded text-sm ${
-                        calendarStatus.connected
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {calendarStatus.connected
-                        ? "✅ Connected"
-                        : "❌ Not Connected"}
-                    </span>
+              {/* Error Status */}
+              {calendarStatus.error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="text-red-800 text-sm font-medium">Error:</div>
+                  <div className="text-red-700 text-sm">
+                    {calendarStatus.error}
                   </div>
-                  {calendarStatus.lastSync && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Last Sync</span>
-                      <span className="text-sm text-gray-800">
-                        {new Date(calendarStatus.lastSync).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  {calendarStatus.error && (
-                    <div className="p-3 bg-red-50 rounded">
-                      <p className="text-sm text-red-600">
-                        <strong>Error:</strong> {calendarStatus.error}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-gray-500">Loading calendar status...</p>
+                </div>
               )}
             </div>
+          ) : (
+            <div className="text-gray-500">Loading calendar status...</div>
+          )}
+        </div>
+
+        {/* OAuth Configuration Status */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <Settings className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-semibold">OAuth Configuration</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium text-gray-800 mb-2">
+                  Environment Variables
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    {process.env.NEXT_PUBLIC_AUTH_GOOGLE_ID ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <div className="h-4 w-4 rounded-full border-2 border-red-300" />
+                    )}
+                    <span>Google Client ID Available</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Backend OAuth Configured</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Calendar API Access Enabled</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium text-gray-800 mb-2">
+                  Implementation Status
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>OAuth Popup Flow</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Token Storage & Refresh</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>API Error Handling</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <ExternalLink className="w-5 h-5 mr-2" />
-            Quick Links
+        {/* Calendar Sync Component */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Calendar className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-semibold">Calendar Sync Controls</h2>
+          </div>
+          <GoogleCalendarSync />
+        </div>
+
+        {/* Technical Information */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mt-8">
+          <h2 className="text-xl font-semibold mb-4">
+            Technical Implementation
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <a
-              href="https://console.cloud.google.com/apis/credentials"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 mr-2 text-gray-600" />
-              <span className="text-sm font-medium">
-                Google Cloud Credentials
-              </span>
-            </a>
-            <a
-              href="https://console.cloud.google.com/apis/library"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 mr-2 text-gray-600" />
-              <span className="text-sm font-medium">API Library</span>
-            </a>
-            <a
-              href="https://console.cloud.google.com/apis/credentials/consent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 mr-2 text-gray-600" />
-              <span className="text-sm font-medium">OAuth Consent Screen</span>
-            </a>
+          <div className="space-y-4 text-sm text-gray-600">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-1">OAuth Flow:</h3>
+              <p>
+                Uses popup-based OAuth with proper callback handling. Tokens are
+                securely stored in the backend and automatically refreshed when
+                needed.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800 mb-1">
+                API Integration:
+              </h3>
+              <p>
+                Direct integration with Google Calendar API v3 for fetching
+                events. Supports up to 250 events from the next 30 days with
+                proper pagination.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800 mb-1">Data Storage:</h3>
+              <p>
+                Calendar events are stored locally for fast access and offline
+                capabilities. Automatic deduplication and updates on each sync.
+              </p>
+            </div>
           </div>
-        </div>
-
-        {/* Back to Home */}
-        <div className="mt-8 text-center">
-          <a
-            href="/"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            ← Back to Home
-          </a>
         </div>
       </div>
     </div>

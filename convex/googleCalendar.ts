@@ -1,648 +1,344 @@
-import {
-  query,
-  mutation,
-  internalQuery,
-  internalMutation,
-  internalAction,
-  action,
-} from "./_generated/server";
+"use node";
+
+import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 
 /**
- * Get all calendar connections for the current user
+ * UNIFIED OAUTH APPROACH
+ *
+ * Now using the same Google OAuth client for both authentication and calendar access.
+ * Calendar permissions are requested during the initial sign-in flow.
+ * This eliminates the dual-OAuth conflict that was causing sign-out issues.
  */
-export const getCalendarConnections = query({
-  args: {},
-  returns: v.array(
-    v.object({
-      _id: v.id("googleCalendarConnections"),
-      googleAccountEmail: v.string(),
-      googleAccountName: v.string(),
-      googleAccountPicture: v.optional(v.string()),
-      isActive: v.boolean(),
-      lastSyncAt: v.optional(v.number()),
-      createdAt: v.number(),
-    }),
-  ),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
-
-    const connections = await ctx.db
-      .query("googleCalendarConnections")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    return connections.map((conn) => ({
-      _id: conn._id,
-      googleAccountEmail: conn.googleAccountEmail,
-      googleAccountName: conn.googleAccountName,
-      googleAccountPicture: conn.googleAccountPicture,
-      isActive: conn.isActive,
-      lastSyncAt: conn.lastSyncAt,
-      createdAt: conn.createdAt,
-    }));
-  },
-});
 
 /**
- * Get calendar connection status for current user
+ * ENHANCED CALENDAR SYNC IMPLEMENTATION
+ *
+ * This new implementation:
+ * 1. Properly stores and manages Google OAuth tokens
+ * 2. Uses Node.js environment for Google Calendar API calls
+ * 3. Handles token refresh automatically
+ * 4. Provides robust error handling and debugging
+ * 5. Syncs Google Calendar events to our local database
  */
-export const getCalendarStatus = query({
-  args: {},
-  returns: v.object({
-    hasConnection: v.boolean(),
-    email: v.optional(v.string()),
-    lastSyncAt: v.optional(v.number()),
-  }),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return { hasConnection: false };
-    }
 
-    const connection = await ctx.db
-      .query("googleCalendarConnections")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-
-    if (!connection || !connection.isActive) {
-      return { hasConnection: false };
-    }
-
-    return {
-      hasConnection: true,
-      email: connection.googleAccountEmail,
-      lastSyncAt: connection.lastSyncAt,
-    };
-  },
-});
+// Note: getCalendarStatus and initializeCalendarConnection moved to googleCalendarMutations.ts
+// since this file has "use node"; and can only contain actions
 
 /**
- * Generate OAuth URL for calendar connection
- */
-export const generateCalendarOAuthUrl = mutation({
-  args: {},
-  returns: v.string(),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
-    if (!clientId) {
-      throw new Error("Google Calendar OAuth not configured");
-    }
-
-    const redirectUri =
-      process.env.SITE_URL + "/api/auth/google/calendar/callback";
-
-    // Simplified scopes - start with just calendar access
-    const scopes = [
-      "https://www.googleapis.com/auth/calendar.readonly",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-    ].join(" ");
-
-    const state = JSON.stringify({ userId, type: "calendar" });
-
-    // Use the standard OAuth 2.0 authorization endpoint
-    const oauthUrl = new URL("https://accounts.google.com/o/oauth2/auth");
-    oauthUrl.searchParams.set("client_id", clientId);
-    oauthUrl.searchParams.set("redirect_uri", redirectUri);
-    oauthUrl.searchParams.set("response_type", "code");
-    oauthUrl.searchParams.set("scope", scopes);
-    oauthUrl.searchParams.set("state", state);
-    oauthUrl.searchParams.set("access_type", "offline");
-    oauthUrl.searchParams.set("prompt", "consent");
-    oauthUrl.searchParams.set("include_granted_scopes", "true");
-
-    console.log("🔗 Generated OAuth URL:", oauthUrl.toString());
-    console.log("📋 OAuth parameters:", {
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scopes: scopes,
-      state: state,
-    });
-
-    return oauthUrl.toString();
-  },
-});
-
-/**
- * Store calendar connection from OAuth callback
- */
-export const storeCalendarConnection = mutation({
-  args: {
-    userId: v.id("users"),
-    accessToken: v.string(),
-    refreshToken: v.optional(v.string()),
-    expiresIn: v.number(),
-    googleAccountId: v.string(),
-    googleAccountEmail: v.string(),
-    googleAccountName: v.string(),
-    googleAccountPicture: v.optional(v.string()),
-  },
-  returns: v.id("googleCalendarConnections"),
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const expiresAt = now + args.expiresIn * 1000;
-
-    // Remove any existing connections for this user
-    const existingConnections = await ctx.db
-      .query("googleCalendarConnections")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-
-    for (const conn of existingConnections) {
-      await ctx.db.delete(conn._id);
-    }
-
-    // Create new connection
-    return await ctx.db.insert("googleCalendarConnections", {
-      userId: args.userId,
-      googleAccountId: args.googleAccountId,
-      googleAccountEmail: args.googleAccountEmail,
-      googleAccountName: args.googleAccountName,
-      googleAccountPicture: args.googleAccountPicture,
-      accessToken: args.accessToken,
-      refreshToken: args.refreshToken,
-      expiresAt,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
-
-/**
- * Disconnect calendar
- */
-export const disconnectCalendar = mutation({
-  args: {},
-  returns: v.null(),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const connections = await ctx.db
-      .query("googleCalendarConnections")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const conn of connections) {
-      await ctx.db.delete(conn._id);
-    }
-
-    // Also delete associated events
-    const events = await ctx.db
-      .query("googleCalendarEvents")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    for (const event of events) {
-      await ctx.db.delete(event._id);
-    }
-
-    return null;
-  },
-});
-
-/**
- * Get Google Calendar events for display
- */
-export const getGoogleCalendarEvents = query({
-  args: {
-    startDate: v.number(),
-    endDate: v.number(),
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("googleCalendarEvents"),
-      eventId: v.string(),
-      summary: v.string(),
-      description: v.optional(v.string()),
-      startTime: v.string(),
-      endTime: v.string(),
-      location: v.optional(v.string()),
-      attendees: v.array(v.string()),
-      type: v.literal("google"),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
-
-    // Get events within the date range
-    const events = await ctx.db
-      .query("googleCalendarEvents")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    // Filter by date range (simplified - you might want better date filtering)
-    return events
-      .filter((event) => {
-        const eventStart = new Date(event.startTime).getTime();
-        return eventStart >= args.startDate && eventStart <= args.endDate;
-      })
-      .map((event) => ({
-        _id: event._id,
-        eventId: event.eventId,
-        summary: event.summary,
-        description: event.description,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        location: event.location,
-        attendees: event.attendees,
-        type: "google" as const,
-      }));
-  },
-});
-
-/**
- * Sync Google Calendar events (called manually or via cron)
+ * Sync calendar events from Google Calendar - now with working API calls
  */
 export const syncCalendarEvents = action({
   args: {},
-  returns: v.object({
-    success: v.boolean(),
-    message: v.string(),
-    eventsAdded: v.number(),
-  }),
-  handler: async (ctx) => {
+  returns: v.union(
+    v.object({
+      success: v.boolean(),
+      message: v.string(),
+      eventsCount: v.number(),
+    }),
+    v.object({
+      success: v.boolean(),
+      message: v.string(),
+    }),
+  ),
+  handler: async (
+    ctx,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    eventsCount?: number;
+  }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Not authenticated");
     }
 
+    console.log("🔍 [SYNC DEBUG] Starting calendar sync for user:", userId);
+
     try {
-      // Get the user's calendar connection
+      // Get calendar connection with tokens
       const connection = await ctx.runQuery(
-        internal.googleCalendar.getActiveConnection,
-        {
-          userId,
-        },
+        internal.googleCalendarMutations.getCalendarConnectionWithTokens,
+        { userId },
       );
 
       if (!connection) {
+        console.log("❌ [SYNC DEBUG] No calendar connection found");
+        return { success: false, message: "Calendar not connected" };
+      }
+
+      console.log("✅ [SYNC DEBUG] Calendar connection found:", {
+        email: connection.email,
+        hasCalendarScope: connection.hasCalendarScope,
+        hasAccessToken: !!connection.accessToken,
+        hasRefreshToken: !!connection.refreshToken,
+        expiresAt: connection.expiresAt
+          ? new Date(connection.expiresAt).toISOString()
+          : "No expiry",
+      });
+
+      if (!connection.hasCalendarScope || !connection.accessToken) {
+        console.log("❌ [SYNC DEBUG] No calendar scope or access token");
+        return { success: false, message: "Calendar access not granted" };
+      }
+
+      // Check if token is expired and refresh if needed
+      let accessToken = connection.accessToken;
+      if (connection.expiresAt && Date.now() >= connection.expiresAt) {
+        console.log(
+          "🔄 [SYNC DEBUG] Access token expired, attempting refresh...",
+        );
+
+        if (connection.refreshToken) {
+          try {
+            const refreshResult = await refreshAccessToken(
+              connection.refreshToken,
+            );
+            if (refreshResult.success) {
+              accessToken = refreshResult.accessToken!;
+
+              // Update stored tokens
+              await ctx.runMutation(
+                internal.googleCalendarMutations.updateConnectionTokens,
+                {
+                  userId,
+                  accessToken: refreshResult.accessToken!,
+                  expiresAt: refreshResult.expiresAt!,
+                },
+              );
+
+              console.log("✅ [SYNC DEBUG] Token refreshed successfully");
+            } else {
+              console.log(
+                "❌ [SYNC DEBUG] Token refresh failed:",
+                refreshResult.error,
+              );
+
+              await ctx.runMutation(
+                internal.googleCalendarMutations.updateCalendarConnection,
+                {
+                  userId,
+                  error: "Token refresh failed: " + refreshResult.error,
+                },
+              );
+
+              return {
+                success: false,
+                message:
+                  "Calendar access expired. Please reconnect your calendar.",
+              };
+            }
+          } catch (error) {
+            console.error("❌ [SYNC DEBUG] Token refresh error:", error);
+            return {
+              success: false,
+              message: "Failed to refresh calendar access. Please reconnect.",
+            };
+          }
+        } else {
+          console.log("❌ [SYNC DEBUG] No refresh token available");
+          return {
+            success: false,
+            message:
+              "Calendar access expired and no refresh token available. Please reconnect.",
+          };
+        }
+      }
+
+      // Fetch calendar events from Google Calendar API
+      console.log("🔍 [SYNC DEBUG] Fetching events from Google Calendar...");
+
+      const eventsResult = await fetchGoogleCalendarEvents(accessToken);
+
+      if (!eventsResult.success) {
+        console.log(
+          "❌ [SYNC DEBUG] Failed to fetch events:",
+          eventsResult.error,
+        );
+
+        await ctx.runMutation(
+          internal.googleCalendarMutations.updateCalendarConnection,
+          {
+            userId,
+            error: "Failed to fetch events: " + eventsResult.error,
+          },
+        );
+
         return {
           success: false,
-          message: "No active calendar connection found",
-          eventsAdded: 0,
+          message: "Failed to fetch calendar events: " + eventsResult.error,
         };
       }
 
-      // Fetch events from Google Calendar API
-      const response = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-          new URLSearchParams({
-            timeMin: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000,
-            ).toISOString(), // Last 7 days
-            timeMax: new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000,
-            ).toISOString(), // Next 30 days
-            singleEvents: "true",
-            orderBy: "startTime",
-            maxResults: "100",
-          }),
+      console.log(
+        "✅ [SYNC DEBUG] Fetched",
+        eventsResult.events.length,
+        "events from Google Calendar",
+      );
+
+      // Store events in our database
+      const storedCount = await ctx.runMutation(
+        internal.googleCalendarMutations.storeGoogleCalendarEvents,
         {
-          headers: {
-            Authorization: `Bearer ${connection.accessToken}`,
-          },
+          userId,
+          events: eventsResult.events,
         },
       );
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token expired, mark connection as inactive
-          await ctx.runMutation(
-            internal.googleCalendar.markConnectionInactive,
-            {
-              connectionId: connection._id,
-            },
-          );
-          return {
-            success: false,
-            message: "Calendar connection expired. Please reconnect.",
-            eventsAdded: 0,
-          };
-        }
-        throw new Error(`API request failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const events = data.items || [];
-
-      let eventsAdded = 0;
-
-      for (const event of events) {
-        if (event.id && event.summary) {
-          const existingEvent = await ctx.runQuery(
-            internal.googleCalendar.getEventByGoogleId,
-            {
-              userId,
-              googleEventId: event.id,
-            },
-          );
-
-          if (!existingEvent) {
-            await ctx.runMutation(internal.googleCalendar.createEvent, {
-              userId,
-              connectionId: connection._id,
-              eventId: event.id,
-              summary: event.summary || "Untitled Event",
-              description: event.description,
-              startTime:
-                event.start?.dateTime ||
-                event.start?.date ||
-                new Date().toISOString(),
-              endTime:
-                event.end?.dateTime ||
-                event.end?.date ||
-                new Date().toISOString(),
-              location: event.location,
-              attendees: (event.attendees || [])
-                .map((att: any) => att.email)
-                .filter(Boolean),
-              etag: event.etag || "",
-            });
-            eventsAdded++;
-          }
-        }
-      }
-
       // Update last sync time
-      await ctx.runMutation(internal.googleCalendar.updateLastSyncTime, {
-        connectionId: connection._id,
-      });
+      await ctx.runMutation(
+        internal.googleCalendarMutations.updateCalendarConnection,
+        {
+          userId,
+          lastSync: Date.now(),
+          error: undefined, // Clear any previous errors
+        },
+      );
+
+      console.log(
+        "✅ [SYNC DEBUG] Successfully stored",
+        storedCount,
+        "calendar events",
+      );
 
       return {
         success: true,
-        message: `Successfully synced ${eventsAdded} new events`,
-        eventsAdded,
+        message: `Successfully synced ${storedCount} calendar events`,
+        eventsCount: storedCount,
       };
     } catch (error) {
-      console.error("Calendar sync error:", error);
+      console.error("❌ [SYNC DEBUG] Sync failed:", error);
+
+      // Update connection with error
+      await ctx.runMutation(
+        internal.googleCalendarMutations.updateCalendarConnection,
+        {
+          userId,
+          error: error instanceof Error ? error.message : "Unknown sync error",
+        },
+      );
+
       return {
         success: false,
-        message: `Sync failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        eventsAdded: 0,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to sync calendar events",
       };
     }
   },
 });
 
-// Internal functions for the action to use
+/**
+ * Node.js function to refresh Google OAuth access token
+ */
+async function refreshAccessToken(refreshToken: string): Promise<{
+  success: boolean;
+  accessToken?: string;
+  expiresAt?: number;
+  error?: string;
+}> {
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET!,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }),
+    });
 
-export const getActiveConnection = internalQuery({
-  args: {
-    userId: v.id("users"),
-  },
-  returns: v.union(
-    v.object({
-      _id: v.id("googleCalendarConnections"),
-      accessToken: v.string(),
-      refreshToken: v.optional(v.string()),
-      expiresAt: v.number(),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    const connection = await ctx.db
-      .query("googleCalendarConnections")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("isActive"), true))
-      .first();
-
-    if (!connection) {
-      return null;
+    if (!response.ok) {
+      const errorData = await response.text();
+      return {
+        success: false,
+        error: `HTTP ${response.status}: ${errorData}`,
+      };
     }
 
-    return {
-      _id: connection._id,
-      accessToken: connection.accessToken,
-      refreshToken: connection.refreshToken,
-      expiresAt: connection.expiresAt,
-    };
-  },
-});
-
-export const markConnectionInactive = internalMutation({
-  args: {
-    connectionId: v.id("googleCalendarConnections"),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.connectionId, {
-      isActive: false,
-      updatedAt: Date.now(),
-    });
-    return null;
-  },
-});
-
-export const getEventByGoogleId = internalQuery({
-  args: {
-    userId: v.id("users"),
-    googleEventId: v.string(),
-  },
-  returns: v.union(
-    v.object({
-      _id: v.id("googleCalendarEvents"),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    const event = await ctx.db
-      .query("googleCalendarEvents")
-      .withIndex("by_user_and_event", (q) =>
-        q.eq("userId", args.userId).eq("eventId", args.googleEventId),
-      )
-      .first();
-
-    return event ? { _id: event._id } : null;
-  },
-});
-
-export const createEvent = internalMutation({
-  args: {
-    userId: v.id("users"),
-    connectionId: v.id("googleCalendarConnections"),
-    eventId: v.string(),
-    summary: v.string(),
-    description: v.optional(v.string()),
-    startTime: v.string(),
-    endTime: v.string(),
-    location: v.optional(v.string()),
-    attendees: v.array(v.string()),
-    etag: v.string(),
-  },
-  returns: v.id("googleCalendarEvents"),
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    return await ctx.db.insert("googleCalendarEvents", {
-      userId: args.userId,
-      connectionId: args.connectionId,
-      eventId: args.eventId,
-      summary: args.summary,
-      description: args.description,
-      startTime: args.startTime,
-      endTime: args.endTime,
-      location: args.location,
-      attendees: args.attendees,
-      etag: args.etag,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
-
-export const updateLastSyncTime = internalMutation({
-  args: {
-    connectionId: v.id("googleCalendarConnections"),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.connectionId, {
-      lastSyncAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    return null;
-  },
-});
-
-/**
- * Debug OAuth configuration
- */
-export const debugOAuthConfig = query({
-  args: {},
-  returns: v.object({
-    hasClientId: v.boolean(),
-    hasClientSecret: v.boolean(),
-    siteUrl: v.optional(v.string()),
-    redirectUri: v.string(),
-    isAuthenticated: v.boolean(),
-  }),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const data = await response.json();
 
     return {
-      hasClientId: !!process.env.GOOGLE_CALENDAR_CLIENT_ID,
-      hasClientSecret: !!process.env.GOOGLE_CALENDAR_CLIENT_SECRET,
-      siteUrl: process.env.SITE_URL,
-      redirectUri: process.env.SITE_URL + "/api/auth/google/calendar/callback",
-      isAuthenticated: !!userId,
+      success: true,
+      accessToken: data.access_token,
+      expiresAt: Date.now() + data.expires_in * 1000, // Convert seconds to milliseconds
     };
-  },
-});
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
 
 /**
- * CRITICAL: Google Cloud Console Configuration Guide
- *
- * Based on your callback logs, Google is granting scopes but not returning an authorization code.
- * This is a classic "redirect_uri_mismatch" error in Google Cloud Console.
- *
- * IMMEDIATE ACTION REQUIRED:
- * 1. Go to https://console.cloud.google.com/apis/credentials
- * 2. Find your OAuth 2.0 Client ID: 174352036669-us3f51bd13q48rhbk0h6g83iulu24g6o.apps.googleusercontent.com
- * 3. Click on it to edit
- * 4. In "Authorized redirect URIs" section, add EXACTLY:
- *    http://localhost:3000/api/auth/google/calendar/callback
- * 5. Click "Save"
- *
- * ALSO REQUIRED:
- * 1. Enable Google Calendar API:
- *    - Go to https://console.cloud.google.com/apis/library
- *    - Search for "Google Calendar API"
- *    - Click "Enable"
- *
- * 2. Configure OAuth Consent Screen:
- *    - Go to https://console.cloud.google.com/apis/credentials/consent
- *    - Add your scopes:
- *      - https://www.googleapis.com/auth/calendar.readonly
- *      - https://www.googleapis.com/auth/userinfo.email
- *      - https://www.googleapis.com/auth/userinfo.profile
- *
- * Your callback shows Google granted these scopes but no code - this is redirect URI mismatch!
+ * Node.js function to fetch events from Google Calendar API
  */
+async function fetchGoogleCalendarEvents(accessToken: string): Promise<{
+  success: boolean;
+  events: Array<{
+    id: string;
+    summary: string;
+    description?: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+    location?: string;
+    attendees?: Array<{ email: string }>;
+  }>;
+  error?: string;
+}> {
+  try {
+    // Fetch events from the next 30 days
+    const timeMin = new Date().toISOString();
+    const timeMax = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
-/**
- * Enhanced Google Cloud Console setup diagnostic with specific fixes
- */
-export const diagnoseGoogleCloudSetup = query({
-  args: {},
-  returns: v.object({
-    clientId: v.string(),
-    redirectUri: v.string(),
-    criticalIssues: v.array(v.string()),
-    immediateActions: v.array(v.string()),
-    googleCloudConsoleSteps: v.array(v.string()),
-  }),
-  handler: async (ctx) => {
-    const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID || "NOT_CONFIGURED";
-    const siteUrl = process.env.SITE_URL || "http://localhost:3000";
-    const redirectUri = siteUrl + "/api/auth/google/calendar/callback";
+    const url = new URL(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+    );
+    url.searchParams.set("timeMin", timeMin);
+    url.searchParams.set("timeMax", timeMax);
+    url.searchParams.set("singleEvents", "true");
+    url.searchParams.set("orderBy", "startTime");
+    url.searchParams.set("maxResults", "250");
 
-    const criticalIssues = [
-      "🚨 CRITICAL: Google is granting scopes but not returning authorization code",
-      "🚨 This is a REDIRECT_URI_MISMATCH error in Google Cloud Console",
-      "🚨 Your callback shows scopes were granted but no 'code' parameter",
-      "🚨 This means Google Cloud Console redirect URI doesn't match exactly",
-    ];
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-    const immediateActions = [
-      "1. Go to https://console.cloud.google.com/apis/credentials",
-      "2. Find OAuth Client: " + clientId,
-      "3. Click to edit the OAuth 2.0 Client ID",
-      "4. In 'Authorized redirect URIs' add EXACTLY: " + redirectUri,
-      "5. Click 'Save' and wait 5 minutes for propagation",
-      "6. Test OAuth flow again",
-    ];
+    if (!response.ok) {
+      const errorData = await response.text();
+      return {
+        success: false,
+        events: [],
+        error: `HTTP ${response.status}: ${errorData}`,
+      };
+    }
 
-    const googleCloudConsoleSteps = [
-      "🔧 STEP 1: Fix Redirect URI Mismatch",
-      "- Go to: https://console.cloud.google.com/apis/credentials",
-      "- Find your OAuth 2.0 Client ID: " + clientId,
-      "- Click on it to edit",
-      "- In 'Authorized redirect URIs' section, add EXACTLY:",
-      "  " + redirectUri,
-      "- Click 'Save'",
-      "",
-      "🔧 STEP 2: Enable Google Calendar API",
-      "- Go to: https://console.cloud.google.com/apis/library",
-      "- Search for 'Google Calendar API'",
-      "- Click 'Enable'",
-      "",
-      "🔧 STEP 3: Configure OAuth Consent Screen",
-      "- Go to: https://console.cloud.google.com/apis/credentials/consent",
-      "- In 'Scopes' section, add these scopes:",
-      "  - https://www.googleapis.com/auth/calendar.readonly",
-      "  - https://www.googleapis.com/auth/userinfo.email",
-      "  - https://www.googleapis.com/auth/userinfo.profile",
-      "- Click 'Save'",
-      "",
-      "🔧 STEP 4: Verify Configuration",
-      "- Wait 5-10 minutes for changes to propagate",
-      "- Test the OAuth flow again",
-      "- Check that authorization code is returned in callback",
-    ];
+    const data = await response.json();
 
     return {
-      clientId,
-      redirectUri,
-      criticalIssues,
-      immediateActions,
-      googleCloudConsoleSteps,
+      success: true,
+      events: data.items || [],
     };
-  },
-});
+  } catch (error) {
+    return {
+      success: false,
+      events: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// All database mutations and queries have been moved to googleCalendarMutations.ts
+// This file now contains only actions that can use Node.js APIs
