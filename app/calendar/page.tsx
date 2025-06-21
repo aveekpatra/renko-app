@@ -14,7 +14,6 @@ import {
   Search,
 } from "lucide-react";
 import { useTheme } from "@/components/AppLayout";
-import { GoogleCalendarSync } from "@/components/GoogleCalendarSync";
 
 interface Task {
   id: string;
@@ -787,8 +786,6 @@ export default function CalendarPage() {
             </div>
           )}
         </div>
-
-        <GoogleCalendarSync />
       </div>
 
       {/* Main Calendar Area */}

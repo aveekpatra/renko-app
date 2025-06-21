@@ -11,8 +11,6 @@ const nextConfig: NextConfig = {
   // Expose environment variables to client
   env: {
     NEXT_PUBLIC_AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
-    NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID:
-      process.env.GOOGLE_CALENDAR_CLIENT_ID,
   },
   // Stable CSS class names to prevent hydration issues
   webpack: (config, { dev }) => {

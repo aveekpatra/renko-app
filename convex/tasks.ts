@@ -261,7 +261,7 @@ export const updateTask = mutation({
       throw new Error("Task not found or not accessible");
     }
 
-    const updates: any = { updatedAt: Date.now() };
+    const updates: Record<string, unknown> = { updatedAt: Date.now() };
 
     if (args.title !== undefined) {
       if (!args.title.trim()) {
@@ -362,7 +362,7 @@ export const updateProject = mutation({
       throw new Error("Project not found or not accessible");
     }
 
-    const updates: any = { updatedAt: Date.now() };
+    const updates: Record<string, unknown> = { updatedAt: Date.now() };
 
     if (args.name !== undefined) {
       if (!args.name.trim()) {
@@ -520,7 +520,7 @@ export const updateColumn = mutation({
     }
 
     // Build update object
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (args.name !== undefined) updates.name = args.name.trim();
     if (args.color !== undefined) updates.color = args.color;
     if (args.position !== undefined) updates.position = args.position;
@@ -625,41 +625,6 @@ export const updateColumnPositions = mutation({
   },
 });
 
-// === GOOGLE CALENDAR INTEGRATION HELPERS ===
-
-/**
- * Update task with Google Calendar event ID
- */
-export const updateTaskGoogleEventId = mutation({
-  args: {
-    taskId: v.id("tasks"),
-    googleEventId: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const task = await ctx.db.get(args.taskId);
-    if (!task) {
-      throw new Error("Task not found");
-    }
-
-    if (task.userId !== userId) {
-      throw new Error("Not authorized to update this task");
-    }
-
-    await ctx.db.patch(args.taskId, {
-      googleEventId: args.googleEventId,
-      updatedAt: Date.now(),
-    });
-
-    return null;
-  },
-});
-
 // Get unscheduled tasks for calendar view
 export const getUnscheduledTasks = query({
   args: {},
@@ -675,7 +640,6 @@ export const getUnscheduledTasks = query({
       columnId: v.id("columns"),
       routineId: v.optional(v.id("routines")),
       eventId: v.optional(v.id("events")),
-      googleEventId: v.optional(v.string()),
       position: v.number(),
       userId: v.id("users"),
       assignedTo: v.optional(v.id("users")),

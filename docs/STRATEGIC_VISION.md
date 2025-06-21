@@ -16,7 +16,6 @@ Build the first AI agent that doesn't just organize your tasks - it thinks about
 **Database**: 12 interconnected tables with comprehensive relationships
 **Frontend**: Professional glassmorphic UI with real-time capabilities
 **Authentication**: Multi-provider auth (Password + Google OAuth) working seamlessly
-**Calendar Integration**: Complete Google Calendar sync with unified OAuth
 **Real-Time**: Full Convex synchronization across all components
 
 **Competitive Advantages Already Built:**
@@ -25,7 +24,6 @@ Build the first AI agent that doesn't just organize your tasks - it thinks about
 - Real-time collaboration infrastructure
 - Full-text search across all content
 - Professional glassmorphic design system
-- Google Calendar integration with intelligent scheduling context
 - Comprehensive data relationships for AI context
 
 ### **🚀 IMMEDIATE FOCUS: AI-FIRST MVP** _(Next 6-8 weeks)_
@@ -107,7 +105,6 @@ export const getAITaskPriorities = query({
   handler: async (ctx, args) => {
     // AI analyzes all tasks considering:
     // - Due dates and urgency
-    // - Google Calendar constraints
     // - Project importance
     // - User completion patterns
     // - Task relationships
@@ -128,7 +125,6 @@ export const generateDailyPlan = action({
   }),
   handler: async (ctx, args) => {
     // Generate optimal schedule considering:
-    // - Google Calendar events (real constraints)
     // - Task priorities and deadlines
     // - User energy patterns
     // - Time estimates
@@ -208,7 +204,6 @@ $12/month or $120/year (save 17%)
 What's included:
 ✅ Unlimited AI-powered task management
 ✅ Smart prioritization with reasoning
-✅ Google Calendar integration
 ✅ Daily AI planning
 ✅ Up to 3 projects
 ✅ Progress insights and coaching
@@ -237,7 +232,6 @@ Heavy usage limits:
 **AI Benefits**:
 
 - Universal linking enables intelligent suggestions ("This task relates to 3 other projects")
-- Google Calendar provides real scheduling constraints
 - User pattern tracking ready for machine learning
 - Cross-entity relationships power smart recommendations
 
@@ -405,7 +399,6 @@ With AI MVP generating revenue, expand the platform:
 1. **Rich Context**: AI has access to tasks, projects, calendar, relationships
 2. **Real-Time Updates**: AI suggestions can update live as context changes
 3. **User Patterns**: Database structure supports learning from user behavior
-4. **Calendar Intelligence**: Google Calendar provides real scheduling constraints
 
 ---
 

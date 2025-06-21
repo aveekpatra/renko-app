@@ -23,7 +23,6 @@
   - [ ] `getAITaskPriorities` query (intelligent task reordering)
     - Analyze deadlines, calendar constraints, user patterns
     - Provide priority scores with reasoning
-    - Consider Google Calendar scheduling context
   - [ ] AI usage tracking and cost monitoring system
     - Track tokens used per operation
     - Monitor costs per user
@@ -71,7 +70,6 @@
 
 - [ ] **Basic AI Daily Planning View**
   - [ ] AI-suggested task order for the day
-  - [ ] Time blocking based on Google Calendar constraints
   - [ ] Energy level recommendations (high/medium/low energy)
   - [ ] Buffer time suggestions between tasks
   - [ ] Conflict detection with existing calendar events
@@ -80,7 +78,6 @@
 
 - [ ] Build comprehensive AI context builder using existing data:
   - [ ] Current tasks and project relationships
-  - [ ] Google Calendar events and constraints
   - [ ] User completion patterns from task history
   - [ ] Universal linking relationships for suggestions
   - [ ] User preferences and working hours
@@ -144,7 +141,6 @@
 - [x] **Projects API** (3 functions) - full CRUD with statistics
 - [x] **Tasks API** (14 functions) - kanban boards, drag & drop, positioning
 - [x] **Calendar API** (8 functions) - events with project/task linking
-- [x] **Google Calendar API** (6 functions) - unified OAuth, sync, diagnostics
 - [x] **Universal Linking API** (8 functions) - connect any entities
 - [x] **Search API** (2 functions) - full-text search across all entities
 - [x] **Routines API** (8 functions) - templates, tracking, analytics
@@ -154,7 +150,6 @@
 
 - [x] **12 Interconnected Tables** with proper relationships
 - [x] **Universal Linking System** for entity connections
-- [x] **Google Calendar Integration** tables with unified OAuth
 - [x] **Proper Indexing** for performance optimization
 - [x] **Real-Time Capabilities** with Convex synchronization
 
@@ -162,14 +157,11 @@
 
 - [x] **Professional Glassmorphic UI** with dark/light themes
 - [x] **Real-Time Data Integration** across all components
-- [x] **Google Calendar Display** in weekly calendar view
 - [x] **Authentication Flow** with multi-provider support
 - [x] **Mobile Responsive Design** patterns
 
 ### **✅ Calendar Integration (COMPLETE)**
 
-- [x] **Unified OAuth Approach** - single Google client for auth + calendar
-- [x] **Google Calendar Sync** with automated cron jobs
 - [x] **Calendar Events Display** with distinct styling
 - [x] **Error Handling** for OAuth and API failures
 - [x] **Token Management** with automatic refresh
@@ -214,7 +206,6 @@
 
 - **Rich Data Context**: 12 tables provide comprehensive productivity context
 - **Real-Time Infrastructure**: Convex enables live AI updates and suggestions
-- **Calendar Intelligence**: Google Calendar provides real scheduling constraints
 - **Universal Relationships**: Cross-entity connections power intelligent suggestions
 - **Professional Foundation**: Production-ready backend supports AI features
 

@@ -1,265 +1,224 @@
-# 🎯 Renko - AI-Ready Productivity App
+# Renko Documentation
 
-**For Claude/Cursor AI**: Next.js + Convex productivity app with glassmorphic design, comprehensive backend, and real-time data integration.
+## Overview
 
-## 🚀 **CURRENT STATUS**
+Renko is a modern productivity application that combines project management, task tracking, and calendar scheduling into one seamless experience. Built with Next.js and Convex for real-time functionality.
 
-### ✅ **FULLY IMPLEMENTED BACKEND + TYPESCRIPT MIGRATION COMPLETE**
+## Features
 
-- **Auth**: Password + Google OAuth (Convex Auth) ✅
-- **Database**: 12 interconnected tables with proper indexing ✅
-- **API**: 41 functions across 10 backend files ✅
-- **Frontend**: 5 pages with real Convex data integration ✅
-- **Components**: 7 reusable components with dynamic data ✅
-- **TypeScript**: All compilation errors resolved ✅
-- **Schema Migration**: Complete boards→projects migration ✅
-- **Sample Data**: Comprehensive demo data system ✅
-- **Data Integrity**: Clean schema with consistent relationships ✅
-- **Google Calendar**: Full OAuth integration with automated sync ✅
+- **Project Management**: Kanban boards with drag-and-drop functionality
+- **Task Tracking**: Comprehensive task management with priorities and due dates
+- **Calendar Integration**: Weekly calendar view with scheduling capabilities
+- **Real-time Updates**: Live collaboration and instant updates
+- **Authentication**: Secure Google OAuth integration
 
-### 📁 **PROJECT STRUCTURE**
+## Architecture
+
+### Backend (Convex)
+
+The backend is built on Convex, providing:
+
+- Real-time database with automatic syncing
+- Serverless functions for business logic
+- Type-safe API generation
+- Built-in authentication
+
+### File Structure
+
+```
+convex/
+├── auth.ts              # Authentication configuration
+├── projects.ts          # 8 functions - Project management
+├── tasks.ts             # 15 functions - Task operations
+├── calendar.ts          # 4 functions - Calendar events
+├── routines.ts          # 8 functions - Routine templates
+├── users.ts             # 4 functions - User management
+├── search.ts            # 2 functions - Search functionality
+├── utils.ts             # Utility functions
+└── schema.ts            # Database schema
+```
+
+### Frontend (Next.js)
 
 ```
 app/
-├── page.tsx           # Dashboard with real Convex data
-├── boards/page.tsx    # Kanban management
-├── calendar/page.tsx  # Calendar with events API
-├── habits/page.tsx    # Routines with templates & insights
-└── signin/page.tsx    # Multi-provider auth
+├── page.tsx             # Home page with calendar
+├── boards/              # Project boards
+├── calendar/            # Calendar page
+├── signin/              # Authentication
+└── signup/              # User registration
 
 components/
-├── UnifiedKanbanWidget.tsx  # Dynamic widget with real data
-├── Sidebar.tsx             # Navigation with user data
-├── TaskModal.tsx           # Task creation/editing
-├── ProjectKanbanBoard.tsx  # Kanban board component
-├── QuickTasks.tsx          # Quick task overview
-├── AppLayout.tsx           # Main layout wrapper
-└── ConvexClientProvider.tsx # Convex integration
-
-convex/
-├── schema.ts       # 10 tables + auth with relationships
-├── projects.ts     # 3 functions - project management
-├── tasks.ts        # 14 functions - task/kanban management
-├── calendar.ts     # 8 functions - event management
-├── routines.ts     # 8 functions - routine templates & tracking
-├── links.ts        # 8 functions - universal entity linking
-├── search.ts       # 2 functions - full-text search
-├── users.ts        # 2 functions - user management
-├── sampleData.ts   # 1 function - demo data generation
-├── googleCalendar.ts # 6 functions - Google Calendar integration
-└── crons.ts        # Automated sync jobs
+├── AppLayout.tsx        # Main layout wrapper
+├── Header.tsx           # Navigation header
+├── Sidebar.tsx          # Navigation sidebar
+├── Calendar.tsx         # Calendar component
+├── TaskCard.tsx         # Task display
+├── TaskModal.tsx        # Task editing
+└── BoardModals.tsx      # Board management
 ```
 
-## 🔌 **COMPLETE API COVERAGE**
+## API Reference
 
-### ✅ **PROJECTS API** (convex/projects.ts) - 3 Functions
+### Core Functions
 
-```typescript
-getProjects(): Project[]
-createProject(name, description?, color?, status?): projectId
-updateProject(projectId, updates): null
-```
+#### **PROJECT API** (convex/projects.ts) - 8 Functions
 
-### ✅ **TASKS API** (convex/tasks.ts) - 14 Functions
+**Queries:**
 
-```typescript
-// Project/Board Management
-getBoards(): Project[] // Returns projects (unified with boards)
-createBoard(name, description?): Id<"projects">
-updateProject(projectId, updates): null
-deleteProject(projectId): null
+- `getProjects()` - Get all user projects
+- `getProject(projectId)` - Get single project with columns
+- `getProjectStats(projectId)` - Get project statistics
 
-// Column Management
-getColumns(boardId: Id<"projects">): Column[]
-createColumn(name, projectId, position, color?): columnId
-updateColumn(columnId, updates): null
-deleteColumn(columnId): null
-updateColumnPositions(positions): null
+**Mutations:**
 
-// Task Management
-getTasks(columnId): Task[]
-getTask(taskId): Task | null
-createTask(title, description?, columnId, priority?, dueDate?): taskId
-updateTask(taskId, updates): null
-updateTaskPosition(taskId, newColumnId, newPosition): null
-```
+- `createProject(name, description?, color?)` - Create new project
+- `updateProject(projectId, updates)` - Update project details
+- `deleteProject(projectId)` - Delete project and all tasks
+- `createColumn(projectId, name, position)` - Add column to project
+- `updateColumn(columnId, updates)` - Update column details
 
-### ✅ **CALENDAR API** (convex/calendar.ts) - 8 Functions
+#### **TASK API** (convex/tasks.ts) - 15 Functions
 
-```typescript
-getEvents(startDate, endDate, projectId?): Event[]
-createEvent(title, description?, startDate, endDate, allDay?, projectId?, taskId?, routineId?): eventId
-updateEvent(eventId, updates): null
-deleteEvent(eventId): null
-getTodayEvents(): Event[]
-getUpcomingEvents(days?): Event[]
-fixBrokenEvents(): null // Data repair utility
-fixAllBrokenEventsTemp(): null // Comprehensive data repair
-```
+**Queries:**
 
-### ✅ **ROUTINES API** (convex/routines.ts) - 8 Functions
+- `getTasks(columnId)` - Get tasks for column
+- `getTask(taskId)` - Get single task
+- `getTasksByProject(projectId)` - Get all project tasks
+- `getUnscheduledTasks()` - Get tasks without calendar events
 
-```typescript
-getTemplates(category?, difficulty?): RoutineTemplate[]
-createTemplate(name, description, category, difficulty, isPublic, tags, blocks): templateId
-getRoutines(timeOfDay?, isActive?): Routine[]
-createRoutine(name, description?, templateId?, timeOfDay, blocks?): routineId
-completeBlock(routineId, blockId, actualDuration?, notes?, energyLevel?): null
-getInsights(timeRange?): RoutineInsights
-updateRoutine(routineId, updates): null
-deleteRoutine(routineId): null
-```
+**Mutations:**
 
-### ✅ **UNIVERSAL LINKING API** (convex/links.ts) - 8 Functions
+- `createTask(columnId, title, description?, priority?)` - Create task
+- `updateTask(taskId, updates)` - Update task details
+- `deleteTask(taskId)` - Delete task
+- `moveTask(taskId, columnId, position)` - Move task between columns
+- `updateTaskPositions(updates[])` - Bulk position updates
 
-```typescript
-createLink(fromTable, fromId, toTable, toId, linkType, metadata?): linkId
-getLinksFrom(fromTable, fromId, linkType?): Link[]
-getLinksTo(toTable, toId, linkType?): Link[]
-getAllLinks(table, id, linkType?): {outgoing: Link[], incoming: Link[]}
-updateLink(linkId, metadata): null
-deleteLink(linkId): null
-linkTaskToRoutine(taskId, routineId, description?): linkId
-getConnectionGraph(entityTable, entityId, depth?): {nodes: Node[], edges: Edge[]}
-```
+#### **CALENDAR API** (convex/calendar.ts) - 4 Functions
 
-### ✅ **SEARCH API** (convex/search.ts) - 2 Functions
+**Queries:**
 
-```typescript
-search(query, types?, projectId?, limit?): SearchResults
-getSearchSuggestions(query): string[]
-```
+- `getEvents(startDate, endDate)` - Get calendar events
+- `getEventsByProject(projectId)` - Get project-specific events
 
-### ✅ **USERS API** (convex/users.ts) - 2 Functions
+**Mutations:**
 
-```typescript
-getUsers(): User[]
-getCurrentUser(): User | null
-```
+- `createEvent(title, startDate, endDate, allDay?, projectId?, taskId?)` - Create event
+- `updateEvent(eventId, updates)` - Update event details
 
-### ✅ **SAMPLE DATA API** (convex/sampleData.ts) - 1 Function
+#### **ROUTINE API** (convex/routines.ts) - 8 Functions
 
-```typescript
-createSampleData(): null
-```
+**Queries:**
 
-### ✅ **GOOGLE CALENDAR API** (convex/googleCalendar.ts) - 6 Functions
+- `getRoutineTemplates()` - Get available templates
+- `getUserRoutines()` - Get user's personal routines
+- `getRoutineBlocks(routineId)` - Get routine components
 
-```typescript
-generateGoogleAuthUrl(userId): string
-exchangeCodeForTokens(code, redirectUri, userId): null
-getValidAccessToken(userId): string | null
-syncTaskToGoogleCalendar(taskId, startTime, endTime): string | null
-fetchAndCacheGoogleCalendarEvents(userId, timeMin, timeMax): number
-getCachedCalendarEvents(userId, startDate, endDate): GoogleCalendarEvent[]
-```
+**Mutations:**
 
-## 🛠️ **DEVELOPMENT GUIDE**
+- `createRoutineFromTemplate(templateId, customizations?)` - Create from template
+- `createCustomRoutine(name, description, blocks[])` - Create custom routine
+- `updateRoutine(routineId, updates)` - Update routine
+- `deleteRoutine(routineId)` - Delete routine
 
-### **Setup**
+## Database Schema
+
+### Core Tables
+
+**projects** - Project/board management
+
+- name, description, color, status, priority, dueDate, tags
+- userId, createdAt, updatedAt
+
+**columns** - Kanban columns within projects
+
+- name, projectId, position, color, createdAt
+
+**tasks** - Individual tasks
+
+- title, description, status, priority, dueDate
+- columnId, routineId, eventId, position
+- userId, assignedTo, tags, timeEstimate
+- completedAt, createdAt, updatedAt
+
+**events** - Calendar events
+
+- title, description, startDate, endDate, allDay
+- projectId, taskId, routineId, userId
+- createdAt, updatedAt
+
+### Routine System
+
+**routineTemplates** - Community and personal templates
+
+- name, description, category, difficulty, estimatedDuration
+- isPublic, popularity, tags, userId
+
+**routines** - User's personal routines
+
+- name, description, templateId, timeOfDay, isActive
+- totalDuration, userId
+
+**routineBlocks** - Individual routine components
+
+- name, description, duration, category, energyLevel
+- color, icon, position, routineId/templateId
+
+## Development
+
+### Setup
+
+1. Clone repository
+2. Install dependencies: `npm install`
+3. Set up Convex: `npx convex dev`
+4. Configure environment variables
+5. Start development: `npm run dev`
+
+### Environment Variables
 
 ```bash
-npm run dev        # Next.js
-npx convex dev     # Backend (parallel)
+# Convex
+CONVEX_DEPLOYMENT=your-deployment-url
+NEXT_PUBLIC_CONVEX_URL=your-convex-url
+
+# Authentication
+AUTH_GOOGLE_ID=your-google-client-id
+AUTH_GOOGLE_SECRET=your-google-client-secret
 ```
 
-### **Key Patterns**
+### Key Technologies
 
-**1. New Convex Function with Proper Validation**
+- **Next.js 14**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Convex**: Backend-as-a-service
+- **Lucide Icons**: Modern icon library
 
-```typescript
-export const functionName = query({
-  args: { param: v.string() },
-  returns: v.array(
-    v.object({
-      _id: v.id("tableName"),
-      _creationTime: v.number(),
-      field: v.string(),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-    return await ctx.db
-      .query("tableName")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-  },
-});
-```
+## Status
 
-**2. Dashboard Widget with Real Data**
+**Current Phase**: Production-ready core functionality
 
-```typescript
-const projects = useQuery(api.projects.getProjects);
-const events = useQuery(api.calendar.getUpcomingEvents);
+✅ **Complete Features:**
 
-<UnifiedKanbanWidget
-  isDarkMode={isDarkMode}
-  title="Widget Title"
-  icon={IconComponent}
-  columns={columnsArray}
-  data={transformedData}
-  onAddItem={handleAddItem}
-/>
-```
+- Project and task management
+- Kanban board interface
+- Calendar scheduling
+- User authentication
+- Real-time updates
+- Responsive design
 
-## 🎯 **CURRENT PHASE STATUS**
+**Next Phase**: AI integration and advanced features
 
-### **Phase 2: Dashboard & Design System** ✅ **COMPLETE**
+## Contributing
 
-- ✅ Professional glassmorphic design system
-- ✅ Comprehensive Convex backend (35 functions)
-- ✅ Real-time data integration across all widgets
-- ✅ TypeScript compilation fully resolved
-- ✅ Sample data system for demos
-- ✅ Universal linking between entities
-- ✅ Full-text search functionality
-- ✅ Calendar drag & drop functionality working
-- ✅ Data integrity issues resolved
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-### **Phase 3A: Google Calendar Integration** ✅ **COMPLETE**
+## Support
 
-- ✅ Google Calendar API setup and OAuth
-- ✅ Two-way sync (import/export events)
-- ✅ Automated sync with cron jobs every 30 minutes
-- ✅ Comprehensive error handling and token refresh
-
-### **Phase 3B: Complete UI CRUD Operations** (Next Priority)
-
-- [ ] Modal dialogs for all entity creation
-- [ ] Inline editing for quick updates
-- [ ] Bulk operations and power user features
-
-### **Phase 4: AI Agent Integration**
-
-- [ ] Smart task prioritization
-- [ ] Proactive productivity insights
-- [ ] Natural language AI interface
-- [ ] Pattern learning and optimization
-
-## 📊 **COMPREHENSIVE STATISTICS**
-
-- **Backend Functions**: 41 implemented across 10 files
-- **Database Tables**: 12 interconnected + auth tables
-- **API Coverage**: 100% of core functionality
-- **Frontend Pages**: 5 with real data integration
-- **Components**: 7 reusable with dynamic data
-- **Authentication**: Multi-provider (Password + Google OAuth)
-- **Real-time**: Full Convex real-time synchronization
-- **Search**: Full-text search across tasks and projects
-- **Linking**: Universal cross-entity linking system
-- **Google Calendar**: OAuth integration with automated sync
-
-## 🔧 **TROUBLESHOOTING**
-
-- **Auth errors**: See `docs/AUTH_TROUBLESHOOTING.md`
-- **TypeScript errors**: All system fields included in validators
-- **Real data**: All pages now use live Convex data
-- **Design patterns**: Follow established glassmorphic patterns in `docs/DESIGN_GUIDELINES.md`
-- **Calendar issues**: Drag & drop functionality fully working
-
-**Status**: Production-ready backend with battle-tested functionality and Google Calendar integration complete. Ready for UI enhancements and AI agent integration.
+- Check documentation in `/docs` folder
+- Use GitHub issues for bugs
+- Use GitHub discussions for questions

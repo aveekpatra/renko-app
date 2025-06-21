@@ -46,7 +46,6 @@ export default defineSchema({
     columnId: v.id("columns"), // Tasks belong to columns, which belong to projects
     routineId: v.optional(v.id("routines")), // Link to routines
     eventId: v.optional(v.id("events")), // Link to calendar events
-    googleEventId: v.optional(v.string()), // Google Calendar event ID
     position: v.number(),
     userId: v.id("users"),
     assignedTo: v.optional(v.id("users")),
@@ -205,77 +204,4 @@ export default defineSchema({
     ),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
-
-  // === GOOGLE CALENDAR INTEGRATION ===
-
-  // Unified Calendar Connection (single OAuth client approach)
-  calendarConnections: defineTable({
-    userId: v.id("users"),
-    hasCalendarScope: v.boolean(),
-    email: v.string(),
-    connectedAt: v.number(),
-    lastSync: v.optional(v.number()),
-    error: v.optional(v.string()),
-    // OAuth token storage for API access
-    accessToken: v.optional(v.string()),
-    refreshToken: v.optional(v.string()),
-    expiresAt: v.optional(v.number()),
-  }).index("by_user", ["userId"]),
-
-  // Unified Google Calendar Events (for the new unified approach)
-  unifiedGoogleCalendarEvents: defineTable({
-    userId: v.id("users"),
-    eventId: v.string(), // Google Calendar event ID
-    summary: v.string(),
-    description: v.optional(v.string()),
-    startTime: v.string(), // ISO string from Google
-    endTime: v.string(), // ISO string from Google
-    location: v.optional(v.string()),
-    attendees: v.array(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_and_event", ["userId", "eventId"]),
-
-  // Google Calendar Integration - Support multiple calendar connections (LEGACY)
-  googleCalendarConnections: defineTable({
-    userId: v.id("users"),
-    googleAccountId: v.string(),
-    googleAccountEmail: v.string(),
-    googleAccountName: v.string(),
-    googleAccountPicture: v.optional(v.string()),
-    accessToken: v.string(),
-    refreshToken: v.optional(v.string()),
-    expiresAt: v.number(),
-    isActive: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-    lastSyncAt: v.optional(v.number()),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_and_google_account", ["userId", "googleAccountId"])
-    .index("by_google_account", ["googleAccountId"]),
-
-  googleCalendarEvents: defineTable({
-    userId: v.id("users"),
-    connectionId: v.id("googleCalendarConnections"),
-    eventId: v.string(),
-    summary: v.string(),
-    description: v.optional(v.string()),
-    startTime: v.string(),
-    endTime: v.string(),
-    location: v.optional(v.string()),
-    attendees: v.array(v.string()),
-    etag: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_connection", ["connectionId"])
-    .index("by_user_and_event", ["userId", "eventId"])
-    .index("by_connection_and_event", ["connectionId", "eventId"]),
-
-  // Remove old single calendar tables
-  // googleCalendarTokens and old googleCalendarEvents will be replaced
 });

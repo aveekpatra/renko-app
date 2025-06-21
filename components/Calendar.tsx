@@ -6,12 +6,10 @@ import {
   ChevronRight,
   Plus,
   Clock,
-  Users,
   MapPin,
   CheckSquare,
   GripVertical,
   Search,
-  Calendar as CalendarIcon,
 } from "lucide-react";
 import { useTheme } from "./AppLayout";
 import { useQuery, useMutation } from "convex/react";
@@ -37,12 +35,11 @@ interface ScheduledEvent {
   day: number; // 0-4 for weekdays
   priority?: "urgent" | "high" | "normal" | "low";
   color: string;
-  type: "app" | "google" | "task";
+  type: "app" | "task";
   location?: string;
   attendees?: string[];
   taskId?: Id<"tasks">;
   eventId?: Id<"events">;
-  googleEventId?: string;
 }
 
 interface CalendarProps {
@@ -51,8 +48,6 @@ interface CalendarProps {
 
 const getIconForEventType = (type: string) => {
   switch (type) {
-    case "google":
-      return CalendarIcon;
     case "task":
       return CheckSquare;
     default:
@@ -215,7 +210,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
 
   if (eventsData) {
     // Add app events
-    eventsData.appEvents.forEach((event) => {
+    eventsData.forEach((event) => {
       const eventDate = new Date(event.startDate);
       const dayOfWeek = eventDate.getDay();
       const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday=0 to 6, Monday=1 to 0
@@ -246,37 +241,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
           type: "app",
           taskId: event.taskId,
           eventId: event._id,
-        });
-      }
-    });
-
-    // Add Google Calendar events with enhanced styling
-    eventsData.googleEvents.forEach((event) => {
-      const eventDate = new Date(event.startDate);
-      const dayOfWeek = eventDate.getDay();
-      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-      if (adjustedDay >= 0 && adjustedDay <= 4) {
-        events.push({
-          id: `google-${event._id}`,
-          title: event.title,
-          description: event.description,
-          startTime: eventDate.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }),
-          endTime: new Date(event.endDate).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }),
-          day: adjustedDay,
-          color: "indigo", // Google events in indigo for better distinction
-          type: "google",
-          location: event.location,
-          attendees: event.attendees,
-          googleEventId: event.eventId,
         });
       }
     });
@@ -611,27 +575,13 @@ export default function Calendar({ className = "" }: CalendarProps) {
       return colorMap[color as keyof typeof colorMap] || colorMap.blue;
     };
 
-    // Special styling for Google Calendar events
-    const isGoogleEvent = event.type === "google";
-    const googleEventStyle = isGoogleEvent
-      ? {
-          background: isDarkMode
-            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.25) 100%)"
-            : "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.2) 100%)",
-          borderLeft: `4px solid ${getColorValue(event.color)}`,
-          borderColor: isDarkMode
-            ? "rgba(99, 102, 241, 0.4)"
-            : "rgba(99, 102, 241, 0.3)",
-        }
-      : {};
-
     return (
       <div
         className={`absolute rounded-lg cursor-pointer backdrop-blur-md border transition-all duration-200 hover:shadow-lg group flex flex-col overflow-hidden ${
           isDarkMode
             ? "bg-gray-800/90 border-gray-700/50 hover:bg-gray-700/60 hover:border-gray-600/60 shadow-black/20"
             : "bg-white/95 border-gray-200/60 hover:bg-white hover:border-gray-300/60 shadow-gray-900/10"
-        } ${isGoogleEvent ? "ring-1 ring-indigo-500/20" : ""}`}
+        }`}
         style={{
           top: `${getTimePosition(event.startTime)}px`,
           height: `${Math.max(eventHeight - 2, 30)}px`,
@@ -639,16 +589,12 @@ export default function Calendar({ className = "" }: CalendarProps) {
           right: "4px",
           zIndex: 10,
           maxWidth: "calc(100% - 8px)",
-          ...googleEventStyle,
         }}
         onClick={() => handleEventClick(event)}
       >
         {isVeryShort ? (
           <div className="p-1.5 flex items-center w-full overflow-hidden">
             <div className="flex items-center flex-shrink-0 mr-1.5">
-              {isGoogleEvent && (
-                <CalendarIcon className="w-2 h-2 text-indigo-500 mr-1" />
-              )}
               <div
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: getColorValue(event.color) }}
@@ -669,9 +615,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 {event.title}
               </h4>
               <div className="flex items-center flex-shrink-0">
-                {isGoogleEvent && (
-                  <CalendarIcon className="w-2.5 h-2.5 text-indigo-500 mr-1" />
-                )}
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: getColorValue(event.color) }}
@@ -696,9 +639,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 {event.title}
               </h4>
               <div className="flex items-center flex-shrink-0">
-                {isGoogleEvent && (
-                  <CalendarIcon className="w-3 h-3 text-indigo-500 mr-1" />
-                )}
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: getColorValue(event.color) }}
@@ -713,7 +653,7 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 {event.startTime} - {event.endTime}
               </span>
             </div>
-            {isGoogleEvent && event.location && (
+            {event.location && (
               <div className="flex items-center space-x-1 mb-1 flex-shrink-0 min-h-0">
                 <MapPin className="w-2.5 h-2.5 flex-shrink-0 text-indigo-400" />
                 <span
@@ -732,13 +672,9 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 </span>
               )}
               <span
-                className={`text-xs font-medium truncate ml-1 max-w-[35%] ${
-                  isGoogleEvent
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : themeClasses.text.tertiary
-                }`}
+                className={`text-xs font-medium truncate ml-1 max-w-[35%] ${themeClasses.text.tertiary}`}
               >
-                {isGoogleEvent ? "Google Calendar" : event.type}
+                {event.type}
               </span>
             </div>
           </div>
@@ -751,9 +687,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 {event.title}
               </h4>
               <div className="flex items-center flex-shrink-0">
-                {isGoogleEvent && (
-                  <CalendarIcon className="w-3 h-3 text-indigo-500 mr-1" />
-                )}
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: getColorValue(event.color) }}
@@ -778,30 +711,15 @@ export default function Calendar({ className = "" }: CalendarProps) {
                   </p>
                 </div>
               )}
-              {isGoogleEvent && (
-                <>
-                  {event.location && (
-                    <div className="flex items-center space-x-1 mb-1">
-                      <MapPin className="w-3 h-3 flex-shrink-0 text-indigo-400" />
-                      <span
-                        className={`text-xs text-indigo-600 dark:text-indigo-400 font-medium`}
-                      >
-                        {event.location}
-                      </span>
-                    </div>
-                  )}
-                  {event.attendees && event.attendees.length > 0 && (
-                    <div className="flex items-center space-x-1 mb-1">
-                      <Users className="w-3 h-3 flex-shrink-0 text-indigo-400" />
-                      <span
-                        className={`text-xs text-indigo-600 dark:text-indigo-400 font-medium`}
-                      >
-                        {event.attendees.length} attendee
-                        {event.attendees.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  )}
-                </>
+              {event.location && (
+                <div className="flex items-center space-x-1 mb-1">
+                  <MapPin className="w-3 h-3 flex-shrink-0 text-indigo-400" />
+                  <span
+                    className={`text-xs text-indigo-600 dark:text-indigo-400 font-medium`}
+                  >
+                    {event.location}
+                  </span>
+                </div>
               )}
             </div>
             <div className="flex items-center justify-between flex-shrink-0 mt-2 min-h-0 overflow-hidden">
@@ -813,13 +731,9 @@ export default function Calendar({ className = "" }: CalendarProps) {
                 </span>
               )}
               <span
-                className={`text-xs font-medium truncate max-w-[35%] ${
-                  isGoogleEvent
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : themeClasses.text.tertiary
-                }`}
+                className={`text-xs font-medium truncate max-w-[35%] ${themeClasses.text.tertiary}`}
               >
-                {isGoogleEvent ? "Google Calendar" : event.type}
+                {event.type}
               </span>
             </div>
           </div>
@@ -1261,28 +1175,6 @@ export default function Calendar({ className = "" }: CalendarProps) {
                     />
                   </button>
                 </div>
-
-                {/* Google Calendar Status Indicator */}
-                {eventsData && (
-                  <div className="flex items-center space-x-2">
-                    {eventsData.googleEvents.length > 0 ? (
-                      <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/50">
-                        <CalendarIcon className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                        <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                          {eventsData.googleEvents.length} Google event
-                          {eventsData.googleEvents.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50">
-                        <CalendarIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                          No Google events
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center space-x-2">

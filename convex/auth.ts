@@ -8,19 +8,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      authorization: {
-        params: {
-          // Extended scopes to include Google Calendar access
-          scope:
-            "openid email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
-          // Request offline access for refresh tokens (recommended for server-side apps)
-          access_type: "offline",
-          // Force consent screen to ensure we get calendar permissions
-          prompt: "consent",
-          // Enable incremental authorization as per Google's best practices
-          include_granted_scopes: true,
-        },
-      },
     }),
   ],
   callbacks: {

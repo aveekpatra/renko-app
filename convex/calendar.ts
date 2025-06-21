@@ -558,73 +558,58 @@ export const unscheduleTask = mutation({
   },
 });
 
-// Get all calendar events including Google Calendar events
+// Get all calendar events
 export const getAllCalendarEvents = query({
   args: {
     startDate: v.number(),
     endDate: v.number(),
   },
-  returns: v.object({
-    appEvents: v.array(
-      v.object({
-        _id: v.id("events"),
-        _creationTime: v.number(),
-        title: v.string(),
-        description: v.optional(v.string()),
-        startDate: v.number(),
-        endDate: v.number(),
-        allDay: v.boolean(),
-        projectId: v.optional(v.id("projects")),
-        taskId: v.optional(v.id("tasks")),
-        routineId: v.optional(v.id("routines")),
-        userId: v.id("users"),
-        createdAt: v.number(),
-        updatedAt: v.number(),
-        project: v.union(
-          v.object({
-            _id: v.id("projects"),
-            name: v.string(),
-            color: v.optional(v.string()),
-          }),
-          v.null(),
-        ),
-        task: v.union(
-          v.object({
-            _id: v.id("tasks"),
-            title: v.string(),
-            status: v.string(),
-            priority: v.optional(v.string()),
-          }),
-          v.null(),
-        ),
-        routine: v.union(
-          v.object({
-            _id: v.id("routines"),
-            name: v.string(),
-            timeOfDay: v.string(),
-          }),
-          v.null(),
-        ),
-        type: v.literal("app"),
-      }),
-    ),
-    googleEvents: v.array(
-      v.object({
-        _id: v.id("unifiedGoogleCalendarEvents"),
-        eventId: v.string(),
-        title: v.string(),
-        description: v.optional(v.string()),
-        startDate: v.number(), // Converted from ISO string
-        endDate: v.number(), // Converted from ISO string
-        location: v.optional(v.string()),
-        attendees: v.array(v.string()),
-        type: v.literal("google"),
-      }),
-    ),
-  }),
+  returns: v.array(
+    v.object({
+      _id: v.id("events"),
+      _creationTime: v.number(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      startDate: v.number(),
+      endDate: v.number(),
+      allDay: v.boolean(),
+      projectId: v.optional(v.id("projects")),
+      taskId: v.optional(v.id("tasks")),
+      routineId: v.optional(v.id("routines")),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      project: v.union(
+        v.object({
+          _id: v.id("projects"),
+          name: v.string(),
+          color: v.optional(v.string()),
+        }),
+        v.null(),
+      ),
+      task: v.union(
+        v.object({
+          _id: v.id("tasks"),
+          title: v.string(),
+          status: v.string(),
+          priority: v.optional(v.string()),
+        }),
+        v.null(),
+      ),
+      routine: v.union(
+        v.object({
+          _id: v.id("routines"),
+          name: v.string(),
+          timeOfDay: v.string(),
+        }),
+        v.null(),
+      ),
+      type: v.literal("app"),
+    }),
+  ),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return { appEvents: [], googleEvents: [] };
+    if (!userId) return [];
 
     // Get app events
     const appEventsQuery = ctx.db
@@ -687,39 +672,6 @@ export const getAllCalendarEvents = query({
       }),
     );
 
-    // Get Google Calendar events
-    const startDateISO = new Date(args.startDate).toISOString();
-    const endDateISO = new Date(args.endDate).toISOString();
-
-    const googleEvents = await ctx.db
-      .query("unifiedGoogleCalendarEvents")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("startTime"), startDateISO),
-          q.lte(q.field("startTime"), endDateISO),
-        ),
-      )
-      .collect();
-
-    // Convert Google events to match our format
-    const formattedGoogleEvents = googleEvents.map((event) => ({
-      _id: event._id,
-      eventId: event.eventId,
-      title: event.summary,
-      description: event.description,
-      startDate: new Date(event.startTime).getTime(),
-      endDate: new Date(event.endTime).getTime(),
-      location: event.location,
-      attendees: event.attendees,
-      type: "google" as const,
-    }));
-
-    return {
-      appEvents: enrichedAppEvents.sort((a, b) => a.startDate - b.startDate),
-      googleEvents: formattedGoogleEvents.sort(
-        (a, b) => a.startDate - b.startDate,
-      ),
-    };
+    return enrichedAppEvents.sort((a, b) => a.startDate - b.startDate);
   },
 });

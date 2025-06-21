@@ -106,7 +106,7 @@ export default function Sidebar({
   // };
 
   // Use the hydrated collapsed state, defaulting to expanded for SSR
-  const currentSidebarWidth = isHydrated && isCollapsed ? 80 : sidebarWidth;
+  const currentSidebarWidth = isHydrated && isCollapsed ? 60 : sidebarWidth;
 
   // Theme classes - more minimal design
   const themeClasses = {

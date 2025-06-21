@@ -147,7 +147,6 @@ export const createEvent = mutation({
 // - getUpcomingEvents() - Week planning for AI optimization
 ```
 
-### **Google Calendar API (convex/googleCalendar.ts)** ✅ **6 Functions - AI CONTEXT PROVIDER**
 
 ```typescript
 // Check calendar connection status
@@ -164,7 +163,6 @@ export const getCalendarStatus = query({
   },
 });
 
-// Import Google Calendar events - AI CONTEXT SOURCE
 export const syncCalendarEvents = action({
   args: {},
   returns: v.object({
@@ -183,7 +181,6 @@ export const getCalendarEvents = query({
     startDate: v.string(),
     endDate: v.string(),
   },
-  returns: v.array(GoogleCalendarEvent),
   handler: async (ctx, args) => {
     // READY FOR AI: Real calendar data for conflict detection
     // AI can suggest task scheduling around existing commitments

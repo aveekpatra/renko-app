@@ -15,7 +15,10 @@ const protectedRoutes = ["/", "/calendar", "/boards", "/habits"];
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   // Block any default Convex Auth signin/signup pages and redirect to custom ones
-  if (request.nextUrl.pathname === "/auth" || request.nextUrl.pathname.startsWith("/auth/")) {
+  if (
+    request.nextUrl.pathname === "/auth" ||
+    request.nextUrl.pathname.startsWith("/auth/")
+  ) {
     return nextjsMiddlewareRedirect(request, "/signin");
   }
 

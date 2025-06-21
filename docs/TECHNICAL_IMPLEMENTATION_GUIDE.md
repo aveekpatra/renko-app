@@ -13,29 +13,22 @@ This guide provides the specific technical implementation details for the Renko 
 
 ---
 
-## **PHASE 3A: GOOGLE CALENDAR INTEGRATION** 🔄
 
 ### **Week 6: Technical Foundation**
 
-#### **Google Calendar API Setup**
 
 ```bash
 # Environment Variables Required
-GOOGLE_CALENDAR_CLIENT_ID=your_client_id
-GOOGLE_CALENDAR_CLIENT_SECRET=your_client_secret
-GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/api/google/callback
 ```
 
 #### **New Convex Functions**
 
 ```typescript
-// convex/googleCalendar.ts
 
 import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 
 // OAuth connection management
-export const connectGoogleCalendar = action({
   args: {
     authCode: v.string(),
     redirectUri: v.string(),
@@ -52,7 +45,6 @@ export const connectGoogleCalendar = action({
   },
 });
 
-// Import events from Google Calendar
 export const importGoogleEvents = action({
   args: {
     calendarId: v.string(),
@@ -67,15 +59,12 @@ export const importGoogleEvents = action({
     }),
   ),
   handler: async (ctx, args) => {
-    // Fetch events from Google Calendar API
     // Map to Renko event format
     // Handle duplicates and conflicts
     // Create/update Renko events
   },
 });
 
-// Export events to Google Calendar
-export const exportToGoogleCalendar = action({
   args: {
     eventIds: v.array(v.id("events")),
     targetCalendarId: v.string(),
@@ -87,8 +76,6 @@ export const exportToGoogleCalendar = action({
   }),
   handler: async (ctx, args) => {
     // Get Renko events
-    // Map to Google Calendar format
-    // Create/update Google Calendar events
     // Handle rate limiting and errors
   },
 });
@@ -102,9 +89,7 @@ export const exportToGoogleCalendar = action({
 export default defineSchema({
   // ... existing tables
 
-  googleCalendarConnections: defineTable({
     userId: v.id("users"),
-    googleCalendarId: v.string(),
     calendarName: v.string(),
     accessToken: v.string(), // encrypted
     refreshToken: v.string(), // encrypted
@@ -119,11 +104,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_and_calendar", ["userId", "googleCalendarId"]),
 
   syncLogs: defineTable({
     userId: v.id("users"),
-    connectionId: v.id("googleCalendarConnections"),
     syncType: v.string(), // "import" | "export" | "bidirectional"
     status: v.string(), // "success" | "partial" | "failed"
     eventsProcessed: v.number(),
@@ -144,15 +127,10 @@ export default defineSchema({
 #### **React Components**
 
 ```typescript
-// components/GoogleCalendarSync/GoogleCalendarSetup.tsx
 
-interface GoogleCalendarSetupProps {
-  onConnectionSuccess: (connection: GoogleCalendarConnection) => void;
   onError: (error: string) => void;
 }
 
-export function GoogleCalendarSetup({ onConnectionSuccess, onError }: GoogleCalendarSetupProps) {
-  const connectGoogle = useMutation(api.googleCalendar.connectGoogleCalendar);
 
   const handleConnect = async () => {
     // Initiate OAuth flow
@@ -169,11 +147,8 @@ export function GoogleCalendarSetup({ onConnectionSuccess, onError }: GoogleCale
   );
 }
 
-// components/GoogleCalendarSync/SyncStatus.tsx
 
 export function SyncStatus() {
-  const connections = useQuery(api.googleCalendar.getConnections);
-  const syncLogs = useQuery(api.googleCalendar.getRecentSyncLogs);
 
   return (
     <div className="space-y-4">
