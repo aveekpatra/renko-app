@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the simple Google Calendar integration implemented for the Renko productivity app. The integration provides a read-only view of Google Calendar events alongside the app's own events in a unified weekly calendar view.
+This document describes the simple Google Calendar integration implemented for the Renko productivity app. The integration provides a read-only view of Google Calendar events alongside the app's own events in a unified weekly calendar view with comprehensive drag-and-drop functionality.
 
 ## Architecture
 
@@ -16,93 +16,257 @@ This document describes the simple Google Calendar integration implemented for t
 
 - **Client-side Integration**: Uses Google Calendar API v3 with browser-based authentication
 - **Persistent Authentication**: Tokens stored in localStorage with automatic refresh
-- **Unified Calendar View**: Shows both app events (blue) and Google Calendar events (green)
-- **Drag-and-Drop Scheduling**: Drag tasks from sidebar to calendar days
-- **Error Handling**: Comprehensive error handling with user-friendly messages
-- **Connection Status**: Real-time connection status indicators
+- **Unified Calendar View**: Shows both app events and Google Calendar events
+- **Drag and Drop Functionality**:
+  - Drag tasks from sidebar to schedule them
+  - Drag existing events to reschedule
+  - Resize events to change duration
+  - Click on cells to create new events
+- **Event Management**:
+  - Create new events by clicking on time slots
+  - Edit event details through modal
+  - Delete app events
+  - View Google Calendar events (read-only)
+- **Race Condition Prevention**: Memoized API calls to prevent duplicate requests
+- **Error Handling**: Comprehensive error states with user-friendly messages
 
-## Technical Implementation
+## Implementation Details
 
-### Authentication Flow
+### Drag and Drop Features
 
-1. **Initialization**: Load Google APIs and initialize client
-2. **OAuth Flow**: Use Google Identity Services for authentication popup
-3. **Token Management**: Store access tokens with expiry tracking
-4. **Persistent Sessions**: Automatically restore authentication on page reload
+#### 1. **Task Scheduling**
 
-### API Integration
+- Drag unscheduled tasks from the sidebar
+- Drop on any time slot to create a 1-hour event
+- Visual feedback during drag operation
 
-- **Google Calendar API v3**: Read-only access to primary calendar
-- **Event Fetching**: Retrieve events for current week view
-- **Rate Limiting**: Memoized requests to prevent excessive API calls
-- **Error Handling**: Graceful degradation when API unavailable
+#### 2. **Event Rescheduling**
 
-### Data Flow
+- Drag app events to new time slots
+- Maintains event duration during move
+- Snaps to 15-minute intervals
+- Real-time position updates
 
+#### 3. **Event Resizing**
+
+- Hover over top/bottom edges to show resize handles
+- Drag handles to adjust start/end times
+- Validates that start time remains before end time
+- Visual feedback with colored resize zones
+
+#### 4. **Click to Create**
+
+- Click any empty time slot
+- Opens modal with event creation form
+- Specify title, description, and duration
+- Automatically sets start time based on clicked slot
+
+### Event Types
+
+1. **App Events** (Blue)
+
+   - Fully editable (move, resize, delete)
+   - Synced with Convex database
+   - Can be linked to tasks and projects
+
+2. **Google Calendar Events** (Green)
+   - Read-only display
+   - Shows with external link icon
+   - Click to open in Google Calendar
+   - Cannot be moved or resized
+
+### GoogleCalendarClient Class
+
+```typescript
+class GoogleCalendarClient {
+  // Singleton pattern for global instance
+  static getInstance(): GoogleCalendarClient;
+
+  // Initialize Google APIs and authentication
+  async initialize(): Promise<boolean>;
+
+  // Sign in with Google OAuth
+  async signIn(): Promise<boolean>;
+
+  // Sign out and clear tokens
+  signOut(): void;
+
+  // Fetch calendar events (memoized)
+  async getEvents(
+    timeMin: string,
+    timeMax: string,
+  ): Promise<GoogleCalendarEvent[]>;
+
+  // Check authentication status
+  isSignedIn(): boolean;
+}
 ```
-GoogleCalendarClient → API Request → Google Calendar API
-                                  ↓
-                              Event Data
-                                  ↓
-                         GoogleCalendarView
-                                  ↓
-                           Unified Events
-                                  ↓
-                          Calendar Display
+
+### State Management
+
+```typescript
+// Drag and drop states
+const [draggedTask, setDraggedTask] = useState<...>
+const [draggedEvent, setDraggedEvent] = useState<...>
+const [resizingEvent, setResizingEvent] = useState<...>
+
+// Modal states
+const [showEventModal, setShowEventModal] = useState(false)
+const [selectedEvent, setSelectedEvent] = useState<UnifiedEvent | null>
+const [newEventData, setNewEventData] = useState<...>
 ```
 
 ## Setup Instructions
 
-### 1. Google Cloud Console Setup
+1. **Enable Google Calendar API**
 
-1. Create a new project or select existing project
-2. Enable the Google Calendar API
-3. Create credentials:
-   - **API Key**: For Calendar API access
-   - **OAuth 2.0 Client ID**: For user authentication
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create or select a project
+   - Enable the Google Calendar API
+   - Create credentials (API Key and OAuth 2.0 Client ID)
 
-### 2. Environment Variables
+2. **Configure Environment Variables**
 
-Add to your `.env.local` file:
+   ```bash
+   # .env.local
+   NEXT_PUBLIC_GOOGLE_API_KEY=your_google_api_key
+   NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID=your_oauth_client_id
+   ```
 
-```bash
-# Google API Key (for Calendar API access)
-GOOGLE_API_KEY=your_google_api_key_here
-NEXT_PUBLIC_GOOGLE_API_KEY=your_google_api_key_here
-
-# OAuth Client ID (for user authentication)
-NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID=your_oauth_client_id_here
-```
-
-**Important**: The API Key and OAuth Client ID are different credentials with different purposes.
-
-### 3. OAuth Configuration
-
-Configure your OAuth 2.0 Client ID in Google Cloud Console:
-
-- **Authorized JavaScript origins**: `http://localhost:3000` (development)
-- **Authorized redirect URIs**: Not required for this client-side implementation
+3. **OAuth Configuration**
+   - Add authorized JavaScript origins: `http://localhost:3000`
+   - Add authorized redirect URIs: `http://localhost:3000`
+   - For production, add your production domain
 
 ## Usage
 
-### Accessing the Calendar
-
-Navigate to `/google-calendar` in your application to access the Google Calendar integration.
-
-### Connecting to Google Calendar
+### Connecting Google Calendar
 
 1. Click "Connect Google Calendar" button
-2. Complete OAuth authentication in popup window
-3. Grant calendar read permissions
-4. View your Google Calendar events alongside app events
+2. Authorize access in the OAuth popup
+3. Events will automatically sync
 
-### Features Available
+### Creating Events
 
-- **Week Navigation**: Navigate between weeks using arrow buttons
-- **Event Display**: View events with different colors for app vs Google events
-- **Task Scheduling**: Drag unscheduled tasks to calendar days
-- **External Links**: Click Google Calendar events to open in Google Calendar
-- **Connection Management**: Connect/disconnect from Google Calendar
+1. **From Tasks**: Drag a task from sidebar to calendar
+2. **New Event**: Click on any time slot
+3. **Fill Details**: Enter title, description, duration
+4. **Save**: Click "Create Event"
+
+### Managing Events
+
+1. **Move**: Drag event to new time/day
+2. **Resize**: Drag top/bottom edges
+3. **Edit**: Click event to open details
+4. **Delete**: Click event, then "Delete" button
+
+### Keyboard Shortcuts
+
+- `Esc`: Close modals
+- `Enter`: Submit forms
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Cannot read properties of null (reading 'client')"**
+
+   - **Cause**: Google API not properly initialized
+   - **Fix**: Refresh the page and ensure API key is correct
+
+2. **"API_ACCESS_DENIED"**
+
+   - **Cause**: Google Calendar API not enabled or API key restrictions
+   - **Fix**: Enable Calendar API in Google Cloud Console and check API key permissions
+
+3. **"TOKEN_EXPIRED"**
+
+   - **Cause**: OAuth token has expired
+   - **Fix**: Click "Connect Google Calendar" to re-authenticate
+
+4. **Events Not Updating**
+   - **Cause**: Race condition or stale data
+   - **Fix**: Refresh the page or wait for automatic refresh
+
+### Debug Mode
+
+To enable debug logging:
+
+```javascript
+// In GoogleCalendarClient
+console.log("Debug: API Response", response);
+```
+
+## Security Considerations
+
+1. **Token Storage**: OAuth tokens stored in localStorage
+2. **API Key**: Restricted to specific domains
+3. **Scope**: Read-only access to Google Calendar
+4. **CORS**: Handled by Google APIs
+
+## Future Enhancements
+
+1. **Write Access**: Add ability to create/edit Google Calendar events
+2. **Recurring Events**: Support for recurring event patterns
+3. **Multi-calendar**: Support multiple Google calendars
+4. **Sync Conflicts**: Handle conflicts between app and Google events
+5. **Mobile Support**: Touch gestures for drag and drop
+6. **Offline Mode**: Cache events for offline viewing
+
+## API Reference
+
+### Convex Mutations
+
+```typescript
+// Create event
+createEvent({
+  title: string,
+  description?: string,
+  startDate: number,
+  endDate: number,
+  allDay?: boolean,
+  taskId?: Id<"tasks">
+})
+
+// Update event
+updateEvent({
+  eventId: Id<"events">,
+  title?: string,
+  description?: string,
+  startDate?: number,
+  endDate?: number
+})
+
+// Delete event
+deleteEvent({
+  eventId: Id<"events">
+})
+```
+
+### Event Handlers
+
+```typescript
+// Drag start
+handleEventDragStart(event: UnifiedEvent, e: React.DragEvent)
+
+// Drop
+handleEventDrop(day: Date, time: string, e: React.DragEvent)
+
+// Resize
+handleResizeStart(event: UnifiedEvent, edge: "start" | "end", e: React.MouseEvent)
+
+// Click
+handleCellClick(day: Date, time: string)
+handleEventClick(event: UnifiedEvent)
+```
+
+## Performance Optimizations
+
+1. **Memoization**: API calls cached for 60 seconds
+2. **React.useMemo**: Event calculations optimized
+3. **Debouncing**: Resize operations debounced
+4. **Virtual Scrolling**: (Future) For large event lists
+5. **Lazy Loading**: Google APIs loaded on demand
 
 ## Error Handling
 

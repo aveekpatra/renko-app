@@ -375,6 +375,26 @@ export default function GoogleCalendarView({
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const googleCalendar = useRef(GoogleCalendarClient.getInstance());
 
+  // Drag and drop states
+  const [draggedEvent, setDraggedEvent] = useState<{
+    id: string;
+    type: "app" | "google";
+    originalStartTime: Date;
+    originalEndTime: Date;
+    offsetMinutes?: number;
+  } | null>(null);
+  const [resizingEvent, setResizingEvent] = useState<{
+    id: string;
+    edge: "start" | "end";
+    originalTime: Date;
+  } | null>(null);
+  const [newEventData, setNewEventData] = useState<{
+    day: Date;
+    startTime: string;
+  } | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<UnifiedEvent | null>(null);
+
   // Get week start (Monday)
   const getWeekStart = (date: Date) => {
     const d = new Date(date);
@@ -412,6 +432,8 @@ export default function GoogleCalendarView({
   const eventsData = useQuery(api.calendar.getEvents, { startDate, endDate });
   const unscheduledTasks = useQuery(api.tasks.getUnscheduledTasks);
   const createEvent = useMutation(api.calendar.createEvent);
+  const updateEvent = useMutation(api.calendar.updateEvent);
+  const deleteEvent = useMutation(api.calendar.deleteEvent);
 
   // Time slots for calendar
   const timeSlots = [
@@ -440,6 +462,257 @@ export default function GoogleCalendarView({
     "22:00",
     "23:00",
   ];
+
+  // Helper function to get time from position
+  const getTimeFromPosition = (y: number): Date => {
+    const minutes = Math.floor((y / 120) * 60);
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const date = new Date();
+    date.setHours(hours, mins, 0, 0);
+    return date;
+  };
+
+  // Helper function to snap time to 15-minute intervals
+  const snapToInterval = (date: Date, intervalMinutes: number = 15): Date => {
+    const minutes = date.getMinutes();
+    const snappedMinutes =
+      Math.round(minutes / intervalMinutes) * intervalMinutes;
+    const snappedDate = new Date(date);
+    snappedDate.setMinutes(snappedMinutes, 0, 0);
+    return snappedDate;
+  };
+
+  // Handle event drag start
+  const handleEventDragStart = (event: UnifiedEvent, e: React.DragEvent) => {
+    if (event.type === "google") {
+      // Can't drag Google Calendar events
+      e.preventDefault();
+      return;
+    }
+
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const offsetMinutes = Math.floor(
+      ((e.clientY - rect.top) / rect.height) *
+        ((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)),
+    );
+
+    setDraggedEvent({
+      id: event.id,
+      type: event.type,
+      originalStartTime: event.startTime,
+      originalEndTime: event.endTime,
+      offsetMinutes,
+    });
+  };
+
+  // Handle event drop on time slot
+  const handleEventDrop = async (
+    day: Date,
+    time: string,
+    e: React.DragEvent,
+  ) => {
+    e.preventDefault();
+
+    if (draggedTask) {
+      // Dropping a task to schedule it
+      const [hour, minute] = time.split(":").map(Number);
+      const startDate = new Date(day);
+      startDate.setHours(hour, minute, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(hour + 1, 0, 0, 0); // Default 1 hour duration
+
+      try {
+        await createEvent({
+          title: draggedTask.title,
+          description: draggedTask.description,
+          startDate: startDate.getTime(),
+          endDate: endDate.getTime(),
+          allDay: false,
+          taskId: draggedTask.taskId,
+        });
+      } catch (error) {
+        console.error("Failed to create event:", error);
+      }
+
+      setDraggedTask(null);
+    } else if (draggedEvent) {
+      // Moving an existing event
+      const [hour, minute] = time.split(":").map(Number);
+      const dropDate = new Date(day);
+      dropDate.setHours(hour, minute, 0, 0);
+
+      // Calculate new times based on drop position and offset
+      const duration =
+        draggedEvent.originalEndTime.getTime() -
+        draggedEvent.originalStartTime.getTime();
+      const offsetMs = (draggedEvent.offsetMinutes || 0) * 60 * 1000;
+      const newStartTime = new Date(dropDate.getTime() - offsetMs);
+      const newEndTime = new Date(newStartTime.getTime() + duration);
+
+      // Snap to 15-minute intervals
+      const snappedStart = snapToInterval(newStartTime);
+      const snappedEnd = snapToInterval(newEndTime);
+
+      try {
+        await updateEvent({
+          eventId: draggedEvent.id as Id<"events">,
+          startDate: snappedStart.getTime(),
+          endDate: snappedEnd.getTime(),
+        });
+      } catch (error) {
+        console.error("Failed to update event:", error);
+      }
+
+      setDraggedEvent(null);
+    }
+  };
+
+  // Handle resize start
+  const handleResizeStart = (
+    event: UnifiedEvent,
+    edge: "start" | "end",
+    e: React.MouseEvent,
+  ) => {
+    if (event.type === "google") {
+      // Can't resize Google Calendar events
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    setResizingEvent({
+      id: event.id,
+      edge,
+      originalTime: edge === "start" ? event.startTime : event.endTime,
+    });
+  };
+
+  // Convert events to unified format
+  const allEvents: UnifiedEvent[] = React.useMemo(() => {
+    const events: UnifiedEvent[] = [];
+
+    // Add app events
+    if (eventsData) {
+      eventsData.forEach((event) => {
+        events.push({
+          id: event._id,
+          title: event.title,
+          description: event.description,
+          startTime: new Date(event.startDate),
+          endTime: new Date(event.endDate),
+          allDay: event.allDay,
+          type: "app",
+          projectColor: event.project?.color,
+          projectName: event.project?.name,
+        });
+      });
+    }
+
+    // Add Google Calendar events
+    googleEvents.forEach((event) => {
+      const startTime = event.start.dateTime
+        ? new Date(event.start.dateTime)
+        : new Date(event.start.date + "T00:00:00");
+      const endTime = event.end.dateTime
+        ? new Date(event.end.dateTime)
+        : new Date(event.end.date + "T23:59:59");
+
+      events.push({
+        id: `google-${event.id}`,
+        title: event.summary || "Untitled Event",
+        description: event.description,
+        startTime,
+        endTime,
+        allDay: !event.start.dateTime,
+        type: "google",
+        htmlLink: event.htmlLink,
+      });
+    });
+
+    return events;
+  }, [eventsData, googleEvents]);
+
+  // Handle resize mouse move
+  useEffect(() => {
+    if (!resizingEvent) return;
+
+    const handleMouseMove = () => {
+      // This will be handled in the resize handle component
+    };
+
+    const handleMouseUp = async (e: MouseEvent) => {
+      if (!resizingEvent) return;
+
+      // Find the calendar grid element
+      const calendarGrid = calendarScrollRef.current;
+      if (!calendarGrid) return;
+
+      const rect = calendarGrid.getBoundingClientRect();
+      const scrollTop = calendarGrid.scrollTop;
+      const y = e.clientY - rect.top + scrollTop;
+
+      const newTime = getTimeFromPosition(y);
+      const snappedTime = snapToInterval(newTime);
+
+      // Find the event being resized
+      const event = allEvents.find((ev) => ev.id === resizingEvent.id);
+      if (!event || event.type !== "app") return;
+
+      try {
+        if (resizingEvent.edge === "start") {
+          // Ensure start time is before end time
+          if (snappedTime.getTime() < event.endTime.getTime()) {
+            await updateEvent({
+              eventId: resizingEvent.id as Id<"events">,
+              startDate: snappedTime.getTime(),
+            });
+          }
+        } else {
+          // Ensure end time is after start time
+          if (snappedTime.getTime() > event.startTime.getTime()) {
+            await updateEvent({
+              eventId: resizingEvent.id as Id<"events">,
+              endDate: snappedTime.getTime(),
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to resize event:", error);
+      }
+
+      setResizingEvent(null);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [resizingEvent, allEvents, updateEvent]);
+
+  // Handle cell click to create new event
+  const handleCellClick = (day: Date, time: string) => {
+    if (draggedTask || draggedEvent || resizingEvent) return;
+
+    const [hour, minute] = time.split(":").map(Number);
+    const startDate = new Date(day);
+    startDate.setHours(hour, minute, 0, 0);
+
+    setNewEventData({ day: startDate, startTime: time });
+    setShowEventModal(true);
+  };
+
+  // Handle event click
+  const handleEventClick = (event: UnifiedEvent) => {
+    if (resizingEvent) return;
+
+    setSelectedEvent(event);
+    setShowEventModal(true);
+  };
 
   // Update current time every minute
   useEffect(() => {
@@ -600,47 +873,6 @@ export default function GoogleCalendarView({
     setGoogleCalendarError(null);
   };
 
-  // Convert events to unified format
-  const allEvents: UnifiedEvent[] = [];
-
-  // Add app events
-  if (eventsData) {
-    eventsData.forEach((event) => {
-      allEvents.push({
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        startTime: new Date(event.startDate),
-        endTime: new Date(event.endDate),
-        allDay: event.allDay,
-        type: "app",
-        projectColor: event.project?.color,
-        projectName: event.project?.name,
-      });
-    });
-  }
-
-  // Add Google Calendar events
-  googleEvents.forEach((event) => {
-    const startTime = event.start.dateTime
-      ? new Date(event.start.dateTime)
-      : new Date(event.start.date + "T00:00:00");
-    const endTime = event.end.dateTime
-      ? new Date(event.end.dateTime)
-      : new Date(event.end.date + "T23:59:59");
-
-    allEvents.push({
-      id: `google-${event.id}`,
-      title: event.summary || "Untitled Event",
-      description: event.description,
-      startTime,
-      endTime,
-      allDay: !event.start.dateTime,
-      type: "google",
-      htmlLink: event.htmlLink,
-    });
-  });
-
   // Group events by day
   const eventsByDay = weekDays.map((day) => {
     const dayEvents = allEvents.filter((event) => {
@@ -653,31 +885,6 @@ export default function GoogleCalendarView({
     });
     return { day, events: dayEvents };
   });
-
-  const handleDrop = async (day: Date, event: React.DragEvent) => {
-    event.preventDefault();
-    if (!draggedTask) return;
-
-    try {
-      const startTime = new Date(day);
-      startTime.setHours(9, 0, 0, 0);
-      const endTime = new Date(startTime);
-      endTime.setHours(10, 0, 0, 0);
-
-      await createEvent({
-        title: draggedTask.title,
-        description: draggedTask.description,
-        startDate: startTime.getTime(),
-        endDate: endTime.getTime(),
-        allDay: false,
-        taskId: draggedTask.taskId as Id<"tasks">,
-      });
-    } catch (error) {
-      console.error("Failed to create event:", error);
-    }
-
-    setDraggedTask(null);
-  };
 
   const getConnectionStatusText = () => {
     switch (connectionStatus) {
@@ -1159,8 +1366,9 @@ export default function GoogleCalendarView({
                               ? "border-gray-700/60 hover:bg-gray-800/5"
                               : "border-gray-300/60 hover:bg-gray-50/10"
                           }`}
-                          onDrop={(e) => handleDrop(day.fullDate, e)}
+                          onDrop={(e) => handleEventDrop(day.fullDate, time, e)}
                           onDragOver={(e) => e.preventDefault()}
+                          onClick={() => handleCellClick(day.fullDate, time)}
                         >
                           <div
                             className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded m-0.5 border border-dashed ${isDarkMode ? "border-purple-500/40" : "border-purple-400/50"}`}
@@ -1193,16 +1401,42 @@ export default function GoogleCalendarView({
                                     event.type === "app"
                                       ? getTaskColor("blue", isDarkMode)
                                       : getTaskColor("green", isDarkMode)
-                                  }`}
+                                  } ${event.type === "app" ? "cursor-move" : ""}`}
                                   style={{
                                     top: `${startPosition}px`,
                                     height: `${height}px`,
                                     left: "4px",
                                     right: "4px",
-                                    zIndex: 10,
+                                    zIndex:
+                                      draggedEvent?.id === event.id ? 20 : 10,
                                     maxWidth: "calc(100% - 8px)",
+                                    opacity:
+                                      draggedEvent?.id === event.id ? 0.5 : 1,
                                   }}
+                                  draggable={event.type === "app"}
+                                  onDragStart={(e) =>
+                                    handleEventDragStart(event, e)
+                                  }
+                                  onClick={() => handleEventClick(event)}
                                 >
+                                  {/* Resize handles for app events */}
+                                  {event.type === "app" && (
+                                    <>
+                                      <div
+                                        className="absolute top-0 left-0 right-0 h-2 cursor-n-resize opacity-0 hover:opacity-100 bg-purple-500/20 transition-opacity"
+                                        onMouseDown={(e) =>
+                                          handleResizeStart(event, "start", e)
+                                        }
+                                      />
+                                      <div
+                                        className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize opacity-0 hover:opacity-100 bg-purple-500/20 transition-opacity"
+                                        onMouseDown={(e) =>
+                                          handleResizeStart(event, "end", e)
+                                        }
+                                      />
+                                    </>
+                                  )}
+
                                   <div className="p-2 flex flex-col h-full overflow-hidden">
                                     <div className="flex items-start justify-between mb-1 flex-shrink-0">
                                       <h4 className="font-semibold text-xs leading-tight truncate flex-1 pr-1">
@@ -1274,6 +1508,185 @@ export default function GoogleCalendarView({
           </div>
         </div>
       </main>
+
+      {/* Event Modal */}
+      {showEventModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div
+            className={`w-full max-w-md p-6 rounded-lg ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-xl`}
+          >
+            <h2
+              className={`text-lg font-bold mb-4 ${themeClasses.text.primary}`}
+            >
+              {selectedEvent ? "Edit Event" : "New Event"}
+            </h2>
+
+            {selectedEvent ? (
+              <div>
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${themeClasses.text.secondary}`}
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue={selectedEvent.title}
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                    readOnly={selectedEvent.type === "google"}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${themeClasses.text.secondary}`}
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    defaultValue={selectedEvent.description}
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                    rows={3}
+                    readOnly={selectedEvent.type === "google"}
+                  />
+                </div>
+
+                <div className="flex justify-between">
+                  <div>
+                    {selectedEvent.type === "app" && (
+                      <button
+                        onClick={async () => {
+                          await deleteEvent({
+                            eventId: selectedEvent.id as Id<"events">,
+                          });
+                          setShowEventModal(false);
+                          setSelectedEvent(null);
+                        }}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setShowEventModal(false);
+                        setSelectedEvent(null);
+                      }}
+                      className={`px-4 py-2 rounded-lg ${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} transition-colors`}
+                    >
+                      Cancel
+                    </button>
+                    {selectedEvent.type === "google" &&
+                      selectedEvent.htmlLink && (
+                        <a
+                          href={selectedEvent.htmlLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                        >
+                          <span>Open in Google Calendar</span>
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                  </div>
+                </div>
+              </div>
+            ) : newEventData ? (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const title = formData.get("title") as string;
+                  const description = formData.get("description") as string;
+                  const duration = parseInt(formData.get("duration") as string);
+
+                  const startDate = new Date(newEventData.day);
+                  const endDate = new Date(startDate);
+                  endDate.setHours(startDate.getHours() + duration);
+
+                  await createEvent({
+                    title,
+                    description,
+                    startDate: startDate.getTime(),
+                    endDate: endDate.getTime(),
+                    allDay: false,
+                  });
+
+                  setShowEventModal(false);
+                  setNewEventData(null);
+                }}
+              >
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${themeClasses.text.secondary}`}
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${themeClasses.text.secondary}`}
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label
+                    className={`block text-sm font-medium mb-1 ${themeClasses.text.secondary}`}
+                  >
+                    Duration (hours)
+                  </label>
+                  <select
+                    name="duration"
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                  >
+                    <option value="1">1 hour</option>
+                    <option value="2">2 hours</option>
+                    <option value="3">3 hours</option>
+                    <option value="4">4 hours</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEventModal(false);
+                      setNewEventData(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg ${isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"} transition-colors`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Create Event
+                  </button>
+                </div>
+              </form>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
